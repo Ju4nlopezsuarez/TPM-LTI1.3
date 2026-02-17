@@ -166,3 +166,29 @@ CREATE TABLE "attempt" (
   FOREIGN KEY ("original_ru_sid") REFERENCES "resource_user" ("sid")
 );
 
+CREATE TABLE IF NOT EXISTS "lti_key_set" (
+  "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+  "kid" TEXT NOT NULL UNIQUE,         
+  "private_key" TEXT NOT NULL,      
+  "public_key" TEXT NOT NULL,        
+  "alg" TEXT DEFAULT 'RS256',        
+  "created_at" INTEGER DEFAULT (strftime('%s', 'now'))
+);
+ALTER TABLE "tool" ADD COLUMN "lti_version" TEXT DEFAULT 'LTI-1p1';
+
+ALTER TABLE "tool" ADD COLUMN "issuer" TEXT;
+
+ALTER TABLE "tool" ADD COLUMN "client_id" TEXT;
+
+ALTER TABLE "tool" ADD COLUMN "deployment_id" TEXT;
+
+ALTER TABLE "tool" ADD COLUMN "oidc_auth_url" TEXT;
+
+ALTER TABLE "tool" ADD COLUMN "oauth_token_url" TEXT;
+
+ALTER TABLE "tool" ADD COLUMN "jwks_url" TEXT;
+
+ALTER TABLE "tool" ADD COLUMN "key_set_id" INTEGER;
+
+CREATE INDEX IF NOT EXISTS "idx_tool_lti13_lookup" ON "tool" ("issuer", "client_id", "deployment_id")
+

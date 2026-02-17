@@ -38,12 +38,14 @@ import es.us.dit.lti.persistence.ToolConsumerUserDao;
 import es.us.dit.lti.persistence.ToolContextDao;
 import es.us.dit.lti.persistence.ToolDao;
 import es.us.dit.lti.persistence.ToolKeyDao;
+import es.us.dit.lti.persistence.ToolLti13Dao;
 import es.us.dit.lti.persistence.ToolNonceDao;
 import es.us.dit.lti.persistence.ToolResourceLinkDao;
 import es.us.dit.lti.persistence.ToolResourceUserDao;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
+import es.us.dit.lti.persistence.KeyService;
 
 /**
  * Web application initialization and destroy.
@@ -148,6 +150,8 @@ public class AppLoader implements ServletContextListener {
 		ToolConsumerUserDao.setDbUtil(appDbUtil);
 		ToolResourceUserDao.setDbUtil(appDbUtil);
 		ToolAttemptDao.setDbUtil(appDbUtil);
+		KeyService.setDbUtil(appDbUtil);
+		ToolLti13Dao.setDbUtil(appDbUtil);
 
 	}
 

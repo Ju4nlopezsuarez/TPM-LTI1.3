@@ -145,6 +145,14 @@ CREATE TABLE "attempt" (
   FOREIGN KEY ("resource_user_sid") REFERENCES "resource_user" ("sid"),
   FOREIGN KEY ("original_ru_sid") REFERENCES "resource_user" ("sid")
 );
+CREATE TABLE "lti_key_set" (
+  "id" SERIAL PRIMARY KEY,
+  "kid" varchar(255) UNIQUE NOT NULL, -- Key ID
+  "private_key" text NOT NULL,        -- clave privada
+  "public_key" text NOT NULL,         -- clave pública
+  "alg" varchar(50) DEFAULT 'RS256',  -- Algoritmo estándar LTI 1.3
+  "created_at" integer DEFAULT (extract(epoch from now()))
+);
 
 CREATE UNIQUE INDEX ON "context" ("consumer_sid", "context_id");
 
@@ -185,3 +193,23 @@ ALTER TABLE "lti_user" ADD FOREIGN KEY ("consumer_sid") REFERENCES "consumer" ("
 ALTER TABLE "resource_user" ADD FOREIGN KEY ("resource_sid") REFERENCES "resource_link" ("sid");
 
 ALTER TABLE "resource_user" ADD FOREIGN KEY ("lti_user_sid") REFERENCES "lti_user" ("sid");
+
+ALTER TABLE "tool" ADD COLUMN "lti_version" varchar(10) DEFAULT 'LTI-1p1';
+
+ALTER TABLE "tool" ADD COLUMN "issuer" varchar(255);
+
+ALTER TABLE "tool" ADD COLUMN "client_id" varchar(255);
+
+ALTER TABLE "tool" ADD COLUMN "deployment_id" varchar(255);
+
+ALTER TABLE "tool" ADD COLUMN "oidc_auth_url" text;
+
+ALTER TABLE "tool" ADD COLUMN "oauth_token_url" text;
+
+ALTER TABLE "tool" ADD COLUMN "jwks_url" text;
+
+ALTER TABLE "tool" ADD COLUMN "key_set_id" integer;
+
+ALTER TABLE "tool" ADD CONSTRAINT "fk_tool_keyset" FOREIGN KEY ("key_set_id") REFERENCES "lti_key_set" ("id");
+
+CREATE INDEX "idx_tool_lookup" ON "tool" ("issuer", "client_id", "deployment_id");

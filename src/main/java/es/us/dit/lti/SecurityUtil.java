@@ -45,6 +45,20 @@ import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.jwk.source.RemoteJWKSet;
+import com.nimbusds.jose.proc.JWSKeySelector;
+import com.nimbusds.jose.proc.JWSVerificationKeySelector;
+import com.nimbusds.jose.proc.SecurityContext;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
+import com.nimbusds.jwt.proc.DefaultJWTProcessor;
+import com.nimbusds.jose.jwk.source.JWKSourceBuilder;
+
+import java.net.URI;
+import java.net.URL;
+
 import es.us.dit.lti.entity.IUpdateRecordEntity;
 
 /**
@@ -405,5 +419,39 @@ public final class SecurityUtil {
 		}
 		return sid;
 	}
+	/*
+     * Valida un ID Token (JWT) recibido del LMS para LTI 1.3.
+     * Descarga las claves públicas del LMS y verifica la firma.
+     */
+	public static JWTClaimsSet validateLti13Token(String idTokenString, String jwksUrl, String expectedIssuer, String expectedClientId) throws Exception {
+		
+		// Configurar el procesador de JWT
+		ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
+
+		// 2. Configurar la fuente de claves (Remote JWK Set)
+		// Esto descarga automáticamente las claves del LMS desde la URL y las cachea
+		JWKSource<SecurityContext> keySource = JWKSourceBuilder.create(URI.create(jwksUrl).toURL()).build();
+
+        // 3. Decirle al procesador que esperamos firma RSA (RS256)
+        JWSAlgorithm expectedJWSAlg = JWSAlgorithm.RS256;
+        JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<>(expectedJWSAlg, keySource);
+        jwtProcessor.setJWSKeySelector(keySelector);
+
+        // 4. Procesar y verificar firma
+        JWTClaimsSet claims = jwtProcessor.process(idTokenString, null);
+
+        // 5. Validaciones adicionales de seguridad
+        // Verificar Issuer (¿Viene de quien dice venir?)
+        if (!claims.getIssuer().equals(expectedIssuer)) {
+            throw new Exception("JWT Validation Failed: Issuer mismatch. Expected " + expectedIssuer + " but got " + claims.getIssuer());
+        }
+
+        // Verificar Audience (¿Es para mí?)
+        if (!claims.getAudience().contains(expectedClientId)) {
+             throw new Exception("JWT Validation Failed: Audience mismatch. Token is not for client_id " + expectedClientId);
+        }
+        
+        return claims;
+    }
 
 }
