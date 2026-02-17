@@ -1231,7 +1231,7 @@ public final class ToolSession implements Serializable {
             this.valid = true;
 			logger.info("Sesión LTI 1.3 inicializada correctamente para el usuario: " + this.sessionUserId);
 			} else {
-                        this.error = "Error: Entidad Tool no encontrada en la base de datos para el nombre: " + config.getToolName();
+                        this.error = "Error: Entidad Tool no encontrada en la base de datos para el nombre: " + toolConfig.getToolName();
                         logger.error(this.error);
                     }
                 } else {

@@ -35,19 +35,20 @@ public class OIDCLoginServlet extends HttpServlet {
         String login_hint = req.getParameter("login_hint"); 
         String target_link_uri = req.getParameter("target_link_uri"); 
         String lti_message_hint = req.getParameter("lti_message_hint");
+        String client_id = req.getParameter("client_id");
         
         // Validación básica
-        if (iss == null || login_hint == null || target_link_uri == null) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Faltan parámetros OIDC obligatorios (iss, login_hint, target_link_uri).");
+        if (iss == null || login_hint == null || target_link_uri == null || client_id == null) {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Faltan parámetros OIDC obligatorios (iss, login_hint, target_link_uri, client_id).");
             
         } else {
             // Buscar configuración usando el DAO (Refactorizado)
-            // Instanciamos el DAO y llamamos al método findByIssuer
+            // Instanciamos el DAO y llamamos al método findByClientId para obtener la configuración de la herramienta.
             ToolLti13Dao dao = new ToolLti13Dao();
-            Lti13ToolConfig config = dao.findByIssuer(iss);
+            Lti13ToolConfig config = dao.findByClientId(client_id);
 
-            if (config == null) {
-                resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Herramienta no registrada para el Issuer: " + iss);
+            if (config == null || !config.getIssuer().equals(iss)) {
+                resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Herramienta no registrada para este Client ID o Issuer Inválido");
             } else {
 
                 //Parámetros de seguridad (State y Nonce)
