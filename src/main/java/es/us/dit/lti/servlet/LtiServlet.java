@@ -80,11 +80,17 @@ public class LtiServlet extends HttpServlet {
             // Obtener el ISS (Issuer)
             SignedJWT parsedToken = SignedJWT.parse(idToken);
             String issuer = parsedToken.getJWTClaimsSet().getIssuer();
-            ToolLti13Dao dao = new ToolLti13Dao();
-            Lti13ToolConfig config = dao.findByIssuer(issuer);
+            java.util.List<String> audiences = parsedToken.getJWTClaimsSet().getAudience();
+            if (audiences == null || audiences.isEmpty()) {
+                logger.error("LTI 1.3 Error: Missing audience in ID Token.");
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid ID Token: Missing audience.");
+            }else{
+                String clientId = audiences.get(0); // Normalmente el Client ID es el primer elemento de la audiencia
+                ToolLti13Dao dao = new ToolLti13Dao();
+                Lti13ToolConfig config = dao.findByClientId(clientId);
 
-            if (config == null) {
-                logger.error("LTI 1.3 Error: Unknown Issuer {}", issuer);
+            if (config == null || !config.getIssuer().equals(issuer)) {
+                logger.error("LTI 1.3 Error: Unknown Configuration for client_id {} and issuer {}", clientId, issuer);
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Tool not configured for Issuer: " + issuer);
                 
             }else {
@@ -130,6 +136,7 @@ public class LtiServlet extends HttpServlet {
             }
 		}
 		}
+    }
 		
     }
         } catch (Exception e) {
