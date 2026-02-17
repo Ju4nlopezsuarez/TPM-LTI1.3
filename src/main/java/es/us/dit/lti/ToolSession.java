@@ -969,6 +969,15 @@ public final class ToolSession implements Serializable {
         try {
             //Generar ID de lanzamiento interno
             this.launchId = UUID.randomUUID().toString();
+			//En LTI 1.3, el client_idviene en el array "aud"
+			List<String> audiences = claims.getAudience();
+			if(audiences != null && !audiences.isEmpty()) {
+				String clientId = audiences.get(0); // Tomamos el primer 'aud'
+				es.us.dit.lti.persistence.ToolLti13Dao lti13Dao = new es.us.dit.lti.persistence.ToolLti13Dao();
+				es.us.dit.lti.persistence.Lti13ToolConfig toolConfig = lti13Dao.findByClientId(clientId);
+				if(toolConfig != null) {
+					this.tool = es.us.dit.lti.persistence.ToolDao.get(toolConfig.getToolName());
+					if(this.tool != null) {
             
             // Mapear Datos de Presentación (Launch Presentation)
             // Usamos getJSONObjectClaim que devuelve un Map estándar
@@ -1104,7 +1113,7 @@ public final class ToolSession implements Serializable {
             String name = (String) claims.getClaim("name");
             String userImage = (String) claims.getClaim("picture");
 
-            // 2 Sincronizar con la Base de Datos
+            // Sincronizar con la Base de Datos
             if (this.resourceLink != null) {
                 
                 //Buscamos el Ususario
@@ -1221,7 +1230,18 @@ public final class ToolSession implements Serializable {
             // Finalización
             this.valid = true;
 			logger.info("Sesión LTI 1.3 inicializada correctamente para el usuario: " + this.sessionUserId);
-
+			} else {
+                        this.error = "Error: Entidad Tool no encontrada en la base de datos para el nombre: " + config.getToolName();
+                        logger.error(this.error);
+                    }
+                } else {
+                    this.error = "Error: Configuración LTI 1.3 no encontrada para el client_id: " + clientId;
+                    logger.error(this.error);
+                }
+            } else {
+                this.error = "Error: El token JWT no contiene Audience (client_id).";
+                logger.error(this.error);
+			}
         
         }
     } catch (Exception e) {
@@ -1229,7 +1249,8 @@ public final class ToolSession implements Serializable {
             this.valid = false;
             this.error = "Error inicializando sesión LTI 1.3: " + e.getMessage();
 	}
-	}
+}
+
 
 
     /**
@@ -1663,6 +1684,6 @@ public final class ToolSession implements Serializable {
 		return valid;
 	}
 
-	
+
 
 }

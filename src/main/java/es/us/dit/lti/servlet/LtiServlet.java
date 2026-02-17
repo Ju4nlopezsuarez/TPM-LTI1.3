@@ -91,13 +91,18 @@ public class LtiServlet extends HttpServlet {
 
         
             // Usamos SecurityUtil para descargar las claves del LMS y verificar
-            JWTClaimsSet claims = SecurityUtil.validateLti13Token(
-                idToken, 
-                config.getJwksUrl(), 
-                issuer, 
-                config.getClientId()
-            );
-
+            JWTClaimsSet claims = SecurityUtil.validateLti13Token(idToken,config.getJwksUrl(), issuer,config.getClientId());
+            String storedNonce= (String) request.getSession().getAttribute("lti_nonce");
+            String tokenNonce= claims.getStringClaim("nonce");
+            if(storedNonce==null || !storedNonce.equals(tokenNonce)) {
+                logger.error("Nonce mismatch or session expired.");
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid Nonce (CSRF). Try refreshing the LMS page.");
+                
+            }else {
+            // Limpiamos el nonce de la sesión
+            request.getSession().removeAttribute("lti_nonce");       
+            
+            
             // Inicializar ToolSession con los datos de LTI 1.3
             final ToolSession ts = new ToolSession();
             // Le pasamos los claims (JSON) para que extraiga user_id, roles, context, etc.
@@ -126,7 +131,7 @@ public class LtiServlet extends HttpServlet {
 		}
 		}
 		
-
+    }
         } catch (Exception e) {
             logger.error("LTI 1.3 Launch Error", e);
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "LTI 1.3 Validation Failed: " + e.getMessage());

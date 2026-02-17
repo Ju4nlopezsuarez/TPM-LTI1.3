@@ -29,14 +29,14 @@ public class ToolLti13Dao {
 
     /**
      * Busca la configuración de una herramienta por su Issuer (LMS).
-     * Utilizado en el paso 1: OIDC Login.
+     * OIDC Login.
      * 
      * @param issuer El identificador del LMS (iss)
      * @return Objeto de configuración o null si no existe.
      */
     public Lti13ToolConfig findByIssuer(String issuer) {
         
-        String sql = "SELECT client_id, oidc_auth_url, jwks_url, deployment_id " +
+        String sql = "SELECT name, client_id, oidc_auth_url, jwks_url, deployment_id " +
                      "FROM tool WHERE issuer = ? AND lti_version = '1.3.0'";
         
         try (Connection conn = getConnection();
@@ -47,6 +47,7 @@ public class ToolLti13Dao {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return new Lti13ToolConfig(
+                        rs.getString("name"),
                         rs.getString("client_id"),
                         issuer,
                         rs.getString("oidc_auth_url"),
@@ -64,10 +65,10 @@ public class ToolLti13Dao {
 
     /**
      * Busca la configuración usando el Client ID y el Issuer (más específico).
-     * Utilizado en el paso 2: LtiServlet (Launch) si es necesario validar ambos.
+     * Utilizado en el LtiServlet (Launch) si es necesario validar ambos.
      */
     public Lti13ToolConfig findByClientId(String clientId) {
-         String sql = "SELECT issuer, oidc_auth_url, jwks_url, deployment_id " +
+         String sql = "SELECT name,issuer, oidc_auth_url, jwks_url, deployment_id " +
                       "FROM tool WHERE client_id = ? AND lti_version = '1.3.0'";
          
          try (Connection conn = getConnection();
@@ -78,6 +79,7 @@ public class ToolLti13Dao {
              try (ResultSet rs = ps.executeQuery()) {
                  if (rs.next()) {
                      return new Lti13ToolConfig(
+                        rs.getString("name"),
                          clientId,
                          rs.getString("issuer"),
                          rs.getString("oidc_auth_url"),

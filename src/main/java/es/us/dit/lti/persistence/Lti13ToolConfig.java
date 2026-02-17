@@ -4,13 +4,15 @@ package es.us.dit.lti.persistence;
  * LTI 1.3 de una herramienta desde la base de datos a los Servlets.
  */
 public class Lti13ToolConfig {
+    private String toolName;
     private String clientId;
     private String issuer;
     private String oidcAuthUrl;
     private String jwksUrl;
     private String deploymentId;
 
-    public Lti13ToolConfig(String clientId, String issuer, String oidcAuthUrl, String jwksUrl, String deploymentId) {
+    public Lti13ToolConfig(String toolName, String clientId, String issuer, String oidcAuthUrl, String jwksUrl, String deploymentId) {
+        this.toolName = toolName;
         this.clientId = clientId;
         this.issuer = issuer;
         this.oidcAuthUrl = oidcAuthUrl;
@@ -19,6 +21,7 @@ public class Lti13ToolConfig {
     }
 
     // Getters
+    public String getToolName() { return toolName; }
     public String getClientId() { return clientId; }
     public String getIssuer() { return issuer; }
     public String getOidcAuthUrl() { return oidcAuthUrl; }
