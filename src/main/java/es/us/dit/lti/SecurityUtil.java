@@ -19,6 +19,7 @@
 
 package es.us.dit.lti;
 
+import java.net.URI;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -29,6 +30,8 @@ import java.security.SecureRandom;
 import java.security.Security;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -47,17 +50,13 @@ import org.slf4j.LoggerFactory;
 
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.jwk.source.RemoteJWKSet;
+import com.nimbusds.jose.jwk.source.JWKSourceBuilder;
 import com.nimbusds.jose.proc.JWSKeySelector;
 import com.nimbusds.jose.proc.JWSVerificationKeySelector;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
-import com.nimbusds.jose.jwk.source.JWKSourceBuilder;
-
-import java.net.URI;
-import java.net.URL;
 
 import es.us.dit.lti.entity.IUpdateRecordEntity;
 
@@ -131,6 +130,10 @@ public final class SecurityUtil {
 	 * timeout in case of encryption error to avoid brute force attacks.
 	 */
 	private static final long ERROR_INTERVAL = 6000L; // 6 seconds
+	/**
+ 	* Caché para reutilizar las fuentes de claves JWK de los distintos LMS.
+ 	*/
+	private static final ConcurrentMap<String, JWKSource<SecurityContext>> jwkSourceCache = new ConcurrentHashMap<>();
 
 	// Initialize all class members.
 	static {
@@ -428,20 +431,26 @@ public final class SecurityUtil {
 		// Configurar el procesador de JWT
 		ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
 
-		// 2. Configurar la fuente de claves (Remote JWK Set)
-		// Esto descarga automáticamente las claves del LMS desde la URL y las cachea
-		JWKSource<SecurityContext> keySource = JWKSourceBuilder.create(URI.create(jwksUrl).toURL()).build();
+		// Configurar la fuente de claves (Remote JWK Set)
+		JWKSource<SecurityContext> keySource = jwkSourceCache.computeIfAbsent(jwksUrl, url -> {
+			try {
+				return JWKSourceBuilder.create(URI.create(url).toURL()).build();
+			} catch (Exception e) {
+				logger.error("Error creando el JWKSource para la URL: " + url, e);
+				throw new RuntimeException("No se pudo construir la fuente de claves JWKS", e);
+			}
+		});
 
-        // 3. Decirle al procesador que esperamos firma RSA (RS256)
+        //Esperamos firma RSA (RS256)
         JWSAlgorithm expectedJWSAlg = JWSAlgorithm.RS256;
         JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<>(expectedJWSAlg, keySource);
         jwtProcessor.setJWSKeySelector(keySelector);
 
-        // 4. Procesar y verificar firma
+        // Procesar y verificar firma
         JWTClaimsSet claims = jwtProcessor.process(idTokenString, null);
 
-        // 5. Validaciones adicionales de seguridad
-        // Verificar Issuer (¿Viene de quien dice venir?)
+        // Validaciones adicionales de seguridad
+        // Verificar Issuer
         if (!claims.getIssuer().equals(expectedIssuer)) {
             throw new Exception("JWT Validation Failed: Issuer mismatch. Expected " + expectedIssuer + " but got " + claims.getIssuer());
         }
