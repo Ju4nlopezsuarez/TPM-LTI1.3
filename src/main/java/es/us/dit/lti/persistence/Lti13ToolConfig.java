@@ -10,14 +10,16 @@ public class Lti13ToolConfig {
     private String oidcAuthUrl;
     private String jwksUrl;
     private String deploymentId;
+    private String tokenUrl;
 
-    public Lti13ToolConfig(String toolName, String clientId, String issuer, String oidcAuthUrl, String jwksUrl, String deploymentId) {
+    public Lti13ToolConfig(String toolName, String clientId, String issuer, String oidcAuthUrl, String jwksUrl, String deploymentId, String tokenUrl) {
         this.toolName = toolName;
         this.clientId = clientId;
         this.issuer = issuer;
         this.oidcAuthUrl = oidcAuthUrl;
         this.jwksUrl = jwksUrl;
         this.deploymentId = deploymentId;
+        this.tokenUrl = tokenUrl;
     }
 
     // Getters
@@ -27,5 +29,6 @@ public class Lti13ToolConfig {
     public String getOidcAuthUrl() { return oidcAuthUrl; }
     public String getJwksUrl() { return jwksUrl; }
     public String getDeploymentId() { return deploymentId; }
+    public String getTokenUrl() { return tokenUrl; }
 }
 

@@ -63,6 +63,12 @@ import org.slf4j.LoggerFactory;
 
 import es.us.dit.lti.entity.ResourceUser;
 import es.us.dit.lti.entity.ToolKey;
+import es.us.dit.lti.persistence.KeyService;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.util.JSONObjectUtils;
+import java.security.interfaces.RSAPrivateKey;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import net.oauth.OAuthAccessor;
 import net.oauth.OAuthConsumer;
 import net.oauth.OAuthException;
@@ -116,6 +122,40 @@ public final class OutcomeService {
 		}
 		return result;
 	}
+	/**
+	 * Función principal para escribir notas en el flujo LTI 1.3.
+	 * Actúa como orquestador solicitando primero el token y enviando luego la nota.
+	 */
+	public static boolean writeLti13Outcome(ResourceUser user, String clientId, String tokenUrl, String kid, String value, String maxValue) {
+		boolean result = false;
+		final String url = user.getResourceLink().getOutcomeServiceUrl(); 
+		
+		if (url != null && !url.isEmpty()) {
+			
+			// Control de nulos estructurado
+			String finalValue = value;
+			if (finalValue == null) {
+				finalValue = "0.0";
+			}
+			
+			String finalMaxValue = maxValue;
+			if (finalMaxValue == null) {
+				finalMaxValue = "1.0"; // Valor por defecto para evitar errores en JSON
+			}
+			
+			// Pedir el Access Token
+			String accessToken = getLti13AccessToken(clientId, tokenUrl, kid, "https://purl.imsglobal.org/spec/lti-ags/scope/score");
+			
+			if (accessToken != null) {
+				// PASO B: Mandar la nota en JSON pasándole ambos valores
+				result = doLti13ServiceRequest(url, user.getResultSourceId(), finalValue, finalMaxValue, accessToken);
+			} else {
+				logger.error("No se pudo enviar la nota porque falló la obtención del Access Token.");
+			}
+		}
+
+		return result;
+	}
 
 	/**
 	 * Deletes outcome/score stored in tool consumer (external).
@@ -130,6 +170,31 @@ public final class OutcomeService {
 		if (url != null && !url.isEmpty() && doServiceRequest(url, "deleteResultRequest", user.getResultSourceId(),
 				null, toolKey.getKey(), toolKey.getSecret()) != null) {
 			result = true;
+		}
+		return result;
+	}
+	/**
+	 * Borra (limpia) la nota del alumno en LTI 1.3 enviando un registro sin puntuación.
+	 * @param user El usuario/resultado a borrar
+	 * @param clientId El Client ID de tu herramienta
+	 * @param tokenUrl La URL de tokens del LMS (Token Endpoint)
+	 * @param kid El identificador de tu clave pública/privada
+	 * @return true si se borró correctamente, false si hubo error.
+	 */
+	public static boolean deleteLti13Outcome(ResourceUser user, String clientId, String tokenUrl, String kid) {
+		boolean result = false;
+		final String url = user.getResourceLink().getOutcomeServiceUrl(); 
+		
+		if (url != null && !url.isEmpty()) {
+			// Solicitamos permiso de ESCRITURA
+			String accessToken = getLti13AccessToken(clientId, tokenUrl, kid, "https://purl.imsglobal.org/spec/lti-ags/scope/score");
+			
+			if (accessToken != null) {
+				// Pasamos value y maxValue a null para efectuar el borrado
+				result = doLti13ServiceRequest(url, user.getResultSourceId(), null, null, accessToken);
+			} else {
+				logger.error("No se pudo borrar la nota porque falló la obtención del Access Token.");
+			}
 		}
 		return result;
 	}
@@ -417,6 +482,207 @@ public final class OutcomeService {
 			}
 		}
 		return fileContent;
+	}
+	/**
+	 * Solicita el Access Token temporal al LMS (OAuth 2.0 Client Credentials Grant)
+	 *
+	 * @param clientId El Client ID de tu herramienta
+	 * @param tokenUrl La URL de tokens del LMS (Token Endpoint)
+	 * @param kid El identificador de tu clave pública/privada
+	 * @param scope El permiso a solicitar (escritura o lectura)
+	 * @return El Access Token en texto, o null si hay error.
+	 */
+	private static String getLti13AccessToken(String clientId, String tokenUrl, String kid, String scope) {
+		String accessToken = null;
+		try {
+			// Recuperar la Clave Privada de la BD
+			KeyService keyService = new KeyService();
+			RSAKey rsaKey = keyService.getPrivateKey(kid);
+			
+			if (rsaKey == null) {
+				logger.error("LTI 1.3 Error: No se encontró la clave privada para el kid: " + kid);
+				
+			}else{
+
+			RSAPrivateKey privateKey = rsaKey.toRSAPrivateKey();
+
+			// Generar el JWT firmado (Client Assertion)
+			String clientAssertion = SecurityUtil.createLti13ClientAssertion(clientId, tokenUrl, privateKey, kid);
+
+			// Preparar la petición POST
+			List<NameValuePair> params = new ArrayList<>();
+			params.add(new BasicNameValuePair("grant_type", "client_credentials"));
+			params.add(new BasicNameValuePair("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"));
+			params.add(new BasicNameValuePair("client_assertion", clientAssertion));
+			// Solicitamos permiso exclusivo para publicar notas:
+			params.add(new BasicNameValuePair("scope", scope));
+
+			// Enviar la petición usando el método que ya tienes programado
+			String response = sendRequest(tokenUrl, params, null, null);
+			
+			// Extraer el "access_token" del JSON de respuesta
+			if (response != null && response.contains("\"access_token\"")) {
+				// Usamos el parser de Nimbus (que ya tienes como dependencia)
+					Map<String, Object> jsonMap = JSONObjectUtils.parse(response);
+					accessToken = (String) jsonMap.get("access_token");
+			}else{
+				logger.error("LTI 1.3 Error: Respuesta inválida al solicitar Access Token. Respuesta: " + response);
+			}
+		}
+		} catch (Exception e) {
+			logger.error("Error obteniendo el Access Token LTI 1.3", e);
+		}
+		return accessToken;
+	}
+	/**
+	 * Envía la calificación al LMS usando el estándar LTI 1.3 AGS.
+	 *
+	 * @param url La URL del LineItem (lisOutcomeServiceUrl)
+	 * @param userId El ID del usuario en el LMS
+	 * @param value La nota obtenida por el alumno
+	 * @param maxValue La nota máxima posible (ej. 10.0, 100.0, etc.)
+	 * @param accessToken El token de autorización
+	 * @return true si la operación fue exitosa
+	 */
+	private static boolean doLti13ServiceRequest(String url, String userId, String value, String maxValue, String accessToken) {
+		boolean success = false;
+
+		try {
+			// Construir la fecha en formato ISO 8601 exigido por IMS Global
+			String timestamp = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
+			String scoreGivenStr = "";
+			if (value != null && !value.isEmpty()) {
+				scoreGivenStr = "  \"scoreGiven\": " + value + ",\n  \"scoreMaximum\": " + maxValue + ",\n";
+			}
+			// Construir el JSON estricto de AGS
+			String jsonPayload = "{\n" +
+				"  \"timestamp\": \"" + timestamp + "\",\n" +
+				scoreGivenStr +
+				"  \"comment\": \"Actualizado automáticamente por TPM\",\n" +
+				"  \"activityProgress\": \"Completed\",\n" +
+				"  \"gradingProgress\": \"FullyGraded\",\n" +
+				"  \"userId\": \"" + userId + "\"\n" +
+				"}";
+
+			// El Content-Type DEBE ser exactamente este por estándar:
+			StringEntity entity = new StringEntity(jsonPayload, ContentType.create("application/vnd.ims.lis.v1.score+json", "UTF-8"));
+
+			// Preparar cabeceras con el Token Temporal
+			Map<String, String> headers = new HashMap<>();
+			headers.put("Authorization", "Bearer " + accessToken);
+
+			// Adaptar la URL si es necesario
+			String scoreUrl = url;
+			if (!scoreUrl.endsWith("/scores")) {
+				scoreUrl += "/scores"; 
+			}
+			
+			// Enviar la nota
+			String response = sendRequest(scoreUrl, null, headers, entity);
+
+			if (response != null) {
+				success = true; // Éxito
+			}
+			
+		} catch (Exception e) {
+			logger.error("Error enviando la nota JSON en LTI 1.3", e);
+		}
+
+		return success;
+	}
+	/**
+	 * Envía una petición HTTP GET (necesaria para lectura de notas en LTI 1.3).
+	 * @param url La URL a la que hacer la petición GET
+	 * @param header Las cabeceras a incluir en la petición (ej. Authorization, Accept)
+	 * @return El cuerpo de la respuesta como texto, o null si hubo error.	
+	 */
+	private static String sendGetRequest(String url, Map<String, String> header) {
+		String fileContent = null;
+		final RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(TIMEOUT).setRedirectsEnabled(false)
+				.setContentCompressionEnabled(false).build();
+
+		final HttpClient client = HttpClientBuilder.create().setHttpProcessor(HttpProcessorBuilder.create()
+				.addAll(new RequestUserAgent(
+						VersionInfo.getUserAgent("Apache-HttpClient", "org.apache.http.client", OutcomeService.class)),
+						new RequestTargetHost(), new RequestContent())
+				.build()).setDefaultRequestConfig(requestConfig).build();
+
+		final org.apache.http.client.methods.HttpGet httpGet = new org.apache.http.client.methods.HttpGet();
+
+		try {
+			httpGet.setURI(new URIBuilder(url).build());
+			if (header != null) {
+				for (final Entry<String, String> entry : header.entrySet()) {
+					httpGet.addHeader(entry.getKey(), entry.getValue());
+				}
+			}
+			final HttpResponse response = client.execute(httpGet);
+			fileContent = processHttpResponse(response);
+		} catch (IOException | URISyntaxException e) {
+			logger.error("Error en petición GET", e);
+		}
+		httpGet.releaseConnection();
+
+		return fileContent;
+	}
+
+	/**
+	 * Lee la nota del alumno desde el LMS usando LTI 1.3 AGS.
+	 * El proceso es similar a escribir la nota, pero con permiso de lectura y una petición GET.
+	 * @param user El usuario/resultado a leer
+	 * @param clientId El Client ID de tu herramienta
+	 * @param tokenUrl La URL de tokens del LMS (Token Endpoint)
+	 * @param kid El identificador de tu clave pública/privada
+	 * @return La nota obtenida como texto, o null si hubo error o no hay nota.
+	 */
+	public static String readLti13Outcome(ResourceUser user, String clientId, String tokenUrl, String kid) {
+		String result = null;
+		final String url = user.getResourceLink().getOutcomeServiceUrl();
+		
+		if (url != null && !url.isEmpty()) {
+			// Solicitamos permiso exclusivo de LECTURA (result.readonly)
+			String accessToken = getLti13AccessToken(clientId, tokenUrl, kid, "https://purl.imsglobal.org/spec/lti-ags/scope/result.readonly");
+			
+			if (accessToken != null) {
+				try {
+					String resultsUrl = url;
+					if (!resultsUrl.endsWith("/results")) {
+						resultsUrl += "/results";
+					}
+					// Filtramos por el ID de este usuario en el LMS
+					resultsUrl += "?user_id=" + user.getResultSourceId();
+
+					Map<String, String> headers = new HashMap<>();
+					headers.put("Authorization", "Bearer " + accessToken);
+					// Cabecera Accept exigida por el estándar para lectura de notas
+					headers.put("Accept", "application/vnd.ims.lis.v2.resultcontainer+json");
+
+					String response = sendGetRequest(resultsUrl, headers);
+					
+					if (response != null) {
+						// El LMS devuelve un Array JSON. Ej: [ { "resultScore": 0.85, ... } ]
+						String cleanResponse = response.trim();
+						if (cleanResponse.startsWith("[") && cleanResponse.endsWith("]")) {
+							// Eliminamos los corchetes para convertirlo en un Objeto JSON estándar
+							cleanResponse = cleanResponse.substring(1, cleanResponse.length() - 1).trim();
+							
+							if (!cleanResponse.isEmpty()) {
+								// Parseo seguro usando JSONObjectUtils de Nimbus
+								Map<String, Object> jsonMap = JSONObjectUtils.parse(cleanResponse);
+								if (jsonMap.containsKey("resultScore")) {
+									result = String.valueOf(jsonMap.get("resultScore"));
+								}
+							}
+						}
+					}
+				} catch (Exception e) {
+					logger.error("Error leyendo la nota JSON en LTI 1.3", e);
+				}
+			} else {
+				logger.error("No se pudo leer la nota porque falló la obtención del Access Token.");
+			}
+		}
+		return result;
 	}
 
 }

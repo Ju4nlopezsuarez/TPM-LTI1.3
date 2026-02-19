@@ -55,6 +55,7 @@ import com.nimbusds.jose.proc.JWSKeySelector;
 import com.nimbusds.jose.proc.JWSVerificationKeySelector;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 
@@ -462,5 +463,45 @@ public final class SecurityUtil {
         
         return claims;
     }
+	/**
+	 * Genera un JWT (Client Assertion) firmado por el TPM para solicitar un Access Token al LMS.
+	 * Flujo LTI 1.3: OAuth 2.0 Client Credentials Grant.
+	 * * @param clientId El Client ID de la herramienta.
+	 * @param tokenUrl La URL del endpoint de tokens del LMS (Token URL).
+	 * @param privateKey La clave privada RSA de tu TPM.
+	 * @param keyId El identificador de la clave (kid) que publicas en tu JWKS.
+	 * @return El JWT serializado listo para enviar.
+	 * @throws Exception Si hay un error en la firma.
+	 */
+	public static String createLti13ClientAssertion(String clientId, String tokenUrl, java.security.interfaces.RSAPrivateKey privateKey, String keyId) throws Exception {
+		
+		// 5 minutos de validez es el estándar recomendado para Client Assertions en OAuth 2.0
+		java.util.Date now = new java.util.Date();
+		java.util.Date exp = new java.util.Date(now.getTime() + 5 * 60 * 1000);
+
+		// Construir los Claims requeridos por LTI 1.3
+		JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+				.issuer(clientId)        // Quién emite el token: tu herramienta (client_id)
+				.subject(clientId)       // Sobre quién trata: tu herramienta (client_id)
+				.audience(tokenUrl)      // A quién va dirigido: el Token Endpoint del LMS
+				.issueTime(now)
+				.expirationTime(exp)
+				.jwtID(java.util.UUID.randomUUID().toString()) // ID único para evitar ataques de repetición
+				.build();
+
+		// Construir la Cabecera indicando el algoritmo RS256 y el ID de tu clave
+		com.nimbusds.jose.JWSHeader header = new com.nimbusds.jose.JWSHeader.Builder(com.nimbusds.jose.JWSAlgorithm.RS256)
+				.type(com.nimbusds.jose.JOSEObjectType.JWT)
+				.keyID(keyId)            // El LMS usará este 'kid' para buscar tu Clave Pública en tu JWKSServlet
+				.build();
+
+		// Firmar el JWT con tu Clave Privada
+		SignedJWT signedJWT = new SignedJWT(header, claimsSet);
+		com.nimbusds.jose.JWSSigner signer = new com.nimbusds.jose.crypto.RSASSASigner(privateKey);
+		signedJWT.sign(signer);
+
+		// Devolver el JWT serializado en texto
+		return signedJWT.serialize();
+	}
 
 }

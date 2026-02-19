@@ -209,6 +209,7 @@ ALTER TABLE "tool" ADD COLUMN "oauth_token_url" text;
 ALTER TABLE "tool" ADD COLUMN "jwks_url" text;
 
 ALTER TABLE "tool" ADD COLUMN "key_set_id" integer;
+ALTER TABLE "tool" ADD COLUMN "token_url" varchar(255);
 
 ALTER TABLE "tool" ADD CONSTRAINT "fk_tool_keyset" FOREIGN KEY ("key_set_id") REFERENCES "lti_key_set" ("id");
 

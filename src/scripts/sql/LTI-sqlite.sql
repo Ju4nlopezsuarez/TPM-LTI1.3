@@ -190,5 +190,7 @@ ALTER TABLE "tool" ADD COLUMN "jwks_url" TEXT;
 
 ALTER TABLE "tool" ADD COLUMN "key_set_id" INTEGER;
 
+ALTER TABLE "tool" ADD COLUMN "token_url" TEXT;
+
 CREATE INDEX IF NOT EXISTS "idx_tool_lti13_lookup" ON "tool" ("issuer", "client_id", "deployment_id")
 

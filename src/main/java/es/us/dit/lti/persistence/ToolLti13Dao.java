@@ -36,7 +36,7 @@ public class ToolLti13Dao {
      */
     public Lti13ToolConfig findByIssuer(String issuer) {
         
-        String sql = "SELECT name, client_id, oidc_auth_url, jwks_url, deployment_id " +
+        String sql = "SELECT name, client_id, oidc_auth_url, jwks_url, deployment_id, token_url " +
                      "FROM tool WHERE issuer = ? AND lti_version = '1.3.0'";
         
         try (Connection conn = getConnection();
@@ -52,7 +52,8 @@ public class ToolLti13Dao {
                         issuer,
                         rs.getString("oidc_auth_url"),
                         rs.getString("jwks_url"),
-                        rs.getString("deployment_id")
+                        rs.getString("deployment_id"),
+                        rs.getString("token_url")
                     );
                 }
             }
@@ -68,7 +69,7 @@ public class ToolLti13Dao {
      * Utilizado en el LtiServlet (Launch) si es necesario validar ambos.
      */
     public Lti13ToolConfig findByClientId(String clientId) {
-         String sql = "SELECT name,issuer, oidc_auth_url, jwks_url, deployment_id " +
+         String sql = "SELECT name,issuer, oidc_auth_url, jwks_url, deployment_id, token_url " +
                       "FROM tool WHERE client_id = ? AND lti_version = '1.3.0'";
          
          try (Connection conn = getConnection();
@@ -84,7 +85,8 @@ public class ToolLti13Dao {
                          rs.getString("issuer"),
                          rs.getString("oidc_auth_url"),
                          rs.getString("jwks_url"),
-                         rs.getString("deployment_id")
+                         rs.getString("deployment_id"),
+                         rs.getString("token_url")
                      );
                  }
              }
