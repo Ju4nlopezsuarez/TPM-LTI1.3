@@ -120,8 +120,8 @@ public final class ToolDao {
 	 */
 	private static final String SQL_CREATE_TOOL = "insert into " + TOOL_TABLE_NAME
 			+ " (name, description, deliveryPassword, enabled, enabled_from, enabled_until, outcome, "
-			+ "extra_args, type, json_config, created, updated) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
+			+ "extra_args, type, json_config, created, updated, lti_version, issuer, client_id, deployment_id, oidc_auth_url, jwks_url, token_url) "
+			+ "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 	/**
 	 * SQL statement to get the serial ID of a tool.
 	 */
@@ -205,10 +205,9 @@ public final class ToolDao {
 	/**
 	 * SQL statement to get tool data.
 	 */
-	private static final String SQL_GET = "SELECT sid, name, description, deliveryPassword,"
+private static final String SQL_GET = "SELECT sid, name, description, deliveryPassword,"
 			+ " enabled, enabled_from, enabled_until, outcome, extra_args, type, json_config,"
-			+ " created, updated FROM " + TOOL_TABLE_NAME;
-
+			+ " created, updated, lti_version, issuer, client_id, deployment_id, oidc_auth_url, jwks_url, token_url FROM " + TOOL_TABLE_NAME;
 	/**
 	 * SQL statement to get all resource links of a tool.
 	 */
@@ -253,14 +252,14 @@ public final class ToolDao {
 	 */
 	private static final String SQL_UPDATE_NOT_NAME = "UPDATE " + TOOL_TABLE_NAME
 			+ " SET description=?,deliveryPassword=?,"
-			+ "enabled=?,enabled_from=?,enabled_until=?,outcome=?,extra_args=?,type=?,json_config=?,updated=? WHERE name=?";
-
+			+ "enabled=?,enabled_from=?,enabled_until=?,outcome=?,extra_args=?,type=?,json_config=?,"
+			+ "issuer=?,client_id=?,deployment_id=?,oidc_auth_url=?,jwks_url=?,token_url=?,updated=? WHERE name=?";
 	/**
 	 * SQL statement to change all tool data.
 	 */
 	private static final String SQL_UPDATE = "UPDATE " + TOOL_TABLE_NAME + " SET description=?,deliveryPassword=?,"
-			+ "enabled=?,enabled_from=?,enabled_until=?,outcome=?,extra_args=?,type=?,json_config=?,name=?,updated=? WHERE name=?";
-
+			+ "enabled=?,enabled_from=?,enabled_until=?,outcome=?,extra_args=?,type=?,json_config=?,"
+			+ "issuer=?,client_id=?,deployment_id=?,oidc_auth_url=?,jwks_url=?,token_url=?,name=?,updated=? WHERE name=?";
 	/**
 	 * SQL statement to DELETE resource Users without attempts of a tool.
 	 */
@@ -478,6 +477,13 @@ public final class ToolDao {
 				final Calendar now = Calendar.getInstance();
 				stmt.setTimestamp(11, DaoUtil.toTimestamp(now));
 				stmt.setTimestamp(12, DaoUtil.toTimestamp(now));
+				stmt.setString(13, "1.3.0");
+				stmt.setString(14, tool.getIssuer());
+				stmt.setString(15, tool.getClientId());
+				stmt.setString(16, tool.getDeploymentId());
+				stmt.setString(17, tool.getOidcAuthUrl());
+				stmt.setString(18, tool.getJwksUrl());
+				stmt.setString(19, tool.getTokenUrl());
 				stmt.executeUpdate();
 			}
 		} catch (final Exception ex) {
@@ -682,6 +688,12 @@ public final class ToolDao {
 						stmt.setString(i++, tool.getExtraArgs());
 						stmt.setInt(i++, tool.getToolType().getCode());
 						stmt.setString(i++, tool.getJsonConfig());
+						stmt.setString(i++, tool.getIssuer());
+						stmt.setString(i++, tool.getClientId());
+						stmt.setString(i++, tool.getDeploymentId());
+						stmt.setString(i++, tool.getOidcAuthUrl());
+						stmt.setString(i++, tool.getJwksUrl());
+						stmt.setString(i++, tool.getTokenUrl());
 					}
 					if (changeName) {
 						stmt.setString(i++, newToolTitle);
@@ -1102,7 +1114,14 @@ public final class ToolDao {
 				result.setJsonConfig(rs.getString(11));
 				result.setCreated(DaoUtil.toCalendar(rs.getTimestamp(12)));
 				result.setUpdated(DaoUtil.toCalendar(rs.getTimestamp(13)));
-			}
+				result.setLtiVersion(rs.getString(14));
+				result.setIssuer(rs.getString(15));
+				result.setClientId(rs.getString(16));
+				result.setDeploymentId(rs.getString(17));
+				result.setOidcAuthUrl(rs.getString(18));
+				result.setJwksUrl(rs.getString(19));
+				result.setTokenUrl(rs.getString(20));
+							}
 			rs.close();
 		} catch (final Exception ex) {
 			logger.error("Error: ", ex);

@@ -137,8 +137,23 @@
 		%> 
 		<div>No existen.</div>	
 		<% } %>
-	</div>
-	<h2>Usuarios asignados</h2>
+    </div>
+    
+    <h2>Datos a configurar en el LMS (LTI 1.3)</h2>
+    <div style="background-color: #f4f4f9; padding: 15px; border-left: 4px solid #005A9C; margin-bottom: 20px;">
+        <%
+            // Calculamos automáticamente la URL base del servidor (ej: http://localhost:8080/tpm-lti)
+            String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath();
+        %>
+        <p style="margin-top: 0;">Proporcione las siguientes URLs al administrador de su plataforma (Moodle, Canvas, etc.) para que pueda dar de alta esta herramienta:</p>
+        <ul style="line-height: 1.8; margin-bottom: 0;">
+            <li><strong>URL de Inicio de Sesión (Initiate Login / OIDC):</strong> <br><code style="background:#e0e0e0; padding:2px 5px;"><%=baseUrl%>/oidc_login</code></li>
+            <li><strong>URL de Redirección / URI de la Herramienta (Tool URL):</strong> <br><code style="background:#e0e0e0; padding:2px 5px;"><%=baseUrl%>/tools</code></li>
+            <li><strong>URL de Claves Públicas (JWKS):</strong> <br><code style="background:#e0e0e0; padding:2px 5px;"><%=baseUrl%>/jwks</code></li>
+            <li><strong>Deep Linking (LTI-DL):</strong> Soportado. Se debe habilitar en el LMS indicando la misma URL de redirección.</li>
+        </ul>
+    </div>
+    <h2>Usuarios asignados</h2>
 	<%
 	List<MgmtUser> users = ToolDao.getUsers(tool);
 	%>

@@ -103,6 +103,34 @@ public class Tool extends UpdateRecordEntity {
 	 */
 	private String extraArgs;
 	/**
+	 * LTI version.
+	 */
+	private String ltiVersion = "1.3.0";
+	/**
+	 * LTI 1.3 issuer (the LMS).
+	 */
+	private String issuer;
+	/**
+	 * LTI 1.3 clientId (the Tool's identifier in the LMS).
+	 */
+	private String clientId;
+	/**
+	 * LTI 1.3 deploymentId (the Tool's deployment identifier in the LMS).
+	 */
+	private String deploymentId;
+	/**
+	 * OIDC Authentication URL.
+	 */
+	private String oidcAuthUrl;
+	/**
+	 * JWKS URL.
+	 */
+	private String jwksUrl;
+	/**
+	 * Token URL for requesting access tokens to sign the Deep Linking response
+	 */
+	private String tokenUrl;
+	/**
 	 * Assessment counter.
 	 */
 	private volatile int counter;
@@ -630,7 +658,13 @@ public class Tool extends UpdateRecordEntity {
 				&& Objects.equals(description, other.description) && enabled == other.enabled
 				&& Objects.equals(enabledFrom, other.enabledFrom) && Objects.equals(enabledUntil, other.enabledUntil)
 				&& Objects.equals(extraArgs, other.extraArgs) && Objects.equals(jsonConfig, other.jsonConfig)
-				&& outcome == other.outcome && toolType == other.toolType && userTypeCode == other.userTypeCode;
+				&& outcome == other.outcome && toolType == other.toolType && userTypeCode == other.userTypeCode
+				&& Objects.equals(issuer, other.issuer)
+				&& Objects.equals(clientId, other.clientId)
+				&& Objects.equals(deploymentId, other.deploymentId)
+				&& Objects.equals(oidcAuthUrl, other.oidcAuthUrl)
+				&& Objects.equals(jwksUrl, other.jwksUrl)
+				&& Objects.equals(tokenUrl, other.tokenUrl);
 	}
 
 	/**
@@ -898,5 +932,75 @@ public class Tool extends UpdateRecordEntity {
 		}
 		return res;
 	}
+	/**
+	 * Gets the LTI version.
+	 * @return the LTI version
+	 */
+	public String getLtiVersion() { return ltiVersion; }
+	/**
+	 * Sets the LTI version.
+	 * @param ltiVersion the LTI version to set
+	 */
+	public void setLtiVersion(String ltiVersion) { this.ltiVersion = ltiVersion; }
+	/**
+	 * Gets the LTI 1.3 issuer (the LMS).
+	 * @return the issuer
+	 */
+	public String getIssuer() { return issuer; }
+	/**
+	 * Sets the LTI 1.3 issuer (the LMS).
+	 * @param issuer the issuer to set
+	 */
+	public void setIssuer(String issuer) { this.issuer = issuer; }
+	/**
+	 * Gets the LTI 1.3 clientId (the Tool's identifier in the LMS).
+	 * @return the clientId
+	 */
+	public String getClientId() { return clientId; }
+	/**
+	 * Sets the LTI 1.3 clientId (the Tool's identifier in the LMS).
+	 * @param clientId the clientId to set
+	 */
+	public void setClientId(String clientId) { this.clientId = clientId; }
+	/**
+	 * Gets the LTI 1.3 deploymentId (the Tool's deployment identifier in the LMS).
+	 * @return the deploymentId
+	 */
+	public String getDeploymentId() { return deploymentId; }
+	/**
+	 * Sets the LTI 1.3 deploymentId (the Tool's deployment identifier in the LMS).
+	 * @param deploymentId the deploymentId to set
+	 */
+	public void setDeploymentId(String deploymentId) { this.deploymentId = deploymentId; }
+	/**
+	 * Gets the OIDC Authentication URL.
+	 * @return the OIDC Authentication URL
+	 */
+	public String getOidcAuthUrl() { return oidcAuthUrl; }
+	/**
+	 * Sets the OIDC Authentication URL.
+	 * @param oidcAuthUrl the OIDC Authentication URL to set
+	 */
+	public void setOidcAuthUrl(String oidcAuthUrl) { this.oidcAuthUrl = oidcAuthUrl; }
+	/**
+	 * Gets the JWKS URL.
+	 * @return the JWKS URL
+	 */
+	public String getJwksUrl() { return jwksUrl; }
+	/**
+	 * Sets the JWKS URL.
+	 * @param jwksUrl the JWKS URL to set
+	 */
+	public void setJwksUrl(String jwksUrl) { this.jwksUrl = jwksUrl; }
+	/**
+	 * Gets the Token URL for requesting access tokens to sign the Deep Linking response.
+	 * @return the Token URL
+	 */
+	public String getTokenUrl() { return tokenUrl; }
+	/**
+	 * Sets the Token URL for requesting access tokens to sign the Deep Linking response.
+	 * @param tokenUrl the Token URL to set
+	 */
+	public void setTokenUrl(String tokenUrl) { this.tokenUrl = tokenUrl; }
 	
 }

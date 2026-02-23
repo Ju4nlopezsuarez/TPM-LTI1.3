@@ -313,88 +313,110 @@ public class EditToolServlet extends HttpServlet {
 	}
 
 	/**
-	 * Set the value of a property of a tool.
-	 *
-	 * @param tool     the tool
-	 * @param property the property name
-	 * @param value    the property new value
-	 */
-	private void setProperty(Tool tool, String property, String value) {
-		switch (property) {
-		case TOOLNAME_PARAM:
-			tool.setName(value);
-			break;
-		case "description":
-			tool.setDescription(value);
-			break;
-		case "deliveryPassword":
-			tool.setDeliveryPassword(value);
-			break;
-		case "enabled":
-			tool.setEnabled(Boolean.parseBoolean(value));
-			break;
-		case "enabledFrom":
-			// Receive number timestamp
-			if (!value.isEmpty()) {
-				try {
-					final long tsLong = Long.parseLong(value);
-					if (tsLong > 0) {
-						final Timestamp ts = new Timestamp(tsLong);
-						tool.setEnabledFrom(new Calendar.Builder().setInstant(ts).build());
-					}
-				} catch (final NumberFormatException e2) {
-					logger.error("enabledFrom invalid.", e2);
-				}
-			}
-			break;
-		case "enabledUntil":
-			if (!value.isEmpty()) {
-				try {
-					final long tsLong = Long.parseLong(value);
-					if (tsLong > 0) {
-						final Timestamp ts = new Timestamp(tsLong);
-						tool.setEnabledUntil(new Calendar.Builder().setInstant(ts).build());
-					}
-				} catch (final NumberFormatException e2) {
-					logger.error("enabledUntil invalid.", e2);
-				}
-			}
-			break;
-		case "outcome":
-			tool.setOutcome(Boolean.parseBoolean(value));
-			break;
-		case "jsonconfig":
-			tool.setJsonConfig(value);
-			break;
-		case "tooltype":
-			ToolRunnerType toolType = ToolRunnerType.UNKNOWN;
-			try {
-				toolType = ToolRunnerType.fromInt(Integer.parseInt(value));
-			} catch (final NumberFormatException e1) {
-				logger.error("toolType invalid.", e1);
-			}
-			tool.setToolType(toolType);
-			break;
-		case "extraArgs":
-			tool.setExtraArgs(value);
-			break;
-		case "counter":
-			int counter = -1;
-			if (!value.isEmpty()) {
-				try {
-					counter = Integer.parseInt(value);
-				} catch (final NumberFormatException e) {
-					// Nada, seguirá siendo -1
-					logger.error("counter invalid.", e);
-				}
-			}
-			tool.setCounter(counter);
-			break;
-		default:
-			// ignore
-			break;
-		}
-	}
+     * Set the value of a property of a tool.
+     *
+     * @param tool     the tool
+     * @param property the property name
+     * @param value    the property new value
+     */
+    private void setProperty(Tool tool, String property, String value) {
+        switch (property) {
+        case TOOLNAME_PARAM:
+            tool.setName(value);
+            break;
+        case "description":
+            tool.setDescription(value);
+            break;
+        case "deliveryPassword":
+            tool.setDeliveryPassword(value);
+            break;
+        case "enabled":
+            tool.setEnabled(Boolean.parseBoolean(value));
+            break;
+        case "enabledFrom":
+            // Receive number timestamp
+            if (!value.isEmpty()) {
+                try {
+                    final long tsLong = Long.parseLong(value);
+                    if (tsLong > 0) {
+                        final Timestamp ts = new Timestamp(tsLong);
+                        tool.setEnabledFrom(new Calendar.Builder().setInstant(ts).build());
+                    }
+                } catch (final NumberFormatException e2) {
+                    logger.error("enabledFrom invalid.", e2);
+                }
+            }
+            break;
+        case "enabledUntil":
+            if (!value.isEmpty()) {
+                try {
+                    final long tsLong = Long.parseLong(value);
+                    if (tsLong > 0) {
+                        final Timestamp ts = new Timestamp(tsLong);
+                        tool.setEnabledUntil(new Calendar.Builder().setInstant(ts).build());
+                    }
+                } catch (final NumberFormatException e2) {
+                    logger.error("enabledUntil invalid.", e2);
+                }
+            }
+            break;
+        case "outcome":
+            tool.setOutcome(Boolean.parseBoolean(value));
+            break;
+        case "jsonconfig":
+            tool.setJsonConfig(value);
+            break;
+        case "tooltype":
+            ToolRunnerType toolType = ToolRunnerType.UNKNOWN;
+            try {
+                toolType = ToolRunnerType.fromInt(Integer.parseInt(value));
+            } catch (final NumberFormatException e1) {
+                logger.error("toolType invalid.", e1);
+            }
+            tool.setToolType(toolType);
+            break;
+        case "extraArgs":
+            tool.setExtraArgs(value);
+            break;
+        case "counter":
+            int counter = -1;
+            if (!value.isEmpty()) {
+                try {
+                    counter = Integer.parseInt(value);
+                } catch (final NumberFormatException e) {
+                    // Nada, seguirá siendo -1
+                    logger.error("counter invalid.", e);
+                }
+            }
+            tool.setCounter(counter);
+            break;
+            
+        // --- NUEVOS CAMPOS LTI 1.3 ---
+        case "issuer":
+            tool.setIssuer(value);
+            break;
+        case "clientId":
+            tool.setClientId(value);
+            break;
+        case "deploymentId":
+            tool.setDeploymentId(value);
+            break;
+        case "oidcAuthUrl":
+            tool.setOidcAuthUrl(value);
+            break;
+        case "jwksUrl":
+            tool.setJwksUrl(value);
+            break;
+        case "tokenUrl":
+            tool.setTokenUrl(value);
+            break;
+        // -----------------------------
+
+        default:
+            // ignore
+            break;
+        }
+    }
 
 	/**
 	 * Forwards HTTP request.

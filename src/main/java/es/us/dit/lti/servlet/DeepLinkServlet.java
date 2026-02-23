@@ -78,7 +78,7 @@ public class DeepLinkServlet extends HttpServlet {
                 out.println("</body></html>");
                 out.close();
                 
-                // Limpiar la sesión si se desea (opcional)
+                // Limpiar la sesión de la herramienta después de enviar la respuesta
                 request.getSession().removeAttribute(ToolSession.class.getName());
             } else {
                 response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error interno generando la firma criptográfica.");
