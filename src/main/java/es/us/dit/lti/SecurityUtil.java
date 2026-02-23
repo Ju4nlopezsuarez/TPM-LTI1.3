@@ -503,5 +503,73 @@ public final class SecurityUtil {
 		// Devolver el JWT serializado en texto
 		return signedJWT.serialize();
 	}
+	/**
+	 * Construye y firma un JWT de respuesta de Deep Linking (LtiDeepLinkingResponse).
+	 * Incluye el recurso (Content Item) que el profesor ha configurado.
+	 */
+	public static String createDeepLinkingResponseJWT(
+			String clientId, String issuer, String deploymentId, String data,
+			String title, String customArgs,
+			java.security.interfaces.RSAPrivateKey privateKey, String keyId) {
+		
+		String serializedToken = null; 
+
+		try {
+			java.util.Date now = new java.util.Date();
+			java.util.Date exp = new java.util.Date(now.getTime() + 5 * 60 * 1000); // 5 minutos
+
+			//Construir el 'Content Item' (El enlace LTI 1.3)
+			java.util.Map<String, Object> contentItem = new java.util.HashMap<>();
+			contentItem.put("type", "ltiResourceLink");
+			contentItem.put("title", title);
+			
+			// Parámetros Custom
+			java.util.Map<String, Object> custom = new java.util.HashMap<>();
+			if (customArgs != null && !customArgs.isEmpty()) {
+				custom.put("args", customArgs);
+			}
+			if (!custom.isEmpty()) {
+				contentItem.put("custom", custom);
+			}
+
+			// LTI 1.3 exige que sea un Array
+			java.util.List<java.util.Map<String, Object>> contentItems = new java.util.ArrayList<>();
+			contentItems.add(contentItem);
+
+			// Construir los Claims requeridos para Deep Linking
+			JWTClaimsSet.Builder claimsBuilder = new JWTClaimsSet.Builder()
+					.issuer(clientId)          // Identificador de tu Herramienta
+					.audience(issuer)          // Va dirigido al LMS
+					.issueTime(now)
+					.expirationTime(exp)
+					.jwtID(java.util.UUID.randomUUID().toString())
+					.claim("https://purl.imsglobal.org/spec/lti/claim/message_type", "LtiDeepLinkingResponse")
+					.claim("https://purl.imsglobal.org/spec/lti/claim/version", "1.3.0")
+					.claim("https://purl.imsglobal.org/spec/lti/claim/deployment_id", deploymentId)
+					.claim("https://purl.imsglobal.org/spec/lti-dl/claim/content_items", contentItems);
+
+			// Si el LMS nos envió el parámetro opcional 'data', estamos OBLIGADOS a devolverlo intacto
+			if (data != null && !data.isEmpty()) {
+				claimsBuilder.claim("https://purl.imsglobal.org/spec/lti-dl/claim/data", data);
+			}
+
+			// Crear cabecera y firmar
+			com.nimbusds.jose.JWSHeader header = new com.nimbusds.jose.JWSHeader.Builder(com.nimbusds.jose.JWSAlgorithm.RS256)
+					.type(com.nimbusds.jose.JOSEObjectType.JWT)
+					.keyID(keyId)
+					.build();
+
+			SignedJWT signedJWT = new SignedJWT(header, claimsBuilder.build());
+			com.nimbusds.jose.JWSSigner signer = new com.nimbusds.jose.crypto.RSASSASigner(privateKey);
+			signedJWT.sign(signer);
+
+			serializedToken = signedJWT.serialize();
+
+		} catch (Exception e) {
+			logger.error("Error generando JWT de Deep Linking", e);
+		}
+
+		return serializedToken; 
+	}
 
 }
