@@ -246,6 +246,32 @@ public final class ToolSession implements Serializable {
 	private String customArgs;
     private boolean customDebug;
     private boolean customNoCal;
+	//Variables para Deep Linking (LTI 1.3)
+	private boolean isDeepLinking = false;
+    private String deepLinkReturnUrl;
+    private String deepLinkData;
+	// Id del cliente
+	private String lti13ClientId;
+	// Id de la implementación
+	private String lti13DeploymentId;
+
+	/**
+	 * Devuelve el Client_id del token LTI 1.3 (JWT) que ha iniciado la sesión.
+	 * @return Ide del cliente
+	 */
+	public String getLti13ClientId() { return lti13ClientId; }
+	/**
+	 * Devuelve el Deployment_id del token LTI 1.3 (JWT) que ha iniciado la sesión.
+	 * @return Id de la implementación
+	 */
+	public String getLti13DeploymentId() { return lti13DeploymentId; }
+	/**
+	 * Devuelve si la sesión se ha iniciado a partir de un token LTI 1.3 con Deep Linking.
+	 * @return true si es una sesión de Deep Linking, false en caso contrario.
+	 */
+    public boolean isDeepLinking() { return isDeepLinking; }
+    public String getDeepLinkReturnUrl() { return deepLinkReturnUrl; }
+    public String getDeepLinkData() { return deepLinkData; }
 
 	/**
 	 * Gets URL del servicio de calificaciones
@@ -270,7 +296,10 @@ public final class ToolSession implements Serializable {
 
 		String url = ltiReturnUrl;
 		if (valid) {
-			if (tool.getToolUiConfig().isRedirectMode()) {
+			if(isDeepLinking()) {
+				// Rediriimos a la interfaz de Deep Linking
+				url = "instructor/deeplink.jsp";
+			} else if (tool.getToolUiConfig().isRedirectMode()) {
 				// Redirect twice
 				url = REDIRECT_MODE_URL;
 			} else if (isLearner()) {
@@ -976,6 +1005,8 @@ public final class ToolSession implements Serializable {
 				es.us.dit.lti.persistence.ToolLti13Dao lti13Dao = new es.us.dit.lti.persistence.ToolLti13Dao();
 				es.us.dit.lti.persistence.Lti13ToolConfig toolConfig = lti13Dao.findByClientId(clientId);
 				if(toolConfig != null) {
+					this.lti13ClientId = toolConfig.getClientId();
+					this.lti13DeploymentId = toolConfig.getDeploymentId();
 					this.tool = es.us.dit.lti.persistence.ToolDao.get(toolConfig.getToolName());
 					if(this.tool != null) {
             
@@ -1107,67 +1138,72 @@ public final class ToolSession implements Serializable {
 
 			//Usuario
 			//Extraer datos del Token LTI 1.3
-            
+			//Detención del tipo de mensaje para Deep Linking
+            String messageType = claims.getStringClaim("https://purl.imsglobal.org/spec/lti/claim/message_type");
+            if ("LtiDeepLinkingRequest".equals(messageType)) {
+                this.isDeepLinking = true;
+                Map<String, Object> dlSettings = claims.getJSONObjectClaim("https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings");
+                if (dlSettings != null) {
+                    this.deepLinkReturnUrl = (String) dlSettings.get("deep_link_return_url");
+                    this.deepLinkData = (String) dlSettings.get("data");
+                }
+                logger.info("Detectada petición de Deep Linking LTI 1.3");
+            } else {
+                this.isDeepLinking = false;
+            }
+			// Usuario
+			// Extraer datos del Token LTI 1.3
             this.sessionUserId = claims.getSubject(); 
             String email = (String) claims.getClaim("email");
             String name = (String) claims.getClaim("name");
-            String userImage = (String) claims.getClaim("picture");
+            
 
-            // Sincronizar con la Base de Datos
-            if (this.resourceLink != null) {
-                
-                //Buscamos el Ususario
-				es.us.dit.lti.entity.LtiUser ltiUser = ToolConsumerUserDao.getById(this.consumer.getSid(), this.sessionUserId);
+            // Sincronizar LtiUser
+            es.us.dit.lti.entity.LtiUser ltiUser = ToolConsumerUserDao.getById(this.consumer.getSid(), this.sessionUserId);
 
-                if (ltiUser== null) {
-                    
-                    //Si no existe lo creamos
-					ltiUser = new es.us.dit.lti.entity.LtiUser();
-					ltiUser.setConsumer(this.consumer);
-					ltiUser.setUserId(this.sessionUserId);
-					ltiUser.setEmail(email);
-					ltiUser.setNameFull(name);
-				
-
-					boolean created = ToolConsumerUserDao.create(ltiUser);
-					if (!created) {
-						logger.error("No se pudo crear el LTI User: " + this.sessionUserId);
-					} else {
-						logger.info("Nuevo LTI User creado: " + this.sessionUserId);
-					}
-
+            if (ltiUser == null) {
+                // Si no existe lo creamos
+                ltiUser = new es.us.dit.lti.entity.LtiUser();
+                ltiUser.setConsumer(this.consumer);
+                ltiUser.setUserId(this.sessionUserId);
+                ltiUser.setEmail(email);
+                ltiUser.setNameFull(name);
+            
+                boolean created = ToolConsumerUserDao.create(ltiUser);
+                if (!created) {
+                    logger.error("No se pudo crear el LTI User: " + this.sessionUserId);
                 } else {
-                    
-                    // Actualizamos los datos del usuario si han cambiado
-					boolean changed = false;
-					if (email != null && !email.equals(ltiUser.getEmail())) {
-						ltiUser.setEmail(email);
-						changed = true;
-					}
-					if (name != null && !name.equals(ltiUser.getNameFull())) {
-						ltiUser.setNameFull(name);
-						changed = true;
-					}
-                    if(changed) {
-						ToolConsumerUserDao.update(ltiUser);
-					}
+                    logger.info("Nuevo LTI User creado: " + this.sessionUserId);
                 }
-				// Vinculamos el ResourceUser con el LtiUser
-				if(ltiUser != null && ltiUser.getSid()>0) {
-					this.ltiResourceUser = ToolResourceUserDao.getById(this.resourceLink.getSid(), ltiUser.getSid());
-					if(this.ltiResourceUser == null) {
-						this.ltiResourceUser = new ResourceUser();
-						this.ltiResourceUser.setResourceLink(this.resourceLink);
-						this.ltiResourceUser.setUser(ltiUser);
-						this.ltiResourceUser.setResultSourceId(this.sessionUserId);
-						boolean created = ToolResourceUserDao.create(this.ltiResourceUser);
-						if (!created) {
-							logger.error("No se pudo crear el ResourceUser para el usuario: " + this.sessionUserId);
-						} else {
-							logger.info("Nuevo ResourceUser creado para el usuario: " + this.sessionUserId);	
-						}
-					}
-				}
+            } else {
+                // Actualizamos los datos del usuario si han cambiado
+                boolean changed = false;
+                if (email != null && !email.equals(ltiUser.getEmail())) {
+                    ltiUser.setEmail(email);
+                    changed = true;
+                }
+                if (name != null && !name.equals(ltiUser.getNameFull())) {
+                    ltiUser.setNameFull(name);
+                    changed = true;
+                }
+                if(changed) {
+                    ToolConsumerUserDao.update(ltiUser);
+                }
+            }
+
+            // Sincronizar ResourceUser (Solo si el recurso ya existe, NO en Deep Linking)
+            if (this.resourceLink != null && ltiUser != null && ltiUser.getSid() > 0) {
+                this.ltiResourceUser = ToolResourceUserDao.getById(this.resourceLink.getSid(), ltiUser.getSid());
+                if(this.ltiResourceUser == null) {
+                    this.ltiResourceUser = new ResourceUser();
+                    this.ltiResourceUser.setResourceLink(this.resourceLink);
+                    this.ltiResourceUser.setUser(ltiUser);
+                    this.ltiResourceUser.setResultSourceId(this.sessionUserId);
+                    boolean created = ToolResourceUserDao.create(this.ltiResourceUser);
+                    if (!created) {
+                        logger.error("No se pudo crear el ResourceUser para: " + this.sessionUserId);
+                    }
+                }
             }
 
             // PROCESAR ROLES
