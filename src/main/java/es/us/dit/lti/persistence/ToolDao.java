@@ -1114,7 +1114,7 @@ private static final String SQL_GET = "SELECT sid, name, description, deliveryPa
 				result.setJsonConfig(rs.getString(11));
 				result.setCreated(DaoUtil.toCalendar(rs.getTimestamp(12)));
 				result.setUpdated(DaoUtil.toCalendar(rs.getTimestamp(13)));
-				result.setLtiVersion(rs.getString(14));
+				result.setLtiVersion(rs.getString(14));  
 				result.setIssuer(rs.getString(15));
 				result.setClientId(rs.getString(16));
 				result.setDeploymentId(rs.getString(17));
