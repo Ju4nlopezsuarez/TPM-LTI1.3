@@ -28,6 +28,6 @@
   </error-page>
   <context-param>
   	<param-name>datasourceName</param-name>
-  	<param-value>jdbc/ltidb</param-value>
+  	<param-value>jdbc:sqlite:/home/ju4nls/TPM/TPM-main/tpm.db</param-value>
   </context-param>
 </web-app>
