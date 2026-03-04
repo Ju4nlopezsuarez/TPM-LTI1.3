@@ -143,14 +143,6 @@
 			<div><input type="text" name="counter" placeholder="${tool.counter}" /></div>
 			
 		</div>
-		<div class="centrado">
-			<input class="accionp" type="submit" name="submit" value="Guardar" />
-			<% if (toolPermission <= MgmtUserType.ADMIN.getCode()) { %>
-			<input class="accionp" type="submit" name="duplicate" 
-				title="Crear una nueva herramienta a partir de los datos actuales. Debe cambiar el nombre y editar descripción y ejecutable."
-				value="Guardar como nuevo" formaction="../admin/createTool" />
-			<% } %>
-		</div>
 		<div style="margin-top: 20px; padding: 10px; border: 1px solid #ccc; background-color: #f9f9f9;">
 		<h3>Configuración LTI 1.3 (Proporcionada por el LMS)</h3>
 		<div title="URL de la plataforma (ej. https://moodle.us.es)">Issuer</div>
@@ -171,6 +163,15 @@
 		<div title="URL del servicio de acceso a Tokens (para enviar notas)">Token URL (OAuth2)</div>
 		<div><input type="text" name="tokenUrl" value="${tool.tokenUrl}" /></div>
 	</div>
+		<div class="centrado">
+			<input class="accionp" type="submit" name="submit" value="Guardar" />
+			<% if (toolPermission <= MgmtUserType.ADMIN.getCode()) { %>
+			<input class="accionp" type="submit" name="duplicate" 
+				title="Crear una nueva herramienta a partir de los datos actuales. Debe cambiar el nombre y editar descripción y ejecutable."
+				value="Guardar como nuevo" formaction="../admin/createTool" />
+			<% } %>
+		</div>
+		
 		</form>
 	</div>
 	<div id='src-modal' class='modal h1container dialog'>
