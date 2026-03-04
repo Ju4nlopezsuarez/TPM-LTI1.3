@@ -97,6 +97,7 @@ public class CsrfFilter extends HttpFilter implements Filter {
 					}
 					if (!Objects.equals(launchId, receivedId) && !isMultipart(req)
 							&& !"/tools".equals(req.getServletPath())
+							&& !"/do/login".equals(req.getServletPath())
 							&& !"/oidc_login".equals(req.getServletPath())
 							&& !"/lti".equals(req.getServletPath())) {
 						// if request is multipart, verification is done in servlet

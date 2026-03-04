@@ -16,7 +16,7 @@ import java.util.UUID;
  * Maneja el flujo de inicio de sesión iniciado por terceros (Third-party Initiated Login).
  * Paso 1 del lanzamiento LTI 1.3.
  */
-@WebServlet("/login_init")
+@WebServlet("/oidc_login")
 public class OIDCLoginServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
@@ -66,6 +66,8 @@ public class OIDCLoginServlet extends HttpServlet {
                 redirectUrl.append(authUrl.contains("?") ? "&" : "?");
                 redirectUrl.append("scope=openid"); 
                 redirectUrl.append("&response_type=id_token");
+                redirectUrl.append("&response_mode=form_post"); 
+                redirectUrl.append("&prompt=none");
                 redirectUrl.append("&client_id=").append(URLEncoder.encode(config.getClientId(), StandardCharsets.UTF_8));
                 redirectUrl.append("&redirect_uri=").append(URLEncoder.encode(target_link_uri, StandardCharsets.UTF_8));
                 redirectUrl.append("&login_hint=").append(URLEncoder.encode(login_hint, StandardCharsets.UTF_8));
