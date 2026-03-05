@@ -1095,9 +1095,15 @@ public final class ToolSession implements Serializable {
                 String resourceLinkTitle = (String) resourceLinkClaim.get("title");
 				
                 // Preparamos los IDs para la consulta
-            
-                Integer contextSid = this.context.getSid();
-                Integer toolSid = this.tool.getSid();
+				
+                Integer contextSid = null;
+				if(this.context != null) {
+                    contextSid = this.context.getSid();
+                }
+                Integer toolSid = null;
+				if(this.tool != null) {
+					toolSid = this.tool.getSid();
+				}
 
                 // Buscamos el enlace de recurso
                 this.resourceLink = ToolResourceLinkDao.getById(toolSid, contextSid, resourceLinkId);
@@ -1119,7 +1125,6 @@ public final class ToolSession implements Serializable {
                     }
 
                     // Guardamos en BBDD
-                    // Asumo que tienes un método 'create' similar al de Context/Consumer
                     boolean created = ToolResourceLinkDao.create(newLink);
                     
                     if (created) {
