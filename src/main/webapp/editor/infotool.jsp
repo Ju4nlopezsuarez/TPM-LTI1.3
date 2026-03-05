@@ -142,8 +142,27 @@
     <h2>Datos a configurar en el LMS (LTI 1.3)</h2>
     <div style="background-color: #f4f4f9; padding: 15px; border-left: 4px solid #005A9C; margin-bottom: 20px;">
         <%
-            // Calculamos automáticamente la URL base del servidor (ej: http://localhost:8080/tpm-lti)
-            String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath();
+            // Detección inteligente de la URL base (soporte para Ngrok/Proxies)
+            String scheme = request.getHeader("X-Forwarded-Proto");
+            if (scheme == null) {
+                scheme = request.getScheme();
+            }
+            
+            String serverName = request.getHeader("X-Forwarded-Host");
+            if (serverName == null) {
+                serverName = request.getServerName();
+            }
+            
+            String portString = "";
+            // Solo añadimos el puerto si NO es un proxy (y no son los estándar 80/443)
+            if (request.getHeader("X-Forwarded-Host") == null) {
+                int port = request.getServerPort();
+                if (port != 80 && port != 443) {
+                    portString = ":" + port;
+                }
+            }
+
+            String baseUrl = scheme + "://" + serverName + portString + request.getContextPath();
         %>
         <p style="margin-top: 0;">Proporcione las siguientes URLs al administrador de su plataforma (Moodle, Canvas, etc.) para que pueda dar de alta esta herramienta:</p>
         <ul style="line-height: 1.8; margin-bottom: 0;">
