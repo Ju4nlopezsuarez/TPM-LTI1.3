@@ -162,7 +162,7 @@ public class DbUtilSingleConnection implements IDbUtil {
 	@Override
 	public void closeConnection(Connection connection) {
 		// Reuse connection
-		if (connection != null) {
+		if (connection != null && rl.isHeldByCurrentThread()) {
 			rl.unlock();
 		}
 	}
