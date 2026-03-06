@@ -34,7 +34,7 @@ if (tool != null && tool.getName() != null) {
 	} else if (ts.getResourceLink().getTitle()!=null) {
 		resourceTitle = ts.getResourceLink().getTitle();
 	}
-	if (!tool.isEnabled() || !ts.getToolKey().isEnabled()) {
+	if (!tool.isEnabled() || (ts.getToolKey() != null && !ts.getToolKey().isEnabled())) {
 		if (ts.getLtiReturnUrl() != null && !ts.getLtiReturnUrl().isEmpty()) {
 			response.sendRedirect(ts.getLtiReturnUrl());
 		} else {
