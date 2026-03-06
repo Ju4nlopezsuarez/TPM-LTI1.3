@@ -50,7 +50,6 @@ import org.slf4j.LoggerFactory;
 
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.jwk.source.JWKSourceBuilder;
 import com.nimbusds.jose.proc.JWSKeySelector;
 import com.nimbusds.jose.proc.JWSVerificationKeySelector;
 import com.nimbusds.jose.proc.SecurityContext;
@@ -435,7 +434,12 @@ public final class SecurityUtil {
 		// Configurar la fuente de claves (Remote JWK Set)
 		JWKSource<SecurityContext> keySource = jwkSourceCache.computeIfAbsent(jwksUrl, url -> {
 			try {
-				return JWKSourceBuilder.create(URI.create(url).toURL()).build();
+			com.nimbusds.jose.util.DefaultResourceRetriever resourceRetriever = 
+            new com.nimbusds.jose.util.DefaultResourceRetriever(10000, 10000, 50000);
+        	return new com.nimbusds.jose.jwk.source.RemoteJWKSet<>(
+            URI.create(url).toURL(), 
+            resourceRetriever
+        );
 			} catch (Exception e) {
 				logger.error("Error creando el JWKSource para la URL: " + url, e);
 				throw new RuntimeException("No se pudo construir la fuente de claves JWKS", e);
