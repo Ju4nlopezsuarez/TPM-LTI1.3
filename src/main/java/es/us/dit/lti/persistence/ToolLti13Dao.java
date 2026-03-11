@@ -38,9 +38,10 @@ public class ToolLti13Dao {
         
         String sql = "SELECT name, client_id, oidc_auth_url, jwks_url, deployment_id, token_url " +
                      "FROM tool WHERE issuer = ? AND lti_version = '1.3.0'";
-        
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        Connection conn = null;
+        try{ 
+            conn= getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
             
             ps.setString(1, issuer);
             
@@ -57,9 +58,14 @@ public class ToolLti13Dao {
                     );
                 }
             }
+        }
         } catch (SQLException e) {
             e.printStackTrace();
             // Podria loggear
+        } finally {
+            if (conn != null && dbUtil != null) {
+                dbUtil.closeConnection(conn);
+            }
         }
         return null;
     }
@@ -71,9 +77,11 @@ public class ToolLti13Dao {
     public Lti13ToolConfig findByClientId(String clientId) {
          String sql = "SELECT name,issuer, oidc_auth_url, jwks_url, deployment_id, token_url " +
                       "FROM tool WHERE client_id = ? AND lti_version = '1.3.0'";
-         
-         try (Connection conn = getConnection();
-              PreparedStatement ps = conn.prepareStatement(sql)) {
+         Connection conn = null;
+         try{ 
+             conn= getConnection();
+            
+             try (PreparedStatement ps = conn.prepareStatement(sql)) {
              
              ps.setString(1, clientId);
              
@@ -90,8 +98,13 @@ public class ToolLti13Dao {
                      );
                  }
              }
+            }
          } catch (SQLException e) {
              e.printStackTrace();
+         } finally {
+             if (conn != null && dbUtil != null) {
+                 dbUtil.closeConnection(conn);
+             }
          }
          return null;
     }

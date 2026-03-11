@@ -150,6 +150,7 @@ public class DbUtilSingleConnection implements IDbUtil {
 				if (!rl.tryLock(10, java.util.concurrent.TimeUnit.SECONDS)) {
 					// The lock could not be obtained.
 					logger.error("Lock unavailable. {}, {}", rl.getHoldCount(), rl);
+					
 				}
 			} catch (final InterruptedException e) {
 				logger.error("Interrupted", e);
