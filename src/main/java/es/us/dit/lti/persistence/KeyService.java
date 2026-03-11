@@ -124,6 +124,21 @@ public class KeyService {
         }
         return null;
     }
+    /**
+     * Obtiene el ID de la primera clave disponible.
+     * Útil para recuperar el kid y firmar el Client Assertion.
+     */
+    public String getFirstKid() throws Exception {
+        String sql = "SELECT kid FROM lti_key_set LIMIT 1";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getString("kid");
+            }
+        }
+        return null;
+    }
 
 }
 
