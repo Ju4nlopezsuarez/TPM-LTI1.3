@@ -76,12 +76,15 @@ public class DeleteToolServlet extends HttpServlet {
 
 		boolean del;
 		final Tool tool = ToolDao.get(toolTitle);
-		if (toolTitle != null && ToolDao.getToolUserType(sessionUser, tool) == MgmtUserType.ADMIN.getCode()) {
-			del = ToolDao.delete(tool);
-			if (del) {
-				session.setAttribute(Settings.PENDING_MSG_ATTRIB, "T_HERRAMIENTA_BORRADA");
-			} else {
-				session.setAttribute(Settings.PENDING_MSG_ATTRIB, "T_ERROR_BORRAR_HERRAMIENTA");
+		if (toolTitle != null && tool != null) {
+			int userType = ToolDao.getToolUserType(sessionUser, tool);
+			if (userType == MgmtUserType.ADMIN.getCode() || userType == MgmtUserType.SUPER.getCode()){
+				del = ToolDao.delete(tool);
+				if (del) {
+					session.setAttribute(Settings.PENDING_MSG_ATTRIB, "T_HERRAMIENTA_BORRADA");
+				} else {
+					session.setAttribute(Settings.PENDING_MSG_ATTRIB, "T_ERROR_BORRAR_HERRAMIENTA");
+				}
 			}
 		}
 
