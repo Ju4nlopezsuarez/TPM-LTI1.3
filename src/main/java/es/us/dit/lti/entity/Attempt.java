@@ -293,14 +293,18 @@ public class Attempt extends SidEntity implements IUpdateRecordEntity {
 	public String getUserFolderPath() {
 		String value;
 		if (storageType == StorageType.LOCAL) {
+			// FIX LTI 1.3: Prevenir NPE si el SourceId es nulo usando el ID interno
+			String folderName = resourceUser.getUser().getSourceId();
+			if (folderName == null || folderName.isEmpty()) {
+				folderName = String.valueOf(resourceUser.getUser().getSid());
+			}
 			value = resourceUser.getResourceLink().getTool().getToolDataPath() + File.separator
-					+ URLEncoder.encode(resourceUser.getUser().getSourceId(), StandardCharsets.UTF_8);
+					+ URLEncoder.encode(folderName, StandardCharsets.UTF_8);
 		} else {
 			value = "UNKNOWN";
 		}
 		return value;
 	}
-
 	/**
 	 * Gets the path to the delivery file.
 	 *
@@ -325,8 +329,13 @@ public class Attempt extends SidEntity implements IUpdateRecordEntity {
 	 * @return a unique identifier
 	 */
 	public String getId() {
+		// FIX LTI 1.3: Prevenir NPE al generar el ID del intento
+		String folderName = originalResourceUser.getUser().getSourceId();
+		if (folderName == null || folderName.isEmpty()) {
+			folderName = String.valueOf(originalResourceUser.getUser().getSid());
+		}
 		return Settings.DATE_TIME_FORMATTER.format(instant) + "["
-				+ URLEncoder.encode(originalResourceUser.getUser().getSourceId(), StandardCharsets.UTF_8) + "]"
+				+ URLEncoder.encode(folderName, StandardCharsets.UTF_8) + "]"
 				+ URLEncoder.encode(fileName, StandardCharsets.UTF_8);
 	}
 
