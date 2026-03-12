@@ -436,16 +436,48 @@ public class AssessServlet extends HttpServlet {
 									+ String.format("%.1f", scoreInt * 0.1)
 									+ "</p>");
 							attempt.setErrorCode(OK_WITHOUT_OUTCOME);
-						} else if (OutcomeService.writeOutcome(ts.getLtiResourceUser(), ts.getToolKey(),
-								String.valueOf(scoreInt * 0.01))) {
-							attempt.setErrorCode(OK_WITH_OUTCOME);
-							out.println("<p id='score'><strong>" + text.get("T_NOTA") + ":</strong> "
-									+ String.format("%.1f", scoreInt * 0.1)
-									+ "</p>");
-						} else {
-							out.println(formatError(text.get("T_ERROR_WRITE_OUTCOME")));
-							attempt.setErrorCode(ToolRunner.ERROR_WRITE_OUTCOME);
+							} else {
+							boolean outcomeSuccess = false;
+							String scoreStr = String.valueOf(scoreInt * 0.01);
+							
+							if (ts.getLti13ClientId() != null) {
+								// === FLUJO LTI 1.3 (AGS 2.0) ===
+								try {
+									es.us.dit.lti.persistence.ToolLti13Dao lti13Dao = new es.us.dit.lti.persistence.ToolLti13Dao();
+									es.us.dit.lti.persistence.Lti13ToolConfig config = lti13Dao.findByClientId(ts.getLti13ClientId());
+									if (config != null) {
+										es.us.dit.lti.persistence.KeyService keyService = new es.us.dit.lti.persistence.KeyService();
+										String kid = keyService.getFirstKid(); // Recuperamos el Key ID
+										
+										outcomeSuccess = OutcomeService.writeLti13Outcome(
+												ts.getLtiResourceUser(), 
+												ts.getLti13ClientId(), 
+												config.getTokenUrl(), 
+												kid, 
+												scoreStr, 
+												"1.0");
+									}
+								} catch (Exception e) {
+									logger.error("Error enviando nota LTI 1.3", e);
+								}
+							} else {
+								// === FLUJO LTI 1.1 (Clásico XML) ===
+								outcomeSuccess = OutcomeService.writeOutcome(ts.getLtiResourceUser(), ts.getToolKey(), scoreStr);
+							}
+
+							// Evaluamos si el envío fue un éxito en cualquiera de los dos estándares
+							if (outcomeSuccess) {
+								attempt.setErrorCode(OK_WITH_OUTCOME);
+								out.println("<p id='score'><strong>" + text.get("T_NOTA") + ":</strong> "
+										+ String.format("%.1f", scoreInt * 0.1)
+										+ "</p>");
+							} else {
+								out.println(formatError(text.get("T_ERROR_WRITE_OUTCOME")));
+								attempt.setErrorCode(ToolRunner.ERROR_WRITE_OUTCOME);
+							}
 						}
+					
+
 					} else {
 						attempt.setScore(scoreInt);
 						attempt.setErrorCode(OK_WITHOUT_OUTCOME);

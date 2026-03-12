@@ -1132,13 +1132,18 @@ public final class ToolSession implements Serializable {
                     } else {
                         logger.error("No se pudo crear el ResourceLink: " + resourceLinkId);
                     }
-                } else {
+               } else {
+					// Asegurar que la herramienta está cargada en memoria (Evita NPE)
+					if (this.tool != null) {
+						this.resourceLink.setTool(this.tool);
+					}
 					// Si existe, lo usamos y actualizamos el título si ha cambiado
 					if (!this.resourceLink.getTitle().equals(resourceLinkTitle)) {
 						this.resourceLink.setTitle(resourceLinkTitle);
 						ToolResourceLinkDao.update(this.resourceLink);
+					}
                 }
-            }
+            
             
 
 			//Usuario
@@ -1196,7 +1201,7 @@ public final class ToolSession implements Serializable {
                 }
             }
 
-            // Sincronizar ResourceUser (Solo si el recurso ya existe, NO en Deep Linking)
+			// Sincronizar ResourceUser (Solo si el recurso ya existe, NO en Deep Linking)
             if (this.resourceLink != null && ltiUser != null && ltiUser.getSid() > 0) {
                 this.ltiResourceUser = ToolResourceUserDao.getById(this.resourceLink.getSid(), ltiUser.getSid());
                 if(this.ltiResourceUser == null) {
@@ -1208,6 +1213,10 @@ public final class ToolSession implements Serializable {
                     if (!created) {
                         logger.error("No se pudo crear el ResourceUser para: " + this.sessionUserId);
                     }
+                } else {
+                    // INYECCIÓN: Completar relaciones en memoria si ya existía (Evita NPE)
+                    this.ltiResourceUser.setResourceLink(this.resourceLink);
+                    this.ltiResourceUser.setUser(ltiUser);
                 }
             }
 
