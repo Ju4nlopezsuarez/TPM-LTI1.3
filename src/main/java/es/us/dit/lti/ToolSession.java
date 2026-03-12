@@ -997,7 +997,7 @@ public final class ToolSession implements Serializable {
 		
         try {
             //Generar ID de lanzamiento interno
-            this.launchId = UUID.randomUUID().toString();
+            generateLaunchId();
 			//En LTI 1.3, el client_idviene en el array "aud"
 			List<String> audiences = claims.getAudience();
 			if(audiences != null && !audiences.isEmpty()) {
