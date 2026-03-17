@@ -174,6 +174,33 @@ CREATE TABLE IF NOT EXISTS "lti_key_set" (
   "alg" TEXT DEFAULT 'RS256',        
   "created_at" INTEGER DEFAULT (strftime('%s', 'now'))
 );
+-- Tabla de Plataformas (LMS)
+CREATE TABLE lti_platform (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    issuer VARCHAR(255) NOT NULL UNIQUE,
+    oidc_auth_url VARCHAR(255) NOT NULL,
+    jwks_url VARCHAR(255) NOT NULL,
+    token_url VARCHAR(255) NOT NULL,
+    name VARCHAR(255) -- Nombre legible, ej: "Blackboard US"
+);
+
+-- Tabla de Clientes (Un LMS puede tener varios clientes registrados)
+CREATE TABLE lti_client (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    platform_id INTEGER NOT NULL,
+    client_id VARCHAR(255) NOT NULL,
+    FOREIGN KEY (platform_id) REFERENCES lti_platform(id) ON DELETE CASCADE,
+    UNIQUE (platform_id, client_id)
+);
+
+-- Tabla de Despliegues (Un cliente puede estar instalado en varias instituciones)
+CREATE TABLE lti_deployment (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    client_id INTEGER NOT NULL,
+    deployment_id VARCHAR(255) NOT NULL,
+    FOREIGN KEY (client_id) REFERENCES lti_client(id) ON DELETE CASCADE,
+    UNIQUE (client_id, deployment_id)
+);
 ALTER TABLE "tool" ADD COLUMN "lti_version" TEXT DEFAULT 'LTI-1p1';
 
 ALTER TABLE "tool" ADD COLUMN "issuer" TEXT;
