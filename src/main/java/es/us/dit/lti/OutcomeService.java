@@ -480,6 +480,9 @@ public final class OutcomeService {
 					fileContent = null;
 				}
 			}
+		}else {
+			logger.error("HTTP error response: " + resp);
+			logger.error("Motivo del rechazo del LMS: " + fileContent+"\n");
 		}
 		return fileContent;
 	}

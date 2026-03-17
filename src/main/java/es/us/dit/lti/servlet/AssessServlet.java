@@ -447,6 +447,9 @@ public class AssessServlet extends HttpServlet {
 									es.us.dit.lti.persistence.Lti13ToolConfig config = lti13Dao.findByClientId(ts.getLti13ClientId());
 									if (config != null) {
 										es.us.dit.lti.persistence.KeyService keyService = new es.us.dit.lti.persistence.KeyService();
+										if(es.us.dit.lti.persistence.KeyService.getDbUtil() == null) {
+											es.us.dit.lti.persistence.KeyService.setDbUtil(new es.us.dit.lti.persistence.DbUtilSingleConnection());
+										}
 										String kid = keyService.getFirstKid(); // Recuperamos el Key ID
 										
 										outcomeSuccess = OutcomeService.writeLti13Outcome(
