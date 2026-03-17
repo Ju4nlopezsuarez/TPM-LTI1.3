@@ -58,18 +58,20 @@ public class KeyService {
      * @return El ID de la clave generada (kid)
      */
     public String generateAndSaveNewKey() throws Exception {
-        // 1. Generar clave RSA con Nimbus (Librería LTI 1.3)
+        // Generar clave RSA con Nimbus (Librería LTI 1.3)
         RSAKey jwk = new RSAKeyGenerator(2048)
                 .keyUse(KeyUse.SIGNATURE) 
                 .keyID(UUID.randomUUID().toString())
                 .algorithm(JWSAlgorithm.RS256)       // Algoritmo recomendado para LTI 1.3
                 .generate();
 
-        // 2. Guardar en Base de Datos
+        // Guardar en Base de Datos
         String sql = "INSERT INTO lti_key_set (kid, private_key, public_key, alg) VALUES (?, ?, ?, ?)";
-        
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        try {
+            conn = getConnection();
+            ps = conn.prepareStatement(sql);
             
             ps.setString(1, jwk.getKeyID());
             
@@ -81,7 +83,15 @@ public class KeyService {
             
             ps.executeUpdate();
         }
-        
+        finally {
+            if (ps != null) {
+                ps.close();
+            }
+            if (conn != null && dbUtil != null) {
+                conn.close();
+            }
+        }
+
         return jwk.getKeyID();
     }
     /**
@@ -91,10 +101,13 @@ public class KeyService {
     public JWKSet getPublicJWKSet() throws Exception {
         List<JWK> keys = new ArrayList<>();
         String sql = "SELECT public_key FROM lti_key_set";
-
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try{
+            conn = getConnection();
+            ps = conn.prepareStatement(sql);
+            rs = ps.executeQuery();
             
             while (rs.next()) {
                 String jsonParams = rs.getString("public_key");
@@ -102,6 +115,18 @@ public class KeyService {
                 keys.add(JWK.parse(jsonParams));
             }
         }
+        finally {
+            if (rs != null) {
+                rs.close();
+            }
+            if (ps != null) {
+                ps.close();
+            }
+            if (conn != null && dbUtil != null) {
+                conn.close();
+            }
+        }
+        
         return new JWKSet(keys);
     }
     /**
@@ -111,36 +136,72 @@ public class KeyService {
      */
     public RSAKey getPrivateKey(String kid) throws Exception {
         String sql = "SELECT private_key FROM lti_key_set WHERE kid = ?";
-        
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        RSAKey rsaKey = null;
+        try {
+            conn = getConnection();
+            ps = conn.prepareStatement(sql);
             ps.setString(1, kid);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return RSAKey.parse(rs.getString("private_key"));
-                }
+            rs = ps.executeQuery();
+            if(rs.next()) {
+                rsaKey = RSAKey.parse(rs.getString("private_key"));
             }
         }
-        return null;
+        finally {
+            if (rs != null) {
+                rs.close();
+            }
+            if (ps != null) {
+                ps.close();
+            }
+            if (conn != null && dbUtil != null) {
+                conn.close();
+            }
+        }
+        return rsaKey;
     }
+
     /**
      * Obtiene el ID de la primera clave disponible.
      * Útil para recuperar el kid y firmar el Client Assertion.
      */
     public String getFirstKid() throws Exception {
         String sql = "SELECT kid FROM lti_key_set LIMIT 1";
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        String foundKid = null;
+        try{
+            conn = getConnection();
+            ps = conn.prepareStatement(sql);
+            rs = ps.executeQuery();
             if (rs.next()) {
-                return rs.getString("kid");
+                foundKid = rs.getString("kid");
             }
         }
-        return null;
-    }
+        finally {
+            if (rs != null) {
+                rs.close();
+            }
+            if (ps != null) {
+                ps.close();
+            }
+            if (conn != null && dbUtil != null) {
+                conn.close();
+            }
+        }
+        if (foundKid == null) {//Si no hay claves en la tabla, generamos una nueva al vuelo
+             foundKid= generateAndSaveNewKey();
+        }
+        
 
+        return foundKid;
+    }
 }
+        
+
 
 
 
