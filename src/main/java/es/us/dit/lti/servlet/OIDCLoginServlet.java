@@ -19,6 +19,7 @@ import java.util.UUID;
 @WebServlet("/oidc_login")
 public class OIDCLoginServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
+    
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
