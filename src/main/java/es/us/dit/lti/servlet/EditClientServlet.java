@@ -15,7 +15,7 @@ import es.us.dit.lti.entity.LtiClient;
 import es.us.dit.lti.entity.Settings;
 import es.us.dit.lti.persistence.LtiClientDao;
 
-@WebServlet("/super/editclient")
+@WebServlet("/admin/editclient")
 public class EditClientServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = LoggerFactory.getLogger(EditClientServlet.class);

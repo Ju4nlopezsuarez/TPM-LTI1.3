@@ -15,7 +15,7 @@ import es.us.dit.lti.entity.LtiClient;
 import es.us.dit.lti.entity.Settings;
 import es.us.dit.lti.persistence.LtiClientDao;
 
-@WebServlet("/super/addclient")
+@WebServlet("/admin/addclient")
 public class AddClientServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = LoggerFactory.getLogger(AddClientServlet.class);

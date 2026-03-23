@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import es.us.dit.lti.entity.LtiPlatform;
 import es.us.dit.lti.persistence.LtiPlatformDao;
 
-@WebServlet("/super/platforms")
+@WebServlet("/admin/platforms")
 public class ListPlatformsServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = LoggerFactory.getLogger(ListPlatformsServlet.class);

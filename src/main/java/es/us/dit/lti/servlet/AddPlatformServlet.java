@@ -15,7 +15,7 @@ import es.us.dit.lti.entity.LtiPlatform;
 import es.us.dit.lti.entity.Settings;
 import es.us.dit.lti.persistence.LtiPlatformDao;
 
-@WebServlet("/super/addplatform")
+@WebServlet("/admin/addplatform")
 public class AddPlatformServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = LoggerFactory.getLogger(AddPlatformServlet.class);

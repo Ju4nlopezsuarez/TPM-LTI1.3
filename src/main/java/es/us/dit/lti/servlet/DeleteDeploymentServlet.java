@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import es.us.dit.lti.entity.Settings;
 import es.us.dit.lti.persistence.LtiDeploymentDao;
 
-@WebServlet("/super/deletedeployment")
+@WebServlet("/admin/deletedeployment")
 public class DeleteDeploymentServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = LoggerFactory.getLogger(DeleteDeploymentServlet.class);

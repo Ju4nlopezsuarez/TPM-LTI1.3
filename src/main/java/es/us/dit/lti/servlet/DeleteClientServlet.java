@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import es.us.dit.lti.entity.Settings;
 import es.us.dit.lti.persistence.LtiClientDao;
 
-@WebServlet("/super/deleteclient")
+@WebServlet("/admin/deleteclient")
 public class DeleteClientServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = LoggerFactory.getLogger(DeleteClientServlet.class);

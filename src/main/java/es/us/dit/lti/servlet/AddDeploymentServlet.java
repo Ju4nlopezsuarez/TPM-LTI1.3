@@ -15,7 +15,7 @@ import es.us.dit.lti.entity.LtiDeployment;
 import es.us.dit.lti.entity.Settings;
 import es.us.dit.lti.persistence.LtiDeploymentDao;
 
-@WebServlet("/super/adddeployment")
+@WebServlet("/admin/adddeployment")
 public class AddDeploymentServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = LoggerFactory.getLogger(AddDeploymentServlet.class);
