@@ -37,6 +37,7 @@ public class OIDCLoginServlet extends HttpServlet {
         String target_link_uri = req.getParameter("target_link_uri"); 
         String lti_message_hint = req.getParameter("lti_message_hint");
         String client_id = req.getParameter("client_id");
+        String deployment_id = req.getParameter("lti_deployment_id");
         
         // Validación básica
         if (iss == null || login_hint == null || target_link_uri == null || client_id == null) {
@@ -46,42 +47,35 @@ public class OIDCLoginServlet extends HttpServlet {
             // Buscar configuración usando el DAO (Refactorizado)
             // Instanciamos el DAO y llamamos al método findByClientId para obtener la configuración de la herramienta.
             ToolLti13Dao dao = new ToolLti13Dao();
-            Lti13ToolConfig config = dao.findByClientId(client_id);
-
-            if (config == null || !config.getIssuer().equals(iss)) {
-                resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Herramienta no registrada para este Client ID o Issuer Inválido");
-            } else {
-
-                //Parámetros de seguridad (State y Nonce)
+            String oidcAuthUrl = dao.discoverAndGetOidcAuthUrl(iss, client_id, deployment_id);
+            if(oidcAuthUrl== null){
+                resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Errer 401: Plataforma LTI no registrada en el TPM.");
+            }else{
+                //Seguridad
                 String state = UUID.randomUUID().toString();
                 String nonce = UUID.randomUUID().toString();
-        
-                
                 req.getSession().setAttribute("lti_state", state);
                 req.getSession().setAttribute("lti_nonce", nonce);
-
-                // Construir la URL de redirección
-                String authUrl = config.getOidcAuthUrl(); 
-        
-                StringBuilder redirectUrl = new StringBuilder(authUrl);
-                redirectUrl.append(authUrl.contains("?") ? "&" : "?");
+                //Redireción
+                StringBuilder redirectUrl = new StringBuilder(oidcAuthUrl);
+                redirectUrl.append(oidcAuthUrl.contains("?") ? "&" : "?");
                 redirectUrl.append("scope=openid"); 
                 redirectUrl.append("&response_type=id_token");
                 redirectUrl.append("&response_mode=form_post"); 
                 redirectUrl.append("&prompt=none");
-                redirectUrl.append("&client_id=").append(URLEncoder.encode(config.getClientId(), StandardCharsets.UTF_8));
+                redirectUrl.append("&client_id=").append(URLEncoder.encode(client_id, StandardCharsets.UTF_8));
                 redirectUrl.append("&redirect_uri=").append(URLEncoder.encode(target_link_uri, StandardCharsets.UTF_8));
                 redirectUrl.append("&login_hint=").append(URLEncoder.encode(login_hint, StandardCharsets.UTF_8));
                 redirectUrl.append("&state=").append(state);
                 redirectUrl.append("&nonce=").append(nonce);
-        
-                if (lti_message_hint != null) {
+                if(lti_message_hint != null){
                     redirectUrl.append("&lti_message_hint=").append(URLEncoder.encode(lti_message_hint, StandardCharsets.UTF_8));
                 }
-        
-                //Redirigir al navegador
+                //Enviar al alumno de vuelta al LMS para autenticarse
                 resp.sendRedirect(redirectUrl.toString());
+                
             }
+
         }
     }
     
