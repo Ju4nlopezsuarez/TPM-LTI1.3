@@ -29,6 +29,10 @@
                                 <p>Listado de LMS de confianza.
                                     <a href="addplatform.jsp"><strong>[+ Añadir nueva plataforma]</strong></a>
                                 </p>
+                                <p>
+                                    <a href="ListClientsServlet"><strong>[Ver Clientes Descubiertos]</strong></a> |
+                                    <a href="ListDeploymentsServlet"><strong>[Ver Despliegues Descubiertos]</strong></a>
+                                </p>
 
                                 <div class="scroll50">
                                     <% if (platforms==null || platforms.isEmpty()) { %>
