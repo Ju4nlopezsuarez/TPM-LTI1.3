@@ -46,6 +46,9 @@ import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
 import es.us.dit.lti.persistence.KeyService;
+import es.us.dit.lti.persistence.LtiClientDao;
+import es.us.dit.lti.persistence.LtiDeploymentDao;
+import es.us.dit.lti.persistence.LtiPlatformDao;
 
 /**
  * Web application initialization and destroy.
@@ -152,6 +155,9 @@ public class AppLoader implements ServletContextListener {
 		ToolAttemptDao.setDbUtil(appDbUtil);
 		KeyService.setDbUtil(appDbUtil);
 		ToolLti13Dao.setDbUtil(appDbUtil);
+		LtiPlatformDao.setDbUtil(appDbUtil);
+		LtiClientDao.setDbUtil(appDbUtil);
+		LtiDeploymentDao.setDbUtil(appDbUtil);
 
 	}
 
