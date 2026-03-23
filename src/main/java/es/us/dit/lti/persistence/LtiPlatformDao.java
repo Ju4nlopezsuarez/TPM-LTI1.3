@@ -56,13 +56,14 @@ public class LtiPlatformDao {
     public LtiPlatform findById(int id) {
         String sql = "SELECT id, issuer, oidc_auth_url, jwks_url, token_url, name FROM lti_platform WHERE id = ?";
         Connection conn = null;
+        LtiPlatform platform = null;
         try {
             conn = getConnection();
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setInt(1, id);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        return new LtiPlatform(
+                        platform= new LtiPlatform(
                                 rs.getInt("id"),
                                 rs.getString("issuer"),
                                 rs.getString("oidc_auth_url"),
@@ -80,19 +81,20 @@ public class LtiPlatformDao {
                 dbUtil.closeConnection(conn);
             }
         }
-        return null;
+        return platform;
     }
 
     public LtiPlatform findByIssuer(String issuer) {
         String sql = "SELECT id, issuer, oidc_auth_url, jwks_url, token_url, name FROM lti_platform WHERE issuer = ?";
         Connection conn = null;
+        LtiPlatform platform = null;
         try {
             conn = getConnection();
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, issuer);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        return new LtiPlatform(
+                        platform= new LtiPlatform(
                                 rs.getInt("id"),
                                 rs.getString("issuer"),
                                 rs.getString("oidc_auth_url"),
@@ -110,12 +112,13 @@ public class LtiPlatformDao {
                 dbUtil.closeConnection(conn);
             }
         }
-        return null;
+        return platform;
     }
 
     public boolean insert(LtiPlatform p) {
         String sql = "INSERT INTO lti_platform (issuer, oidc_auth_url, jwks_url, token_url, name) VALUES (?, ?, ?, ?, ?)";
         Connection conn = null;
+        boolean result = false;
         try {
             conn = getConnection();
             try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -131,7 +134,7 @@ public class LtiPlatformDao {
                             p.setId(rs.getInt(1));
                         }
                     }
-                    return true;
+                    result = true;
                 }
             }
         } catch (SQLException e) {
@@ -141,7 +144,7 @@ public class LtiPlatformDao {
                 dbUtil.closeConnection(conn);
             }
         }
-        return false;
+        return result;
     }
 
     public boolean update(LtiPlatform p) {
@@ -172,12 +175,13 @@ public class LtiPlatformDao {
     public boolean delete(int id) {
         String sql = "DELETE FROM lti_platform WHERE id=?";
         Connection conn = null;
+        boolean result= false;
         try {
             conn = getConnection();
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setInt(1, id);
                 int rows = ps.executeUpdate();
-                return rows > 0;
+                result= rows > 0;
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -186,6 +190,6 @@ public class LtiPlatformDao {
                 dbUtil.closeConnection(conn);
             }
         }
-        return false;
+        return result;
     }
 }
