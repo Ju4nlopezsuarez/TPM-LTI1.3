@@ -120,7 +120,7 @@ public class ToolLti13Dao {
         try {
             conn = getConnection();
             // Verificar si el Issuer ya existe en la base de datos
-            String checkSql = "SELECT id, oidc_auth_url FROM lti_platform WHERE issuer = ? AND lti_version = '1.3.0'";
+            String checkSql = "SELECT id, oidc_auth_url FROM lti_platform WHERE issuer = ?";
             ps = conn.prepareStatement(checkSql);
             if (ps != null) {
                 ps.setString(1, issuer);
