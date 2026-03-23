@@ -26,13 +26,7 @@
                                     Plataformas LTI 1.3
                                 </h1>
 
-                                <p>Listado de LMS de confianza.
-                                    <a href="addplatform.jsp"><strong>[+ Añadir nueva plataforma]</strong></a>
-                                </p>
-                                <p>
-                                    <a href="ListClientsServlet"><strong>[Ver Clientes Descubiertos]</strong></a> |
-                                    <a href="ListDeploymentsServlet"><strong>[Ver Despliegues Descubiertos]</strong></a>
-                                </p>
+                                <p>Listado de LMS de confianza.</p>
 
                                 <div class="scroll50">
                                     <% if (platforms==null || platforms.isEmpty()) { %>
@@ -66,6 +60,12 @@
                                                     <% } %>
                                             </table>
                                             <% } %>
+                                </div>
+                                <br />
+                                <div class="centrado">
+                                    <input type='button' value='Añadir plataforma' class="accionp" onclick="window.location.href='addplatform.jsp'" />
+                                    <input type='button' value='Ver Clientes' class="accionp" onclick="window.location.href='clients'" />
+                                    <input type='button' value='Ver Despliegues' class="accionp" onclick="window.location.href='deployments'" />
                                 </div>
                             </div>
                     </body>
