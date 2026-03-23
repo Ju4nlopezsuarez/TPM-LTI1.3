@@ -24,6 +24,32 @@ public class LtiClientDao {
         return dbUtil.getConnection();
     }
 
+    public List<LtiClient> findAll() {
+        List<LtiClient> list = new ArrayList<>();
+        String sql = "SELECT id, platform_id, client_id FROM lti_client";
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new LtiClient(
+                            rs.getInt("id"),
+                            rs.getInt("platform_id"),
+                            rs.getString("client_id")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (conn != null && dbUtil != null) {
+                dbUtil.closeConnection(conn);
+            }
+        }
+        return list;
+    }
+
     public List<LtiClient> findByPlatformId(int platformId) {
         List<LtiClient> list = new ArrayList<>();
         String sql = "SELECT id, platform_id, client_id FROM lti_client WHERE platform_id = ?";

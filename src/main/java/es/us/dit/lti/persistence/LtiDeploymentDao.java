@@ -24,6 +24,32 @@ public class LtiDeploymentDao {
         return dbUtil.getConnection();
     }
 
+    public List<LtiDeployment> findAll() {
+        List<LtiDeployment> list = new ArrayList<>();
+        String sql = "SELECT id, client_id, deployment_id FROM lti_deployment";
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new LtiDeployment(
+                            rs.getInt("id"),
+                            rs.getInt("client_id"),
+                            rs.getString("deployment_id")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (conn != null && dbUtil != null) {
+                dbUtil.closeConnection(conn);
+            }
+        }
+        return list;
+    }
+
     public List<LtiDeployment> findByClientId(int clientIdPk) {
         List<LtiDeployment> list = new ArrayList<>();
         String sql = "SELECT id, client_id, deployment_id FROM lti_deployment WHERE client_id = ?";
