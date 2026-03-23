@@ -243,5 +243,60 @@ public class ToolLti13Dao {
 }
 return oidcAuthUrl;
 }
+/**
+     * Busca si un enlace de Blackboard ya está asociado a una herramienta en el TPM.
+     */
+    public String getMappedTool(String resourceLinkId) {
+        String toolname = null;
+        java.sql.Connection conn = null;
+        java.sql.PreparedStatement ps = null;
+        java.sql.ResultSet rs = null;
+
+        try {
+            conn = getConnection();
+            String sql = "SELECT toolname FROM lti_link_mapping WHERE resource_link_id = ?";
+            ps = conn.prepareStatement(sql);
+            ps.setString(1, resourceLinkId);
+            rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                toolname = rs.getString("toolname");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (rs != null) { try { rs.close(); } catch (Exception e) { e.printStackTrace(); } }
+            if (ps != null) { try { ps.close(); } catch (Exception e) { e.printStackTrace(); } }
+            if (conn != null && dbUtil != null) { dbUtil.closeConnection(conn); }
+        }
+        return toolname;
+    }
+
+    /**
+     * Guarda la asociación entre el enlace de Blackboard y la clave de la herramienta.
+     */
+    public boolean saveResourceLinkMapping(String resourceLinkId, String toolname) {
+        boolean success = false;
+        java.sql.Connection conn = null;
+        java.sql.PreparedStatement ps = null;
+
+        try {
+            conn = getConnection();
+            String sql = "INSERT INTO lti_link_mapping (resource_link_id, toolname) VALUES (?, ?)";
+            ps = conn.prepareStatement(sql);
+            ps.setString(1, resourceLinkId);
+            ps.setString(2, toolname);
+            
+            if (ps.executeUpdate() > 0) {
+                success = true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (ps != null) { try { ps.close(); } catch (Exception e) { e.printStackTrace(); } }
+            if (conn != null && dbUtil != null) { dbUtil.closeConnection(conn); }
+        }
+        return success;
+    }
 
 }

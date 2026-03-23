@@ -108,6 +108,26 @@ public class LtiServlet extends HttpServlet {
             // Limpiamos el nonce de la sesión
             request.getSession().removeAttribute("lti_nonce");       
             
+            // Comprobación del mapping de resource_link_id
+            java.util.Map<String, Object> resourceLinkClaim = claims.getJSONObjectClaim("https://purl.imsglobal.org/spec/lti/claim/resource_link");
+            String resourceLinkId = null;
+            if (resourceLinkClaim != null) {
+                resourceLinkId = (String) resourceLinkClaim.get("id");
+            }
+            
+            if (resourceLinkId != null) {
+                String mappedToolName = dao.getMappedTool(resourceLinkId);
+                if (mappedToolName == null) {
+                    logger.info("Unmapped resource_link_id: {}. Redirecting to link setup.", resourceLinkId);
+                    request.getSession().setAttribute("pending_resource_link_id", resourceLinkId);
+                    request.getSession().setAttribute("lti13_id_token", idToken);
+                    //request.getSession().setAttribute("lti13_claims_json", claims.toJSONObject().toJSONString());
+                    request.getRequestDispatcher("/link_setup.jsp").forward(request, response);
+                    return;
+                }
+                // Guardamos el toolname mapeado en caso de que lo necesitemos más adelante
+                request.getSession().setAttribute("mappedToolName", mappedToolName);
+            }
             
             // Inicializar ToolSession con los datos de LTI 1.3
             final ToolSession ts = new ToolSession();
@@ -137,6 +157,7 @@ public class LtiServlet extends HttpServlet {
 		}
 		}
     }
+            
 		
     }
         } catch (Exception e) {

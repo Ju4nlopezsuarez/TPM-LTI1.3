@@ -201,6 +201,11 @@ CREATE TABLE lti_deployment (
     FOREIGN KEY ("client_id") REFERENCES "lti_client" ("id") ON DELETE CASCADE,
     UNIQUE ("client_id", "deployment_id")
 );
+
+CREATE TABLE lti_link_mapping (
+    resource_link_id VARCHAR(255) PRIMARY KEY,
+    toolname VARCHAR(255) NOT NULL
+);
 ALTER TABLE "tool" ADD COLUMN "lti_version" TEXT DEFAULT 'LTI-1p1';
 
 ALTER TABLE "tool" ADD COLUMN "issuer" TEXT;
