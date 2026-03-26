@@ -118,7 +118,7 @@ CREATE TABLE "resource_link" (
   "updated" integer NOT NULL,
   UNIQUE("tool_sid", "context_sid", "resource_id"),
   FOREIGN KEY ("tool_sid") REFERENCES "tool" ("sid"),
-  FOREIGN KEY ("context_sid") REFERENCES "context" ("sid")
+  FOREIGN KEY ("context_sid") REFERENCES "context" ("sid"), 
   FOREIGN KEY ("tool_key_sid") REFERENCES "tool_key" ("sid")
 );
 
@@ -162,7 +162,7 @@ CREATE TABLE "attempt" (
   "score" integer NOT NULL,
   "errorCode" integer NOT NULL,
   UNIQUE("resource_user_sid", "epoch_seconds", "nanoseconds"),
-  FOREIGN KEY ("resource_user_sid") REFERENCES "resource_user" ("sid")
+  FOREIGN KEY ("resource_user_sid") REFERENCES "resource_user" ("sid"), 
   FOREIGN KEY ("original_ru_sid") REFERENCES "resource_user" ("sid")
 );
 
@@ -174,6 +174,7 @@ CREATE TABLE IF NOT EXISTS "lti_key_set" (
   "alg" TEXT DEFAULT 'RS256',        
   "created_at" INTEGER DEFAULT (strftime('%s', 'now'))
 );
+
 -- Tabla de Plataformas (LMS)
 CREATE TABLE lti_platform (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -181,19 +182,19 @@ CREATE TABLE lti_platform (
     "oidc_auth_url" VARCHAR(255) NOT NULL,
     "jwks_url" VARCHAR(255) NOT NULL,
     "token_url" VARCHAR(255) NOT NULL,
-    "name" VARCHAR(255) -- Nombre legible, ej: "Blackboard US"
+    "name" VARCHAR(255)
 );
 
--- Tabla de Clientes (Un LMS puede tener varios clientes registrados)
+-- Tabla de Clientes
 CREATE TABLE lti_client (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT,
-    "platform_id  " INTEGER NOT NULL,
+    "platform_id" INTEGER NOT NULL,
     "client_id" VARCHAR(255) NOT NULL,
     FOREIGN KEY ("platform_id") REFERENCES "lti_platform" ("id") ON DELETE CASCADE,
     UNIQUE ("platform_id", "client_id")
 );
 
--- Tabla de Despliegues (Un cliente puede estar instalado en varias instituciones)
+-- Tabla de Despliegues
 CREATE TABLE lti_deployment (
     "id"   INTEGER PRIMARY KEY AUTOINCREMENT,
     "client_id" INTEGER NOT NULL,
@@ -206,23 +207,15 @@ CREATE TABLE lti_link_mapping (
     resource_link_id VARCHAR(255) PRIMARY KEY,
     toolname VARCHAR(255) NOT NULL
 );
+
 ALTER TABLE "tool" ADD COLUMN "lti_version" TEXT DEFAULT 'LTI-1p1';
-
 ALTER TABLE "tool" ADD COLUMN "issuer" TEXT;
-
 ALTER TABLE "tool" ADD COLUMN "client_id" TEXT;
-
 ALTER TABLE "tool" ADD COLUMN "deployment_id" TEXT;
-
 ALTER TABLE "tool" ADD COLUMN "oidc_auth_url" TEXT;
-
 ALTER TABLE "tool" ADD COLUMN "oauth_token_url" TEXT;
-
 ALTER TABLE "tool" ADD COLUMN "jwks_url" TEXT;
-
 ALTER TABLE "tool" ADD COLUMN "key_set_id" INTEGER;
-
 ALTER TABLE "tool" ADD COLUMN "token_url" TEXT;
 
-CREATE INDEX IF NOT EXISTS "idx_tool_lti13_lookup" ON "tool" ("issuer", "client_id", "deployment_id")
-
+CREATE INDEX IF NOT EXISTS "idx_tool_lti13_lookup" ON "tool" ("issuer", "client_id", "deployment_id");
