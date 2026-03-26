@@ -25,7 +25,7 @@
 
                         <p>Introduzca los identificadores y parámetros de seguridad públicos del LMS.</p>
 
-                        <form method="post" action="AddPlatformServlet" accept-charset="UTF-8">
+                        <form method="post" action="addplatform" accept-charset="UTF-8">
                             <div class="scroll50">
                                 <p><label for="name">Nombre descriptivo:</label><br />
                                     <input type="text" name="name" required="required" style="width: 90%;"
@@ -38,15 +38,15 @@
                                 </p>
 
                                 <p><label for="oidcAuthUrl">OIDC Auth URL:</label><br />
-                                    <input type="url" name="oidcAuthUrl" required="required" style="width: 90%;" />
+                                    <input type="url" name="oidc_auth_url" required="required" style="width: 90%;" />
                                 </p>
 
                                 <p><label for="jwksUrl">JWKS URL (Claves Públicas):</label><br />
-                                    <input type="url" name="jwksUrl" required="required" style="width: 90%;" />
+                                    <input type="url" name="jwks_url" required="required" style="width: 90%;" />
                                 </p>
 
                                 <p><label for="tokenUrl">Token URL (OAuth2):</label><br />
-                                    <input type="url" name="tokenUrl" required="required" style="width: 90%;" />
+                                    <input type="url" name="token_url" required="required" style="width: 90%;" />
                                 </p>
                             </div>
                             <div class="centrado">

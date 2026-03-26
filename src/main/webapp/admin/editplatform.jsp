@@ -25,7 +25,7 @@
                                 Editar Plataforma
                             </h1>
 
-                            <form method="post" action="EditPlatformServlet" accept-charset="UTF-8">
+                            <form method="post" action="editplatform" accept-charset="UTF-8">
                                 <input type="hidden" name="id" value="<%= platform.getId() %>" />
 
                                 <div class="scroll50">
@@ -42,19 +42,19 @@
                                     </p>
 
                                     <p><label for="oidcAuthUrl">OIDC Auth URL:</label><br />
-                                        <input type="url" name="oidcAuthUrl"
+                                        <input type="url" name="oidc_auth_url"
                                             value="<%= Encode.forHtmlAttribute(platform.getOidcAuthUrl()) %>"
                                             required="required" style="width: 90%;" />
                                     </p>
 
                                     <p><label for="jwksUrl">JWKS URL (Claves Públicas):</label><br />
-                                        <input type="url" name="jwksUrl"
+                                        <input type="url" name="jwks_url"
                                             value="<%= Encode.forHtmlAttribute(platform.getJwksUrl()) %>"
                                             required="required" style="width: 90%;" />
                                     </p>
 
                                     <p><label for="tokenUrl">Token URL (OAuth2):</label><br />
-                                        <input type="url" name="tokenUrl"
+                                        <input type="url" name="token_url"
                                             value="<%= Encode.forHtmlAttribute(platform.getTokenUrl()) %>"
                                             required="required" style="width: 90%;" />
                                     </p>
