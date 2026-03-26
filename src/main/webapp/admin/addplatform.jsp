@@ -26,6 +26,7 @@
                         <p>Introduzca los identificadores y parámetros de seguridad públicos del LMS.</p>
 
                         <form method="post" action="addplatform" accept-charset="UTF-8">
+                            <input type="hidden" name="launchId" value="${launchId}" />
                             <div class="scroll50">
                                 <p><label for="name">Nombre descriptivo:</label><br />
                                     <input type="text" name="name" required="required" style="width: 90%;"

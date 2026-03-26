@@ -34,6 +34,7 @@
                         </blockquote>
 
                         <form method="post" action="DeletePlatformServlet">
+                            <input type="hidden" name="launchId" value="${launchId}" />
                             <input type="hidden" name="id" value="<%= Encode.forHtmlAttribute(idStr) %>" />
                             <div class="centrado" style="margin-top: 20px;">
                                 <input class="accionp" type="submit" value="Sí, Eliminar"

@@ -26,6 +26,7 @@
                             </h1>
 
                             <form method="post" action="editplatform" accept-charset="UTF-8">
+                                <input type="hidden" name="launchId" value="${launchId}" />
                                 <input type="hidden" name="id" value="<%= platform.getId() %>" />
 
                                 <div class="scroll50">
