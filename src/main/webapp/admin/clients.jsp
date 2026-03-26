@@ -21,7 +21,7 @@
                         <%@include file="/WEB-INF/includes/cabecera.jsp" %>
                             <div class="h1container dialog" style="max-width: 90%;">
                                 <h1>
-                                    <a href="ListPlatformsServlet" accesskey="x"><span
+                                    <a href="platforms" accesskey="x"><span
                                             class="material-icons bcerrar">arrow_back</span></a>
                                     Clientes LTI 1.3 Descubiertos
                                 </h1>

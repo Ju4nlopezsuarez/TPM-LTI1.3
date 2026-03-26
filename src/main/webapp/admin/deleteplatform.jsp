@@ -19,7 +19,7 @@
                 <%@include file="/WEB-INF/includes/cabecera.jsp" %>
                     <div class="h1container dialog">
                         <h1>
-                            <a href="ListPlatformsServlet" accesskey="x"><span
+                            <a href="platforms" accesskey="x"><span
                                     class="material-icons bcerrar">close</span></a>
                             Confirmar Eliminación
                         </h1>

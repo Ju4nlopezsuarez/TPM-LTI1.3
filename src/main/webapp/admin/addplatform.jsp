@@ -18,7 +18,7 @@
                 <%@include file="/WEB-INF/includes/cabecera.jsp" %>
                     <div class="h1container dialog">
                         <h1>
-                            <a href="ListPlatformsServlet" accesskey="x"><span
+                            <a href="platforms" accesskey="x"><span
                                     class="material-icons bcerrar">close</span></a>
                             Nueva Plataforma LTI 1.3
                         </h1>
