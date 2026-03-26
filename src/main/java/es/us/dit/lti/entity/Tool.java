@@ -103,10 +103,6 @@ public class Tool extends UpdateRecordEntity {
 	 */
 	private String extraArgs;
 	/**
-	 * LTI version.
-	 */
-	private String ltiVersion = "1.3.0";
-	/**
 	 * Assessment counter.
 	 */
 	private volatile int counter;
@@ -913,24 +909,6 @@ public class Tool extends UpdateRecordEntity {
 			res = false;
 		}
 		return res;
-	}
-
-	/**
-	 * Gets the LTI version.
-	 * 
-	 * @return the LTI version
-	 */
-	public String getLtiVersion() {
-		return ltiVersion;
-	}
-
-	/**
-	 * Sets the LTI version.
-	 * 
-	 * @param ltiVersion the LTI version to set
-	 */
-	public void setLtiVersion(String ltiVersion) {
-		this.ltiVersion = ltiVersion;
 	}
 
 }

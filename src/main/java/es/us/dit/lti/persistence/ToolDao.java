@@ -120,8 +120,8 @@ public final class ToolDao {
 	 */
 	private static final String SQL_CREATE_TOOL = "insert into " + TOOL_TABLE_NAME
 			+ " (name, description, deliveryPassword, enabled, enabled_from, enabled_until, outcome, "
-			+ "extra_args, type, json_config, created, updated, lti_version) "
-			+ "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+			+ "extra_args, type, json_config, created, updated) "
+			+ "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 	/**
 	 * SQL statement to get the serial ID of a tool.
 	 */
@@ -207,7 +207,7 @@ public final class ToolDao {
 	 */
 	private static final String SQL_GET = "SELECT sid, name, description, deliveryPassword,"
 			+ " enabled, enabled_from, enabled_until, outcome, extra_args, type, json_config,"
-			+ " created, updated, lti_version FROM "
+			+ " created, updated FROM "
 			+ TOOL_TABLE_NAME;
 	/**
 	 * SQL statement to get all resource links of a tool.
@@ -478,13 +478,6 @@ public final class ToolDao {
 				final Calendar now = Calendar.getInstance();
 				stmt.setTimestamp(11, DaoUtil.toTimestamp(now));
 				stmt.setTimestamp(12, DaoUtil.toTimestamp(now));
-				stmt.setString(13, "1.3.0");
-				stmt.setString(14, tool.getIssuer());
-				stmt.setString(15, tool.getClientId());
-				stmt.setString(16, tool.getDeploymentId());
-				stmt.setString(17, tool.getOidcAuthUrl());
-				stmt.setString(18, tool.getJwksUrl());
-				stmt.setString(19, tool.getTokenUrl());
 				stmt.executeUpdate();
 			}
 		} catch (final Exception ex) {
@@ -689,12 +682,6 @@ public final class ToolDao {
 						stmt.setString(i++, tool.getExtraArgs());
 						stmt.setInt(i++, tool.getToolType().getCode());
 						stmt.setString(i++, tool.getJsonConfig());
-						stmt.setString(i++, tool.getIssuer());
-						stmt.setString(i++, tool.getClientId());
-						stmt.setString(i++, tool.getDeploymentId());
-						stmt.setString(i++, tool.getOidcAuthUrl());
-						stmt.setString(i++, tool.getJwksUrl());
-						stmt.setString(i++, tool.getTokenUrl());
 					}
 					if (changeName) {
 						stmt.setString(i++, newToolTitle);
@@ -1117,7 +1104,7 @@ public final class ToolDao {
 				result.setJsonConfig(rs.getString(11));
 				result.setCreated(DaoUtil.toCalendar(rs.getTimestamp(12)));
 				result.setUpdated(DaoUtil.toCalendar(rs.getTimestamp(13)));
-				result.setLtiVersion(rs.getString(14));
+
 			}
 			rs.close();
 		} catch (final Exception ex) {
