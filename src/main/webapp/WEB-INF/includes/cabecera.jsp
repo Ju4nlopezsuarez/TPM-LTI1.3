@@ -24,7 +24,7 @@
 		<a href='../super/maintenance.jsp'> Mantenimiento </a>
 		<% } /* Menú ADMIN */ if (tipoUsuario==es.us.dit.lti.entity.MgmtUserType.ADMIN ||
 			tipoUsuario==es.us.dit.lti.entity.MgmtUserType.SUPER) { %>
-			<a href='../admin/platforms.jsp'> Plataformas LTI 1.3 </a>
+			<a href='../admin/platforms'> Plataformas LTI 1.3 </a>
 			<% } /* Todos */ %>
 				<a href='../user/tools.jsp'> Herramientas </a>
 				<a href='../user/editdata.jsp'> Datos personales </a>
