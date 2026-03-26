@@ -174,4 +174,32 @@ public class LtiDeploymentDao {
         }
         return false;
     }
+
+    public LtiDeployment findByClientIdAndDeploymentId(int clientId, String deploymentId) {
+        String sql = "SELECT id, client_id, deployment_id FROM lti_deployment WHERE client_id = ? AND deployment_id = ?";
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, clientId);
+                ps.setString(2, deploymentId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return new LtiDeployment(
+                                rs.getInt("id"),
+                                rs.getInt("client_id"),
+                                rs.getString("deployment_id")
+                        );
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (conn != null && dbUtil != null) {
+                dbUtil.closeConnection(conn);
+            }
+        }
+        return null;
+    }
 }

@@ -31,13 +31,12 @@ public class LtiClientDao {
         try {
             conn = getConnection();
             try (PreparedStatement ps = conn.prepareStatement(sql);
-                 ResultSet rs = ps.executeQuery()) {
+                    ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     list.add(new LtiClient(
                             rs.getInt("id"),
                             rs.getInt("platform_id"),
-                            rs.getString("client_id")
-                    ));
+                            rs.getString("client_id")));
                 }
             }
         } catch (SQLException e) {
@@ -63,8 +62,7 @@ public class LtiClientDao {
                         list.add(new LtiClient(
                                 rs.getInt("id"),
                                 rs.getInt("platform_id"),
-                                rs.getString("client_id")
-                        ));
+                                rs.getString("client_id")));
                     }
                 }
             }
@@ -90,8 +88,7 @@ public class LtiClientDao {
                         return new LtiClient(
                                 rs.getInt("id"),
                                 rs.getInt("platform_id"),
-                                rs.getString("client_id")
-                        );
+                                rs.getString("client_id"));
                     }
                 }
             }
@@ -173,5 +170,36 @@ public class LtiClientDao {
             }
         }
         return false;
+    }
+
+    public LtiClient findByPlatformAndClientId(int platformId, String clientId) {
+        LtiClient client = null;
+        String sql = "SELECT id, platform_id, client_id FROM lti_client WHERE platform_id = ? AND client_id = ?";
+        Connection conn = null;
+
+        try {
+            conn = getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, platformId);
+                ps.setString(2, clientId);
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        client = new LtiClient(
+                                rs.getInt("id"),
+                                rs.getInt("platform_id"),
+                                rs.getString("client_id"));
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (conn != null && dbUtil != null) {
+                dbUtil.closeConnection(conn);
+            }
+        }
+
+        return client;
     }
 }
