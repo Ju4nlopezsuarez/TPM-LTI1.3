@@ -120,8 +120,8 @@ public final class ToolDao {
 	 */
 	private static final String SQL_CREATE_TOOL = "insert into " + TOOL_TABLE_NAME
 			+ " (name, description, deliveryPassword, enabled, enabled_from, enabled_until, outcome, "
-			+ "extra_args, type, json_config, created, updated, lti_version, issuer, client_id, deployment_id, oidc_auth_url, jwks_url, token_url) "
-			+ "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+			+ "extra_args, type, json_config, created, updated, lti_version) "
+			+ "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 	/**
 	 * SQL statement to get the serial ID of a tool.
 	 */
@@ -205,9 +205,10 @@ public final class ToolDao {
 	/**
 	 * SQL statement to get tool data.
 	 */
-private static final String SQL_GET = "SELECT sid, name, description, deliveryPassword,"
+	private static final String SQL_GET = "SELECT sid, name, description, deliveryPassword,"
 			+ " enabled, enabled_from, enabled_until, outcome, extra_args, type, json_config,"
-			+ " created, updated, lti_version, issuer, client_id, deployment_id, oidc_auth_url, jwks_url, token_url FROM " + TOOL_TABLE_NAME;
+			+ " created, updated, lti_version FROM "
+			+ TOOL_TABLE_NAME;
 	/**
 	 * SQL statement to get all resource links of a tool.
 	 */
@@ -379,7 +380,7 @@ private static final String SQL_GET = "SELECT sid, name, description, deliveryPa
 	/**
 	 * Changes tool counter.
 	 *
-	 * @param tool the tool
+	 * @param tool       the tool
 	 * @param newCounter new counter value
 	 * @return true if successful
 	 */
@@ -993,7 +994,8 @@ private static final String SQL_GET = "SELECT sid, name, description, deliveryPa
 	/**
 	 * Gets the user type of a user with respect to a tool.
 	 *
-	 * <p>Always returns ADMIN for super users.
+	 * <p>
+	 * Always returns ADMIN for super users.
 	 *
 	 * @param user the user
 	 * @param tool the tool
@@ -1053,7 +1055,8 @@ private static final String SQL_GET = "SELECT sid, name, description, deliveryPa
 	/**
 	 * Gets list of management users that are associated to a tool.
 	 *
-	 * <p>The type of user of each management users is with respect to the tool.
+	 * <p>
+	 * The type of user of each management users is with respect to the tool.
 	 *
 	 * @param tool the tool
 	 * @return list of management users
@@ -1114,14 +1117,8 @@ private static final String SQL_GET = "SELECT sid, name, description, deliveryPa
 				result.setJsonConfig(rs.getString(11));
 				result.setCreated(DaoUtil.toCalendar(rs.getTimestamp(12)));
 				result.setUpdated(DaoUtil.toCalendar(rs.getTimestamp(13)));
-				result.setLtiVersion(rs.getString(14));  
-				result.setIssuer(rs.getString(15));
-				result.setClientId(rs.getString(16));
-				result.setDeploymentId(rs.getString(17));
-				result.setOidcAuthUrl(rs.getString(18));
-				result.setJwksUrl(rs.getString(19));
-				result.setTokenUrl(rs.getString(20));
-							}
+				result.setLtiVersion(rs.getString(14));
+			}
 			rs.close();
 		} catch (final Exception ex) {
 			logger.error("Error: ", ex);
@@ -1454,7 +1451,7 @@ private static final String SQL_GET = "SELECT sid, name, description, deliveryPa
 
 		return users;
 	}
-	
+
 	/**
 	 * Deletes resource users without attempts of a tool.
 	 * 
@@ -1478,7 +1475,7 @@ private static final String SQL_GET = "SELECT sid, name, description, deliveryPa
 		}
 		return deleted;
 	}
-	
+
 	/**
 	 * Deletes tool data (attempts and resource users).
 	 * 
@@ -1514,7 +1511,7 @@ private static final String SQL_GET = "SELECT sid, name, description, deliveryPa
 			deleted = false;
 			logger.error("Error: ", ex);
 		}
-		
+
 		// Check results
 		if (transactional) {
 			try {
@@ -1532,8 +1529,8 @@ private static final String SQL_GET = "SELECT sid, name, description, deliveryPa
 			}
 		}
 		dbUtil.closeConnection(conn);
-		
+
 		return deleted;
 	}
-	
+
 }

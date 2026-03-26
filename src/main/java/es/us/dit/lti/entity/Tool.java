@@ -107,30 +107,6 @@ public class Tool extends UpdateRecordEntity {
 	 */
 	private String ltiVersion = "1.3.0";
 	/**
-	 * LTI 1.3 issuer (the LMS).
-	 */
-	private String issuer;
-	/**
-	 * LTI 1.3 clientId (the Tool's identifier in the LMS).
-	 */
-	private String clientId;
-	/**
-	 * LTI 1.3 deploymentId (the Tool's deployment identifier in the LMS).
-	 */
-	private String deploymentId;
-	/**
-	 * OIDC Authentication URL.
-	 */
-	private String oidcAuthUrl;
-	/**
-	 * JWKS URL.
-	 */
-	private String jwksUrl;
-	/**
-	 * Token URL for requesting access tokens to sign the Deep Linking response
-	 */
-	private String tokenUrl;
-	/**
 	 * Assessment counter.
 	 */
 	private volatile int counter;
@@ -225,7 +201,8 @@ public class Tool extends UpdateRecordEntity {
 	/**
 	 * Gets the delivery password.
 	 *
-	 * <p>Password that users must provide in order to make a delivery.
+	 * <p>
+	 * Password that users must provide in order to make a delivery.
 	 *
 	 * @return the delivery password
 	 */
@@ -251,11 +228,12 @@ public class Tool extends UpdateRecordEntity {
 		return enabled;
 
 	}
-	
+
 	/**
 	 * Gets whether the tool is enabled or not by date.
 	 *
-	 * <p>This takes into account the start and end dates.
+	 * <p>
+	 * This takes into account the start and end dates.
 	 *
 	 * @return true if tool is enabled
 	 */
@@ -265,12 +243,13 @@ public class Tool extends UpdateRecordEntity {
 				&& (enabledUntil == null || enabledUntil.after(now));
 
 	}
-	
+
 	/**
 	 * Gets whether the tool is enabled or not by date using the passed calendar and
 	 * grace period.
 	 *
-	 * <p>This takes into account the start and end dates.
+	 * <p>
+	 * This takes into account the start and end dates.
 	 *
 	 * @param requestDate        date of request as a calendar object
 	 * @param gracePeriodSeconds number of extra seconds allowed
@@ -307,7 +286,8 @@ public class Tool extends UpdateRecordEntity {
 	/**
 	 * Gets the enable start date, if the tool is enabled.
 	 *
-	 * <p>A null value indicates that there is no limitation.
+	 * <p>
+	 * A null value indicates that there is no limitation.
 	 *
 	 * @return the enable start date
 	 */
@@ -335,7 +315,8 @@ public class Tool extends UpdateRecordEntity {
 	/**
 	 * Gets the enable end date, if the tool is enabled.
 	 *
-	 * <p>A null value indicates that there is no limitation.
+	 * <p>
+	 * A null value indicates that there is no limitation.
 	 *
 	 * @return the enable end date
 	 */
@@ -346,7 +327,7 @@ public class Tool extends UpdateRecordEntity {
 		}
 		return calendar;
 	}
-	
+
 	/**
 	 * Gets the remaining time to disable the tool.
 	 * 
@@ -521,7 +502,8 @@ public class Tool extends UpdateRecordEntity {
 	 * Sets a JSON string with properties of a tool that you do not want to store
 	 * separately in the database.
 	 *
-	 * <p>It also modifies the ToolUiConfig object.
+	 * <p>
+	 * It also modifies the ToolUiConfig object.
 	 *
 	 * @param jsonConfig the JSON extra configuration to set
 	 */
@@ -591,7 +573,7 @@ public class Tool extends UpdateRecordEntity {
 		}
 		return dataPath;
 	}
-	
+
 	/**
 	 * Gets the tool extra folder path.
 	 *
@@ -603,7 +585,7 @@ public class Tool extends UpdateRecordEntity {
 		}
 		return extraPath;
 	}
-	
+
 	/**
 	 * Gets the extra zip path.
 	 *
@@ -841,7 +823,7 @@ public class Tool extends UpdateRecordEntity {
 				result = false;
 			}
 		}
-		
+
 		// Create extra folder.
 		if (result) {
 			folder = new File(getToolExtraPath());
@@ -859,7 +841,7 @@ public class Tool extends UpdateRecordEntity {
 		if (result && descriptionFile != null && !writeToolFile(getDescriptionPath(), descriptionFile, false)) {
 			result = false;
 		}
-		
+
 		// Copy extra zip file
 		if (result && extraZipFile != null) {
 			if (writeToolFile(getExtraZipPath(), extraZipFile, false)) {
@@ -885,11 +867,11 @@ public class Tool extends UpdateRecordEntity {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Unzip ZIP file into destination directory.
 	 * 
-	 * @param zip the ZIP file
+	 * @param zip         the ZIP file
 	 * @param destination the destination directory
 	 * @return true if no error
 	 */
@@ -932,75 +914,23 @@ public class Tool extends UpdateRecordEntity {
 		}
 		return res;
 	}
+
 	/**
 	 * Gets the LTI version.
+	 * 
 	 * @return the LTI version
 	 */
-	public String getLtiVersion() { return ltiVersion; }
+	public String getLtiVersion() {
+		return ltiVersion;
+	}
+
 	/**
 	 * Sets the LTI version.
+	 * 
 	 * @param ltiVersion the LTI version to set
 	 */
-	public void setLtiVersion(String ltiVersion) { this.ltiVersion = ltiVersion; }
-	/**
-	 * Gets the LTI 1.3 issuer (the LMS).
-	 * @return the issuer
-	 */
-	public String getIssuer() { return issuer; }
-	/**
-	 * Sets the LTI 1.3 issuer (the LMS).
-	 * @param issuer the issuer to set
-	 */
-	public void setIssuer(String issuer) { this.issuer = issuer; }
-	/**
-	 * Gets the LTI 1.3 clientId (the Tool's identifier in the LMS).
-	 * @return the clientId
-	 */
-	public String getClientId() { return clientId; }
-	/**
-	 * Sets the LTI 1.3 clientId (the Tool's identifier in the LMS).
-	 * @param clientId the clientId to set
-	 */
-	public void setClientId(String clientId) { this.clientId = clientId; }
-	/**
-	 * Gets the LTI 1.3 deploymentId (the Tool's deployment identifier in the LMS).
-	 * @return the deploymentId
-	 */
-	public String getDeploymentId() { return deploymentId; }
-	/**
-	 * Sets the LTI 1.3 deploymentId (the Tool's deployment identifier in the LMS).
-	 * @param deploymentId the deploymentId to set
-	 */
-	public void setDeploymentId(String deploymentId) { this.deploymentId = deploymentId; }
-	/**
-	 * Gets the OIDC Authentication URL.
-	 * @return the OIDC Authentication URL
-	 */
-	public String getOidcAuthUrl() { return oidcAuthUrl; }
-	/**
-	 * Sets the OIDC Authentication URL.
-	 * @param oidcAuthUrl the OIDC Authentication URL to set
-	 */
-	public void setOidcAuthUrl(String oidcAuthUrl) { this.oidcAuthUrl = oidcAuthUrl; }
-	/**
-	 * Gets the JWKS URL.
-	 * @return the JWKS URL
-	 */
-	public String getJwksUrl() { return jwksUrl; }
-	/**
-	 * Sets the JWKS URL.
-	 * @param jwksUrl the JWKS URL to set
-	 */
-	public void setJwksUrl(String jwksUrl) { this.jwksUrl = jwksUrl; }
-	/**
-	 * Gets the Token URL for requesting access tokens to sign the Deep Linking response.
-	 * @return the Token URL
-	 */
-	public String getTokenUrl() { return tokenUrl; }
-	/**
-	 * Sets the Token URL for requesting access tokens to sign the Deep Linking response.
-	 * @param tokenUrl the Token URL to set
-	 */
-	public void setTokenUrl(String tokenUrl) { this.tokenUrl = tokenUrl; }
-	
+	public void setLtiVersion(String ltiVersion) {
+		this.ltiVersion = ltiVersion;
+	}
+
 }
