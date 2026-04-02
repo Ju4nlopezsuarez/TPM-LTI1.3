@@ -636,13 +636,7 @@ public class Tool extends UpdateRecordEntity {
 				&& Objects.equals(description, other.description) && enabled == other.enabled
 				&& Objects.equals(enabledFrom, other.enabledFrom) && Objects.equals(enabledUntil, other.enabledUntil)
 				&& Objects.equals(extraArgs, other.extraArgs) && Objects.equals(jsonConfig, other.jsonConfig)
-				&& outcome == other.outcome && toolType == other.toolType && userTypeCode == other.userTypeCode
-				&& Objects.equals(issuer, other.issuer)
-				&& Objects.equals(clientId, other.clientId)
-				&& Objects.equals(deploymentId, other.deploymentId)
-				&& Objects.equals(oidcAuthUrl, other.oidcAuthUrl)
-				&& Objects.equals(jwksUrl, other.jwksUrl)
-				&& Objects.equals(tokenUrl, other.tokenUrl);
+				&& outcome == other.outcome && toolType == other.toolType && userTypeCode == other.userTypeCode;
 	}
 
 	/**
