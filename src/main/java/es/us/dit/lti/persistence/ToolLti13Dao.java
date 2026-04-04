@@ -4,6 +4,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import es.us.dit.lti.entity.Tool;
 
 /**
  * DAO especializado en la recuperación de credenciales y configuración
@@ -27,6 +30,34 @@ public class ToolLti13Dao {
         return dbUtil.getConnection();
     }
 
+    /* Devuelve los nombres y descripción de todas las herramientas */
+    public List<Tool> findAll() {
+        String sql = "SELECT name, description FROM tool";
+        Connection conn = null;
+        List<Tool> tools = new ArrayList<>();
+        try {
+            conn = getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        Tool tool = new Tool();
+                        tool.setName(rs.getString("name"));
+                        tool.setDescription(rs.getString("description"));
+                        tools.add(tool);
+                    }
+                }
+
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (conn != null && dbUtil != null) {
+                dbUtil.closeConnection(conn);
+            }
+        }
+        return tools;
+    }
+
     /**
      * Busca la configuración de una herramienta por su Issuer (LMS).
      * OIDC Login.
@@ -35,30 +66,29 @@ public class ToolLti13Dao {
      * @return Objeto de configuración o null si no existe.
      */
     public Lti13ToolConfig findByIssuer(String issuer) {
-        
+
         String sql = "SELECT name, client_id, oidc_auth_url, jwks_url, deployment_id, token_url " +
-                     "FROM tool WHERE issuer = ? AND lti_version = '1.3.0'";
+                "FROM tool WHERE issuer = ? AND lti_version = '1.3.0'";
         Connection conn = null;
-        try{ 
-            conn= getConnection();
+        try {
+            conn = getConnection();
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setString(1, issuer);
-            
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return new Lti13ToolConfig(
-                        rs.getString("name"),
-                        rs.getString("client_id"),
-                        issuer,
-                        rs.getString("oidc_auth_url"),
-                        rs.getString("jwks_url"),
-                        rs.getString("deployment_id"),
-                        rs.getString("token_url")
-                    );
+
+                ps.setString(1, issuer);
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return new Lti13ToolConfig(
+                                rs.getString("name"),
+                                rs.getString("client_id"),
+                                issuer,
+                                rs.getString("oidc_auth_url"),
+                                rs.getString("jwks_url"),
+                                rs.getString("deployment_id"),
+                                rs.getString("token_url"));
+                    }
                 }
             }
-        }
         } catch (SQLException e) {
             e.printStackTrace();
             // Podria loggear
@@ -75,43 +105,45 @@ public class ToolLti13Dao {
      * Utilizado en el LtiServlet (Launch) si es necesario validar ambos.
      */
     public Lti13ToolConfig findByClientId(String clientId) {
-         String sql = "SELECT name,issuer, oidc_auth_url, jwks_url, deployment_id, token_url " +
-                      "FROM tool WHERE client_id = ? AND lti_version = '1.3.0'";
-         Connection conn = null;
-         try{ 
-             conn= getConnection();
-            
-             try (PreparedStatement ps = conn.prepareStatement(sql)) {
-             
-             ps.setString(1, clientId);
-             
-             try (ResultSet rs = ps.executeQuery()) {
-                 if (rs.next()) {
-                     return new Lti13ToolConfig(
-                        rs.getString("name"),
-                         clientId,
-                         rs.getString("issuer"),
-                         rs.getString("oidc_auth_url"),
-                         rs.getString("jwks_url"),
-                         rs.getString("deployment_id"),
-                         rs.getString("token_url")
-                     );
-                 }
-             }
+        String sql = "SELECT name,issuer, oidc_auth_url, jwks_url, deployment_id, token_url " +
+                "FROM tool WHERE client_id = ? AND lti_version = '1.3.0'";
+        Connection conn = null;
+        try {
+            conn = getConnection();
+
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+
+                ps.setString(1, clientId);
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return new Lti13ToolConfig(
+                                rs.getString("name"),
+                                clientId,
+                                rs.getString("issuer"),
+                                rs.getString("oidc_auth_url"),
+                                rs.getString("jwks_url"),
+                                rs.getString("deployment_id"),
+                                rs.getString("token_url"));
+                    }
+                }
             }
-         } catch (SQLException e) {
-             e.printStackTrace();
-         } finally {
-             if (conn != null && dbUtil != null) {
-                 dbUtil.closeConnection(conn);
-             }
-         }
-         return null;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (conn != null && dbUtil != null) {
+                dbUtil.closeConnection(conn);
+            }
+        }
+        return null;
     }
-    /**Descubre y registra dinámicamente Clientes y Despliegues LTI 1.3
-     * Devuelve la URL de autorización OIDC del LMS para el Issuer dado, o null si no se encuentra.
+
+    /**
+     * Descubre y registra dinámicamente Clientes y Despliegues LTI 1.3
+     * Devuelve la URL de autorización OIDC del LMS para el Issuer dado, o null si
+     * no se encuentra.
      */
-    public String discoverAndGetOidcAuthUrl(String issuer, String clientId, String deploymentId){
+    public String discoverAndGetOidcAuthUrl(String issuer, String clientId, String deploymentId) {
         String oidcAuthUrl = null;
         Connection conn = null;
         Integer platformId = null;
@@ -125,7 +157,7 @@ public class ToolLti13Dao {
             if (ps != null) {
                 ps.setString(1, issuer);
                 rs = ps.executeQuery();
-                if (rs!=null) {
+                if (rs != null) {
                     if (rs.next()) {
                         // Issuer ya registrado, devolver URL de autorización
                         oidcAuthUrl = rs.getString("oidc_auth_url");
@@ -135,22 +167,23 @@ public class ToolLti13Dao {
             }
             if (rs != null) {
                 rs.close();
-                rs=null;
+                rs = null;
             }
             if (ps != null) {
                 ps.close();
-                ps=null;
+                ps = null;
             }
-            //Si la plataforma existe, procedemos a registrar el Client ID y Deployment ID dinámicamente
-            if (platformId!=null) {
+            // Si la plataforma existe, procedemos a registrar el Client ID y Deployment ID
+            // dinámicamente
+            if (platformId != null) {
                 Integer clientIdPk = null;
                 String clientCheckSql = "SELECT id FROM lti_client WHERE client_id = ? AND platform_id = ?";
                 ps = conn.prepareStatement(clientCheckSql);
-                if(ps!=null) {
+                if (ps != null) {
                     ps.setString(1, clientId);
                     ps.setInt(2, platformId);
                     rs = ps.executeQuery();
-                    if (rs!=null) {
+                    if (rs != null) {
                         if (rs.next()) {
                             clientIdPk = rs.getInt("id");
                         }
@@ -158,13 +191,13 @@ public class ToolLti13Dao {
                 }
                 if (rs != null) {
                     rs.close();
-                    rs=null;
+                    rs = null;
                 }
                 if (ps != null) {
                     ps.close();
-                    ps=null;
+                    ps = null;
                 }
-                //Si es nuevo lo añadimos
+                // Si es nuevo lo añadimos
                 if (clientIdPk == null) {
                     String clientInsertSql = "INSERT INTO lti_client (client_id, platform_id) VALUES (?, ?)";
                     ps = conn.prepareStatement(clientInsertSql);
@@ -173,21 +206,21 @@ public class ToolLti13Dao {
                         ps.setInt(2, platformId);
                         ps.executeUpdate();
                         rs = ps.getGeneratedKeys();
-                        if ( rs.next()) {
+                        if (rs.next()) {
                             clientIdPk = rs.getInt(1);
                         }
                     }
-                    if (rs!=null) {
+                    if (rs != null) {
                         rs.close();
-                        rs=null;
+                        rs = null;
                     }
-                    if(ps !=null) {
+                    if (ps != null) {
                         ps.close();
-                        ps=null;
+                        ps = null;
                     }
-                    
+
                 }
-                //Descubrir y registrar Deployment ID dinámicamente
+                // Descubrir y registrar Deployment ID dinámicamente
                 if (deploymentId != null && clientIdPk != null) {
                     boolean hasDeployment = false;
                     String sqlDep = "SELECT id FROM lti_deployment WHERE deployment_id = ?";
@@ -197,18 +230,18 @@ public class ToolLti13Dao {
                         rs = ps.executeQuery();
                         if (rs != null) {
                             if (rs.next()) {
-                                hasDeployment = true;   
+                                hasDeployment = true;
                             }
                         }
-                }
-                if (ps != null) {
-                    ps.close();
-                    ps=null;
-                }
-                if (rs != null) {
-                    rs.close();
-                    rs=null;
-                }
+                    }
+                    if (ps != null) {
+                        ps.close();
+                        ps = null;
+                    }
+                    if (rs != null) {
+                        rs.close();
+                        rs = null;
+                    }
                     if (!hasDeployment) {
                         String depInsertSql = "INSERT INTO lti_deployment (deployment_id, client_id) VALUES (?, ?)";
                         ps = conn.prepareStatement(depInsertSql);
@@ -219,32 +252,34 @@ public class ToolLti13Dao {
                         }
                         if (ps != null) {
                             ps.close();
-                            ps=null;
+                            ps = null;
                         }
                     }
                 }
-                
-            }
-            
-    }catch (SQLException e) {
-        e.printStackTrace();
-    } finally {
-        if (ps != null) {
-            try {
-                ps.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-        if (conn != null && dbUtil != null) {
-            dbUtil.closeConnection(conn);
-        }
 
-}
-return oidcAuthUrl;
-}
-/**
-     * Busca si un enlace de Blackboard ya está asociado a una herramienta en el TPM.
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (conn != null && dbUtil != null) {
+                dbUtil.closeConnection(conn);
+            }
+
+        }
+        return oidcAuthUrl;
+    }
+
+    /**
+     * Busca si un enlace de Blackboard ya está asociado a una herramienta en el
+     * TPM.
      */
     public String getMappedTool(String resourceLinkId) {
         String toolname = null;
@@ -258,22 +293,37 @@ return oidcAuthUrl;
             ps = conn.prepareStatement(sql);
             ps.setString(1, resourceLinkId);
             rs = ps.executeQuery();
-            
+
             if (rs.next()) {
                 toolname = rs.getString("toolname");
             }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            if (rs != null) { try { rs.close(); } catch (Exception e) { e.printStackTrace(); } }
-            if (ps != null) { try { ps.close(); } catch (Exception e) { e.printStackTrace(); } }
-            if (conn != null && dbUtil != null) { dbUtil.closeConnection(conn); }
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            if (conn != null && dbUtil != null) {
+                dbUtil.closeConnection(conn);
+            }
         }
         return toolname;
     }
 
     /**
-     * Guarda la asociación entre el enlace de Blackboard y la clave de la herramienta.
+     * Guarda la asociación entre el enlace de Blackboard y la clave de la
+     * herramienta.
      */
     public boolean saveResourceLinkMapping(String resourceLinkId, String toolname) {
         boolean success = false;
@@ -286,15 +336,23 @@ return oidcAuthUrl;
             ps = conn.prepareStatement(sql);
             ps.setString(1, resourceLinkId);
             ps.setString(2, toolname);
-            
+
             if (ps.executeUpdate() > 0) {
                 success = true;
             }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            if (ps != null) { try { ps.close(); } catch (Exception e) { e.printStackTrace(); } }
-            if (conn != null && dbUtil != null) { dbUtil.closeConnection(conn); }
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            if (conn != null && dbUtil != null) {
+                dbUtil.closeConnection(conn);
+            }
         }
         return success;
     }

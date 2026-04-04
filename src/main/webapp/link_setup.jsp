@@ -1,4 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.util.List" %>
+<%@ page import="es.us.dit.lti.entity.Tool" %>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -33,11 +35,26 @@
             <form method="post" action="SaveLinkServlet">
                 <input type="hidden" name="resource_link_id" value="<%= request.getAttribute("resource_link_id") != null ? request.getAttribute("resource_link_id") : request.getParameter("resource_link_id") %>" />       
                 <div class="editfields">
-                    <div title="Nombre o clave secreta de la herramienta en el TPM">Clave de la Herramienta (Toolname):</div>
-                    <div>
-                        <input type="text" name="toolname" required="required" placeholder="Ej: EjercicioJava01" style="width: 90%;"/>
-                    </div>
-                </div>
+                    <select name="toolname" required="required" style="width: 90%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+                            <option value="">-- Seleccione un ejercicio a vincular --</option>
+                            <%
+                                List<Tool> tools = (List<Tool>) request.getAttribute("available_tools");
+                                if (tools != null && !tools.isEmpty()) {
+                                    for (Tool t : tools) {
+                            %>
+                                        <option value="<%= t.getName() %>">
+                                            <%= t.getName() %> 
+                                            <%= (t.getDescription() != null && !t.getDescription().isEmpty()) ? " - " + t.getDescription() : "" %>
+                                        </option>
+                            <%
+                                    }
+                                } else {
+                            %>
+                                <option value="" disabled>No hay herramientas registradas en el TPM</option>
+                            <%
+                                }
+                            %>
+                        </select>
                 <div class="centrado" style="margin-top: 20px;">
                     <input class="accionp" type="submit" value="Vincular y Lanzar" />
                 </div>
