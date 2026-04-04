@@ -9,7 +9,6 @@
     <link rel="stylesheet" type="text/css" href="css/material-icons.css">
 </head>
 <body>
-    <%@include file="/WEB-INF/includes/cabecera.jsp" %>
     <div class="h1container dialog">
         <h1>Vincular Nuevo Enlace LTI 1.3</h1>
         
@@ -32,6 +31,7 @@
             </div>
         <% } else { %>
             <form method="post" action="SaveLinkServlet">
+                <input type="hidden" name="resource_link_id" value="<%= request.getAttribute("resource_link_id") != null ? request.getAttribute("resource_link_id") : request.getParameter("resource_link_id") %>" />       
                 <div class="editfields">
                     <div title="Nombre o clave secreta de la herramienta en el TPM">Clave de la Herramienta (Toolname):</div>
                     <div>

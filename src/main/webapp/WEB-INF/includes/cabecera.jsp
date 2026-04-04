@@ -18,7 +18,7 @@
 <div id="menu">
 	<% es.us.dit.lti.entity.MgmtUserType
 		tipoUsuario=((es.us.dit.lti.entity.MgmtUser)session.getAttribute("mgmtUser")).getType();
-		if(tipoUsuario==es.us.dit.lti.entity.MgmtUserType.SUPER) { %>
+			if(tipoUsuario==es.us.dit.lti.entity.MgmtUserType.SUPER) { %>
 		<a href='../super/users.jsp'> Usuarios </a>
 		<a href='../super/settings.jsp'> Ajustes </a>
 		<a href='../super/maintenance.jsp'> Mantenimiento </a>
@@ -28,11 +28,11 @@
 			<% } /* Todos */ %>
 				<a href='../user/tools.jsp'> Herramientas </a>
 				<a href='../user/editdata.jsp'> Datos personales </a>
-
 </div>
-<% /* Is there a notice? */ String notice=es.us.dit.lti.entity.Settings.getNotice(); if (notice !=null &&
-	!notice.isEmpty()) { %>
+<% /* Is there a notice? */ 
+	String notice=es.us.dit.lti.entity.Settings.getNotice(); 
+if (notice !=null && !notice.isEmpty()) { %>
 	<div id="notice">
 		<%=notice %>
 	</div>
-	<% } %>
+<% } %>

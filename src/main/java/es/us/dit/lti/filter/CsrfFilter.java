@@ -99,7 +99,8 @@ public class CsrfFilter extends HttpFilter implements Filter {
 							&& !"/tools".equals(req.getServletPath())
 							&& !"/do/login".equals(req.getServletPath())
 							&& !"/oidc_login".equals(req.getServletPath())
-							&& !"/lti".equals(req.getServletPath())) {
+							&& !"/lti".equals(req.getServletPath())
+							&& !"/SaveLinkServlet".equals(req.getServletPath())) {
 						// if request is multipart, verification is done in servlet
 						// LTI launch do not use this
 						accept = false;
