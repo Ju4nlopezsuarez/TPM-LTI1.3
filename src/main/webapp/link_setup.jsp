@@ -9,7 +9,7 @@
     <link rel="stylesheet" type="text/css" href="css/material-icons.css">
 </head>
 <body>
-    <div class="h1container dialog">
+    <div class="h1container">
         <h1>Vincular Nuevo Enlace LTI 1.3</h1>
         
         <p style="margin-bottom: 20px;">
