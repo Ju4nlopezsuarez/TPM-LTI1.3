@@ -143,10 +143,8 @@
     <div style="background-color: #f4f4f9; padding: 15px; border-left: 4px solid #005A9C; margin-bottom: 20px;">
         <%
             // Detección inteligente de la URL base (soporte para Ngrok/Proxies)
-            String scheme = request.getHeader("X-Forwarded-Proto");
-            if (scheme == null) {
-                scheme = request.getScheme();
-            }
+            // Forzamos HTTPS para los enlaces LTI 1.3
+            String scheme = "https";
             
             String serverName = request.getHeader("X-Forwarded-Host");
             if (serverName == null) {
