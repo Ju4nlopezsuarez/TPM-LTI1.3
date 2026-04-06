@@ -21,6 +21,28 @@ public class EditPlatformServlet extends HttpServlet {
     private static final Logger logger = LoggerFactory.getLogger(EditPlatformServlet.class);
 
     @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String idStr = request.getParameter("id");
+        if (idStr != null) {
+            try {
+                int id = Integer.parseInt(idStr);
+                LtiPlatformDao dao = new LtiPlatformDao();
+                LtiPlatform platform = dao.findById(id);
+                if (platform != null) {
+                    request.setAttribute("platform", platform);
+                    request.getRequestDispatcher("/admin/editplatform.jsp").forward(request, response);
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                logger.error("Invalid platform ID format", e);
+            }
+        }
+        request.getSession().setAttribute(Settings.PENDING_MSG_ATTRIB, "Plataforma no encontrada");
+        response.sendRedirect("platforms");
+    }
+
+    @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         

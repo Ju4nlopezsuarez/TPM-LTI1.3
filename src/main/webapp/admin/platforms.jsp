@@ -51,7 +51,7 @@
                                                             <%= Encode.forHtml(p.getIssuer()) %>
                                                         </td>
                                                         <td style="padding: 8px;">
-                                                            <a href="EditPlatformServlet?id=<%= p.getId() %>"
+                                                            <a href="editplatform?id=<%= p.getId() %>"
                                                                 style="color: #1976D2; text-decoration: none; margin-right: 10px;">[Editar]</a>
                                                             <a href="deleteplatform.jsp?id=<%= p.getId() %>&name=<%= Encode.forUriComponent(p.getName()) %>"
                                                                 style="color: #D32F2F; text-decoration: none;">[Borrar]</a>
