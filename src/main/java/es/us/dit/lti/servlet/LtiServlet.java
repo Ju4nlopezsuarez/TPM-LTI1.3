@@ -131,6 +131,7 @@ public class LtiServlet extends HttpServlet {
                                     logger.info("Unmapped resource_link_id: {}. Redirecting to link setup.",
                                             resourceLinkId);
                                     ToolLti13Dao toolDao = new ToolLti13Dao();
+
                                     request.setAttribute("available_tools", toolDao.findAll());
                                     request.getSession().setAttribute("pending_resource_link_id", resourceLinkId);
                                     request.getSession().setAttribute("lti13_id_token", idToken);
