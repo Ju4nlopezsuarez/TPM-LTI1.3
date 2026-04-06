@@ -56,6 +56,8 @@ import es.us.dit.lti.persistence.ToolNonceDao;
 import es.us.dit.lti.persistence.ToolResourceLinkDao;
 import es.us.dit.lti.persistence.ToolResourceUserDao;
 import es.us.dit.lti.persistence.ToolLti13Dao;
+import es.us.dit.lti.persistence.ToolDao;
+import es.us.dit.lti.persistence.Lti13ToolConfig;
 import jakarta.servlet.http.HttpServletRequest;
 import net.oauth.OAuthAccessor;
 import net.oauth.OAuthConsumer;
@@ -1036,12 +1038,12 @@ public final class ToolSession implements Serializable {
 			List<String> audiences = claims.getAudience();
 			if (audiences != null && !audiences.isEmpty()) {
 				String clientId = audiences.get(0); // Tomamos el primer 'aud'
-				es.us.dit.lti.persistence.ToolLti13Dao lti13Dao = new es.us.dit.lti.persistence.ToolLti13Dao();
-				es.us.dit.lti.persistence.Lti13ToolConfig toolConfig = lti13Dao.findByClientId(clientId);
+				ToolLti13Dao lti13Dao = new ToolLti13Dao();
+				Lti13ToolConfig toolConfig = lti13Dao.findByClientId(clientId);
 				if (toolConfig != null) {
 					this.lti13ClientId = toolConfig.getClientId();
 					this.lti13DeploymentId = toolConfig.getDeploymentId();
-					this.tool = es.us.dit.lti.persistence.ToolDao.get(toolConfig.getToolName());
+					this.tool = ToolDao.get(toolConfig.getToolName());
 					if (this.tool != null) {
 
 						// Mapear Datos de Presentación (Launch Presentation)
@@ -1132,7 +1134,6 @@ public final class ToolSession implements Serializable {
 							String resourceLinkTitle = (String) resourceLinkClaim.get("title");
 
 							// Overriding the tool with the mapped one for this specific link (if exists)
-							ToolLti13Dao lti13Dao = new ToolLti13Dao();
 							String mappedToolName = lti13Dao.getMappedTool(resourceLinkId);
 							if (mappedToolName != null && !mappedToolName.trim().isEmpty()) {
 								Tool mappedTool = ToolDao.get(mappedToolName);
