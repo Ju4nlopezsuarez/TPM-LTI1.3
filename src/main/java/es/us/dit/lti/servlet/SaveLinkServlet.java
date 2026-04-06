@@ -1,7 +1,8 @@
 package es.us.dit.lti.servlet;
 
 import es.us.dit.lti.entity.Tool;
-import es.us.dit.lti.persistence.ToolDao;
+import es.us.dit.lti.entity.ToolKey;
+import es.us.dit.lti.persistence.ToolKeyDao;
 import es.us.dit.lti.persistence.ToolLti13Dao;
 import es.us.dit.lti.ToolSession;
 import es.us.dit.lti.MessageMap;
@@ -25,25 +26,26 @@ public class SaveLinkServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String toolName = request.getParameter("toolname");
+        String clave = request.getParameter("clave");
+        String secreto = request.getParameter("secreto");
         String resourceLinkId = (String) request.getSession().getAttribute("pending_resource_link_id");
 
         if (resourceLinkId == null) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST,
                     "Sesión caducada. Por favor, vuelva a lanzar la herramienta desde el LMS.");
         } else {
-            // Validar que la clave (toolname) existe en tu TPM usando tu ToolDao original
-            Tool tool = ToolDao.get(toolName);
+            ToolKey toolKey = ToolKeyDao.get(clave, false);
 
-            if (tool == null) {
-                // La clave introducida es incorrecta
+            if (toolKey == null || secreto == null || !secreto.equals(toolKey.getSecret())) {
                 request.setAttribute("error_clave",
-                        "Error: La clave de herramienta introducida no existe en el sistema.");
+                        "Error: La clave o secreto de herramienta introducidos son incorrectos.");
                 request.getRequestDispatcher("/link_setup.jsp").forward(request, response);
             } else {
+                String toolName = toolKey.getTool().getName();
+                
                 // Guardar la asociación en la base de datos LTI 1.3
                 ToolLti13Dao dao = new ToolLti13Dao();
-                boolean saved = dao.saveResourceLinkMapping(resourceLinkId, toolName);
+                boolean saved = dao.saveResourceLinkMapping(resourceLinkId, clave);
 
                 if (saved) {
                     // Limpiar sesión y notificar éxito

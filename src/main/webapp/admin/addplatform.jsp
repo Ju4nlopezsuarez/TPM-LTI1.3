@@ -33,9 +33,9 @@
                                         placeholder="Ej: Blackboard US" />
                                 </p>
 
-                                <p><label for="issuer">Issuer (URL del Emisor):</label><br />
-                                    <input type="url" name="issuer" required="required" style="width: 90%;"
-                                        placeholder="https://..." />
+                                <p><label for="issuer">Issuer (Identificador del Emisor):</label><br />
+                                    <input type="text" name="issuer" required="required" style="width: 90%;"
+                                        placeholder="Ej: https://..." />
                                 </p>
 
                                 <p><label for="oidcAuthUrl">OIDC Auth URL:</label><br />

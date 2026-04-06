@@ -36,8 +36,8 @@
                                             required="required" style="width: 90%;" />
                                     </p>
 
-                                    <p><label for="issuer">Issuer (URL del Emisor):</label><br />
-                                        <input type="url" name="issuer"
+                                    <p><label for="issuer">Issuer (Identificador del Emisor):</label><br />
+                                        <input type="text" name="issuer"
                                             value="<%= Encode.forHtmlAttribute(platform.getIssuer()) %>"
                                             required="required" style="width: 90%;" />
                                     </p>

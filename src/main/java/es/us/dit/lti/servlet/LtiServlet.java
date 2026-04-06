@@ -22,6 +22,8 @@ import es.us.dit.lti.ToolSession;
 import es.us.dit.lti.entity.MgmtUser;
 import es.us.dit.lti.persistence.Lti13ToolConfig;
 import es.us.dit.lti.persistence.ToolLti13Dao;
+import es.us.dit.lti.persistence.ToolKeyDao;
+import es.us.dit.lti.entity.ToolKey;
 
 /**
  * Servlet for receiving initial tool request. LTI initial contact URL.
@@ -126,8 +128,8 @@ public class LtiServlet extends HttpServlet {
                             }
 
                             if (resourceLinkId != null) {
-                                String mappedToolName = dao.getMappedTool(resourceLinkId);
-                                if (mappedToolName == null) {
+                                String mappedClave = dao.getMappedTool(resourceLinkId);
+                                if (mappedClave == null) {
                                     logger.info("Unmapped resource_link_id: {}. Redirecting to link setup.",
                                             resourceLinkId);
                                     ToolLti13Dao toolDao = new ToolLti13Dao();
@@ -140,8 +142,15 @@ public class LtiServlet extends HttpServlet {
                                     request.getRequestDispatcher("/link_setup.jsp").forward(request, response);
                                     return;
                                 }
-                                // Guardamos el toolname mapeado en caso de que lo necesitemos más adelante
-                                request.getSession().setAttribute("mappedToolName", mappedToolName);
+                                
+                                // El valor recuperado de la BD es en realidad la 'clave' de ToolKey
+                                ToolKey toolKey = ToolKeyDao.get(mappedClave, false);
+                                if (toolKey != null) {
+                                    // Inyectamos la toolKey en la sesión
+                                    request.getSession().setAttribute("toolKey", toolKey);
+                                    // Guardamos el verdadero nombre de la herramienta por si hace falta
+                                    request.getSession().setAttribute("mappedToolName", toolKey.getTool().getName());
+                                }
                             }
 
                             // Inicializar ToolSession con los datos de LTI 1.3

@@ -1134,11 +1134,14 @@ public final class ToolSession implements Serializable {
 							String resourceLinkTitle = (String) resourceLinkClaim.get("title");
 
 							// Overriding the tool with the mapped one for this specific link (if exists)
-							String mappedToolName = lti13Dao.getMappedTool(resourceLinkId);
-							if (mappedToolName != null && !mappedToolName.trim().isEmpty()) {
-								Tool mappedTool = ToolDao.get(mappedToolName);
-								if (mappedTool != null) {
-									this.tool = mappedTool;
+							String mappedClave = lti13Dao.getMappedTool(resourceLinkId);
+							if (mappedClave != null && !mappedClave.trim().isEmpty()) {
+								ToolKey mappedToolKey = ToolKeyDao.get(mappedClave, false);
+								if (mappedToolKey != null) {
+									this.toolKey = mappedToolKey;
+									if (mappedToolKey.getTool() != null) {
+										this.tool = mappedToolKey.getTool();
+									}
 								}
 							}
 

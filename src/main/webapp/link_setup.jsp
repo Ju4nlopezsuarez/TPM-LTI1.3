@@ -1,6 +1,4 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="java.util.List" %>
-<%@ page import="es.us.dit.lti.entity.Tool" %>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -36,26 +34,10 @@
                 
                 <input type="hidden" name="resource_link_id" value="<%= request.getAttribute("resource_link_id") != null ? request.getAttribute("resource_link_id") : request.getParameter("resource_link_id") %>" />
 
-                <select name="toolname" required="required" style="width: 100%; max-width: 450px; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; display: block; margin: 0 auto 25px auto; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                    <option value="">-- Seleccione un ejercicio a vincular --</option>
-                    <%
-                        List<Tool> tools = (List<Tool>) request.getAttribute("available_tools");
-                        if (tools != null && !tools.isEmpty()) {
-                            for (Tool t : tools) {
-                    %>
-                                <option value="<%= t.getName() %>">
-                                    <%= t.getName() %> 
-                                    <%= (t.getDescription() != null && !t.getDescription().isEmpty()) ? " - " + t.getDescription() : "" %>
-                                </option>
-                    <%
-                            }
-                        } else {
-                    %>
-                        <option value="" disabled>No hay herramientas registradas en el TPM</option>
-                    <%
-                        }
-                    %>
-                </select>
+                <div style="margin-bottom: 25px;">
+                    <input type="text" name="clave" placeholder="Clave Identificadora" required="required" style="width: 100%; max-width: 450px; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; display: block; margin: 0 auto 15px auto; box-shadow: 0 2px 5px rgba(0,0,0,0.05);" />
+                    <input type="password" name="secreto" placeholder="LTI Secret" required="required" style="width: 100%; max-width: 450px; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; display: block; margin: 0 auto; box-shadow: 0 2px 5px rgba(0,0,0,0.05);" />
+                </div>
 
                 <div>
                     <input class="accionp" type="submit" value="Vincular y Lanzar" style="font-size: 16px; padding: 12px 24px; border-radius: 4px; cursor: pointer; background-color: #0056b3; color: white; border: none;" />
