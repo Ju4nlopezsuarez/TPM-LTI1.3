@@ -30,14 +30,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import com.nimbusds.jwt.JWTClaimsSet;
-import java.util.UUID;
-
-import java.util.ArrayList;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.nimbusds.jwt.JWTClaimsSet;
 
 import es.us.dit.lti.entity.Consumer;
 import es.us.dit.lti.entity.Context;
@@ -48,16 +46,16 @@ import es.us.dit.lti.entity.ResourceUser;
 import es.us.dit.lti.entity.Settings;
 import es.us.dit.lti.entity.Tool;
 import es.us.dit.lti.entity.ToolKey;
+import es.us.dit.lti.persistence.Lti13ToolConfig;
 import es.us.dit.lti.persistence.ToolConsumerDao;
 import es.us.dit.lti.persistence.ToolConsumerUserDao;
 import es.us.dit.lti.persistence.ToolContextDao;
+import es.us.dit.lti.persistence.ToolDao;
 import es.us.dit.lti.persistence.ToolKeyDao;
+import es.us.dit.lti.persistence.ToolLti13Dao;
 import es.us.dit.lti.persistence.ToolNonceDao;
 import es.us.dit.lti.persistence.ToolResourceLinkDao;
 import es.us.dit.lti.persistence.ToolResourceUserDao;
-import es.us.dit.lti.persistence.ToolLti13Dao;
-import es.us.dit.lti.persistence.ToolDao;
-import es.us.dit.lti.persistence.Lti13ToolConfig;
 import jakarta.servlet.http.HttpServletRequest;
 import net.oauth.OAuthAccessor;
 import net.oauth.OAuthConsumer;
@@ -1038,308 +1036,297 @@ public final class ToolSession implements Serializable {
 			List<String> audiences = claims.getAudience();
 			if (audiences != null && !audiences.isEmpty()) {
 				String clientId = audiences.get(0); // Tomamos el primer 'aud'
+				this.lti13ClientId = clientId;
+				this.lti13DeploymentId = claims
+						.getStringClaim("https://purl.imsglobal.org/spec/lti/claim/deployment_id");
 				ToolLti13Dao lti13Dao = new ToolLti13Dao();
 				Lti13ToolConfig toolConfig = lti13Dao.findByClientId(clientId);
-				if (toolConfig != null) {
-					this.lti13ClientId = toolConfig.getClientId();
-					this.lti13DeploymentId = toolConfig.getDeploymentId();
-					this.tool = ToolDao.get(toolConfig.getToolName());
-					if (this.tool != null) {
 
-						// Mapear Datos de Presentación (Launch Presentation)
-						// Usamos getJSONObjectClaim que devuelve un Map estándar
-						Map<String, Object> presentation = claims
-								.getJSONObjectClaim("https://purl.imsglobal.org/spec/lti/claim/launch_presentation");
-						if (presentation != null) {
-							this.ltiReturnUrl = (String) presentation.get("return_url");
-							this.presentationLocale = (String) presentation.get("locale");
+				// Mapear Datos de Presentación (Launch Presentation)
+				// Usamos getJSONObjectClaim que devuelve un Map estándar
+				Map<String, Object> presentation = claims
+						.getJSONObjectClaim("https://purl.imsglobal.org/spec/lti/claim/launch_presentation");
+				if (presentation != null) {
+					this.ltiReturnUrl = (String) presentation.get("return_url");
+					this.presentationLocale = (String) presentation.get("locale");
 
-							Object targetObj = presentation.get("document_target");
-							if (targetObj != null) {
-								this.presentationDocumentTarget = targetObj.toString();
-								if (this.presentationDocumentTarget.equalsIgnoreCase("iframe") ||
-										this.presentationDocumentTarget.equalsIgnoreCase("frame")) {
-									this.frameMode = true;
-								}
-							}
+					Object targetObj = presentation.get("document_target");
+					if (targetObj != null) {
+						this.presentationDocumentTarget = targetObj.toString();
+						if (this.presentationDocumentTarget.equalsIgnoreCase("iframe") ||
+								this.presentationDocumentTarget.equalsIgnoreCase("frame")) {
+							this.frameMode = true;
 						}
+					}
+				}
 
-						String issuer = claims.getIssuer();
+				String issuer = claims.getIssuer();
 
-						// Buscamos si ya conocemos este LMS usando el 'iss' como GUID
-						this.consumer = ToolConsumerDao.getByGuid(issuer);
+				// Buscamos si ya conocemos este LMS usando el 'iss' como GUID
+				this.consumer = ToolConsumerDao.getByGuid(issuer);
 
-						// Si no existe, lo creamos
-						if (this.consumer == null) {
-							this.consumer = new Consumer();
-							this.consumer.setGuid(issuer);
-							this.consumer.setLtiVersion("1.3.0");
+				// Si no existe, lo creamos
+				if (this.consumer == null) {
+					this.consumer = new Consumer();
+					this.consumer.setGuid(issuer);
+					this.consumer.setLtiVersion("1.3.0");
 
-							// Intentamos sacar nombre y versión del claim 'tool_platform' si viene
-							Map<String, Object> platformClaim = claims
-									.getJSONObjectClaim("https://purl.imsglobal.org/spec/lti/claim/tool_platform");
-							if (platformClaim != null) {
+					// Intentamos sacar nombre y versión del claim 'tool_platform' si viene
+					Map<String, Object> platformClaim = claims
+							.getJSONObjectClaim("https://purl.imsglobal.org/spec/lti/claim/tool_platform");
+					if (platformClaim != null) {
 
-								String name = (String) platformClaim.get("name");
-								String version = (String) platformClaim.get("version");
-								this.consumer.setName(name != null ? name : issuer);
-								this.consumer.setVersion(version != null ? version : "Unknown");
-							} else {
-								this.consumer.setName(issuer);
-								this.consumer.setVersion("Unknown");
-							}
+						String name = (String) platformClaim.get("name");
+						String version = (String) platformClaim.get("version");
+						this.consumer.setName(name != null ? name : issuer);
+						this.consumer.setVersion(version != null ? version : "Unknown");
+					} else {
+						this.consumer.setName(issuer);
+						this.consumer.setVersion("Unknown");
+					}
 
-							// Guardamos en BBDD
-							boolean created = ToolConsumerDao.create(this.consumer);
-							if (!created) {
-								throw new Exception("Error crítico: No se pudo crear el ToolConsumer para " + issuer);
-							}
-						}
+					// Guardamos en BBDD
+					boolean created = ToolConsumerDao.create(this.consumer);
+					if (!created) {
+						throw new Exception("Error crítico: No se pudo crear el ToolConsumer para " + issuer);
+					}
+				}
 
-						// Gestionar Contexto (Curso)
-						Map<String, Object> contextClaim = claims
-								.getJSONObjectClaim("https://purl.imsglobal.org/spec/lti/claim/context");
-						if (contextClaim != null) {
-							String contextId = (String) contextClaim.get("id");
-							String contextTitle = (String) contextClaim.get("title");
-							String contextLabel = (String) contextClaim.get("label");
+				// Gestionar Contexto (Curso)
+				Map<String, Object> contextClaim = claims
+						.getJSONObjectClaim("https://purl.imsglobal.org/spec/lti/claim/context");
+				if (contextClaim != null) {
+					String contextId = (String) contextClaim.get("id");
+					String contextTitle = (String) contextClaim.get("title");
+					String contextLabel = (String) contextClaim.get("label");
 
-							// Buscamos si ya existe este curso para este consumidor
+					// Buscamos si ya existe este curso para este consumidor
 
-							Context existingContext = ToolContextDao.getById(this.consumer, contextId);
+					Context existingContext = ToolContextDao.getById(this.consumer, contextId);
 
-							if (existingContext != null) {
-								this.context = existingContext;
-							} else {
-								// Si no existe, creamos el objeto Context y lo vinculamos al Consumer
-								Context newContext = new Context();
-								newContext.setContextId(contextId);
-								newContext.setTitle(contextTitle);
-								newContext.setLabel(contextLabel);
-								newContext.setConsumer(this.consumer); // Vinculamos con el padre Consumer
+					if (existingContext != null) {
+						this.context = existingContext;
+					} else {
+						// Si no existe, creamos el objeto Context y lo vinculamos al Consumer
+						Context newContext = new Context();
+						newContext.setContextId(contextId);
+						newContext.setTitle(contextTitle);
+						newContext.setLabel(contextLabel);
+						newContext.setConsumer(this.consumer); // Vinculamos con el padre Consumer
 
-								boolean created = ToolContextDao.create(newContext);
-								if (created) {
-									this.context = newContext;
-								} else {
-									logger.error("Error creando Contexto LTI 1.3: " + contextId);
-								}
-							}
-						}
-						// Recursos (Resource Link)
-						Map<String, Object> resourceLinkClaim = claims
-								.getJSONObjectClaim("https://purl.imsglobal.org/spec/lti/claim/resource_link");
-						if (resourceLinkClaim != null) {
-							String resourceLinkId = (String) resourceLinkClaim.get("id");
-							String resourceLinkTitle = (String) resourceLinkClaim.get("title");
-
-							// Overriding the tool with the mapped one for this specific link (if exists)
-							String mappedClave = lti13Dao.getMappedTool(resourceLinkId);
-							if (mappedClave != null && !mappedClave.trim().isEmpty()) {
-								ToolKey mappedToolKey = ToolKeyDao.get(mappedClave, false);
-								if (mappedToolKey != null) {
-									this.toolKey = mappedToolKey;
-									if (mappedToolKey.getTool() != null) {
-										this.tool = mappedToolKey.getTool();
-									}
-								}
-							}
-
-							// Preparamos los IDs para la consulta
-
-							Integer contextSid = null;
-							if (this.context != null) {
-								contextSid = this.context.getSid();
-							}
-							Integer toolSid = null;
-							if (this.tool != null) {
-								toolSid = this.tool.getSid();
-							}
-
-							// Buscamos el enlace de recurso
-							this.resourceLink = ToolResourceLinkDao.getById(toolSid, contextSid, resourceLinkId);
-
-							// Si no existe, lo creamos
-							if (this.resourceLink == null) {
-								ResourceLink newLink = new ResourceLink();
-								newLink.setResourceId(resourceLinkId);
-								newLink.setTitle(resourceLinkTitle);
-
-								// Vinculamos con el Contexto y el Consumer padre
-								newLink.setContext(this.context);
-
-								// Si tenemos herramienta asignada, la vinculamos
-								if (this.tool != null) {
-									newLink.setTool(this.tool);
-								}
-
-								// Guardamos en BBDD
-								boolean created = ToolResourceLinkDao.create(newLink);
-
-								if (created) {
-									this.resourceLink = newLink;
-								} else {
-									logger.error("No se pudo crear el ResourceLink: " + resourceLinkId);
-								}
-							} else {
-								// Asegurar que la herramienta está cargada en memoria (Evita NPE)
-								if (this.tool != null) {
-									this.resourceLink.setTool(this.tool);
-								}
-								// Si existe, lo usamos y actualizamos el título si ha cambiado
-								if (!this.resourceLink.getTitle().equals(resourceLinkTitle)) {
-									this.resourceLink.setTitle(resourceLinkTitle);
-									ToolResourceLinkDao.update(this.resourceLink);
-								}
-							}
-
-							// Usuario
-							// Extraer datos del Token LTI 1.3
-							// Detención del tipo de mensaje para Deep Linking
-							String messageType = claims
-									.getStringClaim("https://purl.imsglobal.org/spec/lti/claim/message_type");
-							if ("LtiDeepLinkingRequest".equals(messageType)) {
-								this.isDeepLinking = true;
-								Map<String, Object> dlSettings = claims.getJSONObjectClaim(
-										"https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings");
-								if (dlSettings != null) {
-									this.deepLinkReturnUrl = (String) dlSettings.get("deep_link_return_url");
-									this.deepLinkData = (String) dlSettings.get("data");
-								}
-								logger.info("Detectada petición de Deep Linking LTI 1.3");
-							} else {
-								this.isDeepLinking = false;
-							}
-							// Usuario
-							// Extraer datos del Token LTI 1.3
-							this.sessionUserId = claims.getSubject();
-							String email = (String) claims.getClaim("email");
-							String name = (String) claims.getClaim("name");
-
-							// Sincronizar LtiUser
-							es.us.dit.lti.entity.LtiUser ltiUser = ToolConsumerUserDao.getById(this.consumer.getSid(),
-									this.sessionUserId);
-
-							if (ltiUser == null) {
-								// Si no existe lo creamos
-								ltiUser = new es.us.dit.lti.entity.LtiUser();
-								ltiUser.setConsumer(this.consumer);
-								ltiUser.setUserId(this.sessionUserId);
-								ltiUser.setEmail(email);
-								ltiUser.setNameFull(name);
-
-								boolean created = ToolConsumerUserDao.create(ltiUser);
-								if (!created) {
-									logger.error("No se pudo crear el LTI User: " + this.sessionUserId);
-								} else {
-									logger.info("Nuevo LTI User creado: " + this.sessionUserId);
-								}
-							} else {
-								// Actualizamos los datos del usuario si han cambiado
-								boolean changed = false;
-								if (email != null && !email.equals(ltiUser.getEmail())) {
-									ltiUser.setEmail(email);
-									changed = true;
-								}
-								if (name != null && !name.equals(ltiUser.getNameFull())) {
-									ltiUser.setNameFull(name);
-									changed = true;
-								}
-								if (changed) {
-									ToolConsumerUserDao.update(ltiUser);
-								}
-							}
-
-							// Sincronizar ResourceUser (Solo si el recurso ya existe, NO en Deep Linking)
-							if (this.resourceLink != null && ltiUser != null && ltiUser.getSid() > 0) {
-								this.ltiResourceUser = ToolResourceUserDao.getById(this.resourceLink.getSid(),
-										ltiUser.getSid());
-								if (this.ltiResourceUser == null) {
-									this.ltiResourceUser = new ResourceUser();
-									this.ltiResourceUser.setResourceLink(this.resourceLink);
-									this.ltiResourceUser.setUser(ltiUser);
-									this.ltiResourceUser.setResultSourceId(this.sessionUserId);
-									boolean created = ToolResourceUserDao.create(this.ltiResourceUser);
-									if (!created) {
-										logger.error("No se pudo crear el ResourceUser para: " + this.sessionUserId);
-									}
-								} else {
-									// INYECCIÓN: Completar relaciones en memoria si ya existía (Evita NPE)
-									this.ltiResourceUser.setResourceLink(this.resourceLink);
-									this.ltiResourceUser.setUser(ltiUser);
-								}
-							}
-
-							// PROCESAR ROLES
-							// Extraemos la lista de roles del token
-							List<String> lti13Roles = claims
-									.getStringListClaim("https://purl.imsglobal.org/spec/lti/claim/roles");
-							processLti13Roles(lti13Roles);
-							// Log de depuración para ver qué roles ha detectado
-							if (this.isInstructor) {
-								logger.debug("Usuario identificado como INSTRUCTOR");
-							} else if (this.isLearner) {
-								logger.debug("Usuario identificado como ESTUDIANTE");
-							}
-
-							// CALIFICACIONES AGS (Assignment and Grade Services)
-
-							Map<String, Object> agsClaim = claims
-									.getJSONObjectClaim("https://purl.imsglobal.org/spec/lti-ags/claim/endpoint");
-
-							if (agsClaim != null) {
-								// Si el claim existe, el LMS permite calificar
-								this.outcomeAllowed = true;
-
-								// 'lineitem' es la URL específica donde enviaremos la nota
-								// La guardamos en la variable que OutcomeService antiguo seguramente ya usa.
-								String lineItemUrl = (String) agsClaim.get("lineitem");
-								if (lineItemUrl != null && !lineItemUrl.isEmpty()) {
-									this.lisOutcomeServiceUrl = lineItemUrl;
-									logger.debug("AGS LineItem URL guardada: " + lineItemUrl);
-									if (this.resourceLink != null) {
-										this.resourceLink.setOutcomeServiceUrl(lineItemUrl);
-										ToolResourceLinkDao.update(this.resourceLink);
-									}
-								}
-							} else {
-								this.outcomeAllowed = false;
-							}
-
-							// PARÁMETROS PERSONALIZADOS
-
-							Map<String, Object> custom = claims
-									.getJSONObjectClaim("https://purl.imsglobal.org/spec/lti/claim/custom");
-							if (custom != null) {
-								// Iteramos sobre los parámetros custom recibidos del LMS
-								for (Map.Entry<String, Object> entry : custom.entrySet()) {
-									String key = entry.getKey();
-									String value = String.valueOf(entry.getValue());
-									String lowerKey = key.toLowerCase();
-									// Aceptaos "custom_args"(LTI 1.1) y "args"(LTI 1.3)
-									if ("custom_args".equals(lowerKey) || "args".equals(lowerKey)) {
-										this.customArgs = value;
-									} else if ("custom_debug".equals(lowerKey) || "debug".equals(lowerKey)) {
-										this.customDebug = "true".equalsIgnoreCase(value);
-									} else if ("custom_nocal".equals(lowerKey) || "nocal".equals(lowerKey)) {
-										this.customNoCal = "true".equalsIgnoreCase(value);
-									}
-								}
-							}
-
-							// Finalización
-							this.valid = true;
-							logger.info(
-									"Sesión LTI 1.3 inicializada correctamente para el usuario: " + this.sessionUserId);
+						boolean created = ToolContextDao.create(newContext);
+						if (created) {
+							this.context = newContext;
 						} else {
-							this.error = "Error: Entidad Tool no encontrada en la base de datos para el nombre: "
-									+ toolConfig.getToolName();
-							logger.error(this.error);
+							logger.error("Error creando Contexto LTI 1.3: " + contextId);
+						}
+					}
+				}
+				// Recursos (Resource Link)
+				Map<String, Object> resourceLinkClaim = claims
+						.getJSONObjectClaim("https://purl.imsglobal.org/spec/lti/claim/resource_link");
+				if (resourceLinkClaim != null) {
+					String resourceLinkId = (String) resourceLinkClaim.get("id");
+					String resourceLinkTitle = (String) resourceLinkClaim.get("title");
+
+					// Overriding the tool with the mapped one for this specific link (if exists)
+					String mappedClave = lti13Dao.getMappedTool(resourceLinkId);
+					if (mappedClave != null && !mappedClave.trim().isEmpty()) {
+						ToolKey mappedToolKey = ToolKeyDao.get(mappedClave, false);
+						if (mappedToolKey != null) {
+							this.toolKey = mappedToolKey;
+							if (mappedToolKey.getTool() != null) {
+								this.tool = mappedToolKey.getTool();
+							}
+						}
+					}
+
+					// Preparamos los IDs para la consulta
+
+					Integer contextSid = null;
+					if (this.context != null) {
+						contextSid = this.context.getSid();
+					}
+					Integer toolSid = null;
+					if (this.tool != null) {
+						toolSid = this.tool.getSid();
+					}
+
+					// Buscamos el enlace de recurso
+					this.resourceLink = ToolResourceLinkDao.getById(toolSid, contextSid, resourceLinkId);
+
+					// Si no existe, lo creamos
+					if (this.resourceLink == null) {
+						ResourceLink newLink = new ResourceLink();
+						newLink.setResourceId(resourceLinkId);
+						newLink.setTitle(resourceLinkTitle);
+
+						// Vinculamos con el Contexto y el Consumer padre
+						newLink.setContext(this.context);
+
+						// Si tenemos herramienta asignada, la vinculamos
+						if (this.tool != null) {
+							newLink.setTool(this.tool);
+						}
+
+						// Guardamos en BBDD
+						boolean created = ToolResourceLinkDao.create(newLink);
+
+						if (created) {
+							this.resourceLink = newLink;
+						} else {
+							logger.error("No se pudo crear el ResourceLink: " + resourceLinkId);
 						}
 					} else {
-						this.error = "Error: Configuración LTI 1.3 no encontrada para el client_id: " + clientId;
-						logger.error(this.error);
+						// Asegurar que la herramienta está cargada en memoria (Evita NPE)
+						if (this.tool != null) {
+							this.resourceLink.setTool(this.tool);
+						}
+						// Si existe, lo usamos y actualizamos el título si ha cambiado
+						if (!this.resourceLink.getTitle().equals(resourceLinkTitle)) {
+							this.resourceLink.setTitle(resourceLinkTitle);
+							ToolResourceLinkDao.update(this.resourceLink);
+						}
 					}
+
+					// Usuario
+					// Extraer datos del Token LTI 1.3
+					// Detención del tipo de mensaje para Deep Linking
+					String messageType = claims
+							.getStringClaim("https://purl.imsglobal.org/spec/lti/claim/message_type");
+					if ("LtiDeepLinkingRequest".equals(messageType)) {
+						this.isDeepLinking = true;
+						Map<String, Object> dlSettings = claims.getJSONObjectClaim(
+								"https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings");
+						if (dlSettings != null) {
+							this.deepLinkReturnUrl = (String) dlSettings.get("deep_link_return_url");
+							this.deepLinkData = (String) dlSettings.get("data");
+						}
+						logger.info("Detectada petición de Deep Linking LTI 1.3");
+					} else {
+						this.isDeepLinking = false;
+					}
+					// Usuario
+					// Extraer datos del Token LTI 1.3
+					this.sessionUserId = claims.getSubject();
+					String email = (String) claims.getClaim("email");
+					String name = (String) claims.getClaim("name");
+
+					// Sincronizar LtiUser
+					es.us.dit.lti.entity.LtiUser ltiUser = ToolConsumerUserDao.getById(this.consumer.getSid(),
+							this.sessionUserId);
+
+					if (ltiUser == null) {
+						// Si no existe lo creamos
+						ltiUser = new es.us.dit.lti.entity.LtiUser();
+						ltiUser.setConsumer(this.consumer);
+						ltiUser.setUserId(this.sessionUserId);
+						ltiUser.setEmail(email);
+						ltiUser.setNameFull(name);
+
+						boolean created = ToolConsumerUserDao.create(ltiUser);
+						if (!created) {
+							logger.error("No se pudo crear el LTI User: " + this.sessionUserId);
+						} else {
+							logger.info("Nuevo LTI User creado: " + this.sessionUserId);
+						}
+					} else {
+						// Actualizamos los datos del usuario si han cambiado
+						boolean changed = false;
+						if (email != null && !email.equals(ltiUser.getEmail())) {
+							ltiUser.setEmail(email);
+							changed = true;
+						}
+						if (name != null && !name.equals(ltiUser.getNameFull())) {
+							ltiUser.setNameFull(name);
+							changed = true;
+						}
+						if (changed) {
+							ToolConsumerUserDao.update(ltiUser);
+						}
+					}
+
+					// Sincronizar ResourceUser (Solo si el recurso ya existe, NO en Deep Linking)
+					if (this.resourceLink != null && ltiUser != null && ltiUser.getSid() > 0) {
+						this.ltiResourceUser = ToolResourceUserDao.getById(this.resourceLink.getSid(),
+								ltiUser.getSid());
+						if (this.ltiResourceUser == null) {
+							this.ltiResourceUser = new ResourceUser();
+							this.ltiResourceUser.setResourceLink(this.resourceLink);
+							this.ltiResourceUser.setUser(ltiUser);
+							this.ltiResourceUser.setResultSourceId(this.sessionUserId);
+							boolean created = ToolResourceUserDao.create(this.ltiResourceUser);
+							if (!created) {
+								logger.error("No se pudo crear el ResourceUser para: " + this.sessionUserId);
+							}
+						} else {
+							// INYECCIÓN: Completar relaciones en memoria si ya existía (Evita NPE)
+							this.ltiResourceUser.setResourceLink(this.resourceLink);
+							this.ltiResourceUser.setUser(ltiUser);
+						}
+					}
+
+					// PROCESAR ROLES
+					// Extraemos la lista de roles del token
+					List<String> lti13Roles = claims
+							.getStringListClaim("https://purl.imsglobal.org/spec/lti/claim/roles");
+					processLti13Roles(lti13Roles);
+					// Log de depuración para ver qué roles ha detectado
+					if (this.isInstructor) {
+						logger.debug("Usuario identificado como INSTRUCTOR");
+					} else if (this.isLearner) {
+						logger.debug("Usuario identificado como ESTUDIANTE");
+					}
+
+					// CALIFICACIONES AGS (Assignment and Grade Services)
+
+					Map<String, Object> agsClaim = claims
+							.getJSONObjectClaim("https://purl.imsglobal.org/spec/lti-ags/claim/endpoint");
+
+					if (agsClaim != null) {
+						// Si el claim existe, el LMS permite calificar
+						this.outcomeAllowed = true;
+
+						// 'lineitem' es la URL específica donde enviaremos la nota
+						// La guardamos en la variable que OutcomeService antiguo seguramente ya usa.
+						String lineItemUrl = (String) agsClaim.get("lineitem");
+						if (lineItemUrl != null && !lineItemUrl.isEmpty()) {
+							this.lisOutcomeServiceUrl = lineItemUrl;
+							logger.debug("AGS LineItem URL guardada: " + lineItemUrl);
+							if (this.resourceLink != null) {
+								this.resourceLink.setOutcomeServiceUrl(lineItemUrl);
+								ToolResourceLinkDao.update(this.resourceLink);
+							}
+						}
+					} else {
+						this.outcomeAllowed = false;
+					}
+
+					// PARÁMETROS PERSONALIZADOS
+
+					Map<String, Object> custom = claims
+							.getJSONObjectClaim("https://purl.imsglobal.org/spec/lti/claim/custom");
+					if (custom != null) {
+						// Iteramos sobre los parámetros custom recibidos del LMS
+						for (Map.Entry<String, Object> entry : custom.entrySet()) {
+							String key = entry.getKey();
+							String value = String.valueOf(entry.getValue());
+							String lowerKey = key.toLowerCase();
+							// Aceptaos "custom_args"(LTI 1.1) y "args"(LTI 1.3)
+							if ("custom_args".equals(lowerKey) || "args".equals(lowerKey)) {
+								this.customArgs = value;
+							} else if ("custom_debug".equals(lowerKey) || "debug".equals(lowerKey)) {
+								this.customDebug = "true".equalsIgnoreCase(value);
+							} else if ("custom_nocal".equals(lowerKey) || "nocal".equals(lowerKey)) {
+								this.customNoCal = "true".equalsIgnoreCase(value);
+							}
+						}
+					}
+
+					// Finalización
+					this.valid = true;
+					logger.info(
+							"Sesión LTI 1.3 inicializada correctamente para el usuario: " + this.sessionUserId);
 				} else {
 					this.error = "Error: El token JWT no contiene Audience (client_id).";
 					logger.error(this.error);
