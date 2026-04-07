@@ -105,8 +105,11 @@ public class ToolLti13Dao {
      * Utilizado en el LtiServlet (Launch) si es necesario validar ambos.
      */
     public Lti13ToolConfig findByClientId(String clientId) {
-        String sql = "SELECT name,issuer, oidc_auth_url, jwks_url, deployment_id, token_url " +
-                "FROM tool WHERE client_id = ? AND lti_version = '1.3.0'";
+        String sql = "SELECT p.name, p.issuer, p.oidc_auth_url, p.jwks_url, d.deployment_id, p.token_url " +
+                     "FROM lti_client c " +
+                     "INNER JOIN lti_platform p ON c.platform_id = p.id " +
+                     "LEFT JOIN lti_deployment d ON d.client_id = c.id " +
+                     "WHERE c.client_id = ?";
         Connection conn = null;
         try {
             conn = getConnection();
