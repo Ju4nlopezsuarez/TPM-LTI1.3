@@ -24,6 +24,7 @@ import es.us.dit.lti.persistence.Lti13ToolConfig;
 import es.us.dit.lti.persistence.ToolLti13Dao;
 import es.us.dit.lti.persistence.ToolKeyDao;
 import es.us.dit.lti.entity.ToolKey;
+import es.us.dit.lti.runner.ToolRunnerFactory;
 
 /**
  * Servlet for receiving initial tool request. LTI initial contact URL.
@@ -155,6 +156,14 @@ public class LtiServlet extends HttpServlet {
 
                             // Inicializar ToolSession con los datos de LTI 1.3
                             final ToolSession ts = new ToolSession();
+                            
+                            ToolKey sessionToolKey = (ToolKey) request.getSession().getAttribute("toolKey");
+                            if (sessionToolKey != null) {
+                                ts.setToolKey(sessionToolKey);
+                                ts.setTool(sessionToolKey.getTool());
+                                sessionToolKey.getTool().setToolRunner(ToolRunnerFactory.fromType(sessionToolKey.getTool().getToolType()));
+                            }
+                            
                             // Le pasamos los claims (JSON) para que extraiga user_id, roles, context, etc.
                             ts.initLti13(claims);
 

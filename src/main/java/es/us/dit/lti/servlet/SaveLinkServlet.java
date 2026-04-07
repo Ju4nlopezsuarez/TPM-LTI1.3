@@ -1,11 +1,12 @@
 package es.us.dit.lti.servlet;
 
-import es.us.dit.lti.entity.Tool;
+
 import es.us.dit.lti.entity.ToolKey;
 import es.us.dit.lti.persistence.ToolKeyDao;
 import es.us.dit.lti.persistence.ToolLti13Dao;
 import es.us.dit.lti.ToolSession;
 import es.us.dit.lti.MessageMap;
+import es.us.dit.lti.runner.ToolRunnerFactory;
 
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.JWTClaimsSet;
@@ -42,7 +43,7 @@ public class SaveLinkServlet extends HttpServlet {
                 request.getRequestDispatcher("/link_setup.jsp").forward(request, response);
             } else {
                 String toolName = toolKey.getTool().getName();
-                
+
                 // Guardar la asociación en la base de datos LTI 1.3
                 ToolLti13Dao dao = new ToolLti13Dao();
                 boolean saved = dao.saveResourceLinkMapping(resourceLinkId, clave);
@@ -58,6 +59,9 @@ public class SaveLinkServlet extends HttpServlet {
                             JWTClaimsSet claims = parsedToken.getJWTClaimsSet();
 
                             ToolSession ts = new ToolSession();
+                            ts.setToolKey(toolKey);
+                            ts.setTool(toolKey.getTool());
+                            toolKey.getTool().setToolRunner(ToolRunnerFactory.fromType(toolKey.getTool().getToolType()));
                             ts.initLti13(claims);
 
                             Locale locale = request.getLocale();
