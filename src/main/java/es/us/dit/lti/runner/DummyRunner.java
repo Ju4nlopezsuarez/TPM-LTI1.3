@@ -35,7 +35,8 @@ import es.us.dit.lti.config.ExecutionRestrictionsConfig;
 /**
  * Dummy Runner.
  *
- * <p>Only wait, do not execute corrector.
+ * <p>
+ * Only wait, do not execute corrector.
  *
  * @author Francisco José Fernández Jiménez
  */
@@ -57,8 +58,9 @@ public class DummyRunner implements ToolRunner {
 	/**
 	 * Initializes tool runner.
 	 *
-	 * <p>Gets arguments to add before the command.
-	 * <code>executionRestrictions</code> must be an object containing a 
+	 * <p>
+	 * Gets arguments to add before the command.
+	 * <code>executionRestrictions</code> must be an object containing a
 	 * <code>preArgs</code> property with a table of strings (arguments).
 	 */
 	@Override
@@ -117,7 +119,7 @@ public class DummyRunner implements ToolRunner {
 				}
 				out.println("</pre>");
 			}
-			Thread.sleep(maxSecondsWait * 1000);
+			Thread.sleep(1000);
 			result = 100;
 		} catch (final InterruptedException e) {
 			result = ERROR_CORRECTOR_EXCEPTION;
