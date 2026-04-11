@@ -187,30 +187,30 @@ function validateAndSend() {
 }
 
 function send(formData) {
-  
-  let xmlhttp = new XMLHttpRequest();
-  // Preparamos la función que se ejecutará cuando acabe la petición async
-  xmlhttp.onreadystatechange = function() {
-    if (xmlhttp.readyState == 4) {
-	  if (xmlhttp.status == 200) {
-        if (xmlhttp.responseText === "") {
-          createResult("<p class='error'>"+texts.errorClosedSession+"</p>");
-        } else {
-          createResult(xmlhttp.responseText);
-        }
-	  } else if (xmlhttp.status == 403) {
-		createResult("<p class='error'>"+texts.errorClosedSession+"</p>");
-      } else {
-		console.log(xmlhttp.status);
-        createResult("<p class='error'>"+texts.errorNoResponse+"</p>");
-	  }
-    }
-  };
-  xmlhttp.onerror = function() {
-    createResult("<p class='error'>"+texts.errorRequest+"</p>");
-  };
-  xmlhttp.open("POST", "../learner/assess", true);
-  xmlhttp.send(formData);
+	fetch("../learner/assess", {
+		method: "POST",
+		body: formData
+	})
+	.then(response => {
+		if (response.ok) {
+			return response.text().then(text => {
+				if (text === "") {
+					createResult("<p class='error'>"+texts.errorClosedSession+"</p>");
+				} else {
+					createResult(text);
+				}
+			});
+		} else if (response.status === 403) {
+			createResult("<p class='error'>"+texts.errorClosedSession+"</p>");
+		} else {
+			console.log(response.status);
+			createResult("<p class='error'>"+texts.errorNoResponse+"</p>");
+		}
+	})
+	.catch(error => {
+		console.error(error);
+		createResult("<p class='error'>"+texts.errorRequest+"</p>");
+	});
 }
 
 function createResult(text) {
