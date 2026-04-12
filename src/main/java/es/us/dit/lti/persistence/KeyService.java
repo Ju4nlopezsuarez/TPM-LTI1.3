@@ -88,7 +88,7 @@ public class KeyService {
                 ps.close();
             }
             if (conn != null && dbUtil != null) {
-                conn.close();
+                dbUtil.closeConnection(conn);
             }
         }
 
@@ -123,7 +123,7 @@ public class KeyService {
                 ps.close();
             }
             if (conn != null && dbUtil != null) {
-                conn.close();
+                dbUtil.closeConnection(conn);
             }
         }
         
@@ -157,7 +157,7 @@ public class KeyService {
                 ps.close();
             }
             if (conn != null && dbUtil != null) {
-                conn.close();
+                dbUtil.closeConnection(conn);
             }
         }
         return rsaKey;
@@ -189,7 +189,7 @@ public class KeyService {
                 ps.close();
             }
             if (conn != null && dbUtil != null) {
-                conn.close();
+                dbUtil.closeConnection(conn);
             }
         }
         if (foundKid == null) {//Si no hay claves en la tabla, generamos una nueva al vuelo
