@@ -300,8 +300,11 @@ public class SshToolRunner implements ToolRunner {
 		final File outputErr = new File(outputPath + Settings.OUTPUT_ERROR_EXT);
 		final ArrayList<String> args = new ArrayList<>();
 		final String fileUrlEncoded = URLEncoder.encode(new File(filePath).getName(), StandardCharsets.UTF_8);
-		// Add preArgs
-		args.addAll(Arrays.asList(preArgs));
+		if (preArgs != null) {
+			for (String arg : preArgs) {
+				args.add(arg != null ? arg : "");
+			}
+		}
 		args.add(BIN_NAME);
 		try {
 			final ProcessBuilder pb = new ProcessBuilder(args);

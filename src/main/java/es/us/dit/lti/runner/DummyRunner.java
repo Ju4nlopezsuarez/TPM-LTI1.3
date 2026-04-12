@@ -86,14 +86,23 @@ public class DummyRunner implements ToolRunner {
 
 		int result = 0;
 		final File output = new File(outputPath);
-		final ArrayList<String> args = new ArrayList<>(Arrays.asList(preArgs));
-		args.add(exe);
-		args.add(filePath);
-		args.add(userId);
-		args.add(originalFilename);
+		final ArrayList<String> args = new ArrayList<>();
+		if (preArgs != null) {
+			for (String arg : preArgs) {
+				args.add(arg != null ? arg : "");
+			}
+		}
+		args.add(exe != null ? exe : "");
+		args.add(filePath != null ? filePath : "");
+		args.add(userId != null ? userId : "");
+		args.add(originalFilename != null ? originalFilename : "");
 		args.add(String.valueOf(counter));
 		args.add(String.valueOf(isInstructor));
-		args.addAll(extraArgs);
+		if (extraArgs != null) {
+			for (String arg : extraArgs) {
+				args.add(arg != null ? arg : "");
+			}
+		}
 
 		// Use the first extra argument as timeout
 		if (!extraArgs.isEmpty()) {
