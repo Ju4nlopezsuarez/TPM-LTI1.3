@@ -760,8 +760,8 @@ public class AssessServlet extends HttpServlet {
 					}
 				} else {
 					try {
-						extraArgs.add(
-								(String) ef.createValueExpression(elContext, token, String.class).getValue(elContext));
+						Object elValue = ef.createValueExpression(elContext, token, String.class).getValue(elContext);
+						extraArgs.add(elValue != null ? String.valueOf(elValue) : "");
 					} catch (final Exception e) {
 						logger.error("Error processing extraArgs {}: {}", token, e.getMessage());
 						extraArgs.add("");
