@@ -507,8 +507,7 @@ public class AssessServlet extends HttpServlet {
 							String secureId = SecurityUtil.getSecureSid(attempt);
 							out.println(
 									"<div class='resizer'><iframe class='resized outputframe' src='attempt/"
-											+ URLDecoder.decode(attempt.getResourceUser().getUser().getSourceId(),
-													StandardCharsets.UTF_8)
+											+ java.net.URLEncoder.encode(userId != null ? userId : "user", StandardCharsets.UTF_8).replace("+", "%20")
 											+ "/output/" + secureId + "'></iframe></div>");
 						} else {
 							// Copy to response
