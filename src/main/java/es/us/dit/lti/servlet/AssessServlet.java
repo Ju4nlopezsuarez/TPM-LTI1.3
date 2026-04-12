@@ -360,9 +360,13 @@ public class AssessServlet extends HttpServlet {
 	
 							logger.info("{}:{} > {} > concurrence={}", tool.getName(), counter, userId,
 									concurrentUsers.size());
-							// This can also be done asynchronously. Keep it in mind in the future.
-							scoreInt = executer.exec(userFilePath, outputPath, userId, filename, counter, isInstructor,
-									extraArgs, 60); // 1 minute max correction
+							try {
+								scoreInt = executer.exec(userFilePath, outputPath, userId, filename, counter, isInstructor,
+										extraArgs, 60); // 1 minute max correction
+							} catch (Throwable t) {
+								scoreInt = ToolRunner.ERROR_RUNNER_EXCEPTION;
+								logger.error("FATAL ERROR during ToolRunner.exec for tool {}: {}", tool.getName(), t.getMessage(), t);
+							}
 							logger.info("{}:{} > {} > result={}", tool.getName(), counter, userId, scoreInt);
 							
 							// Output of execution
