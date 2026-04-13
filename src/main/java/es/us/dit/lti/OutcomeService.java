@@ -598,7 +598,7 @@ public final class OutcomeService {
 					"  \"gradingProgress\": \"FullyGraded\",\n" +
 					"  \"userId\": \"" + userId + "\"\n" +
 					"}";
-			logger.info("\nEnviando Nota a URL: " + url + "\nPayload:\n" + jsonPayload + "\n");
+			logger.info("Enviando Nota a URL: " + url + "\nPayload:\n" + jsonPayload + "\n");
 			// El Content-Type DEBE ser exactamente este por estándar:
 			StringEntity entity = new StringEntity(jsonPayload,
 					ContentType.create("application/vnd.ims.lis.v1.score+json", "UTF-8"));
