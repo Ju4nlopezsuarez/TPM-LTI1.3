@@ -63,6 +63,8 @@ import es.us.dit.lti.persistence.ToolDao;
 import es.us.dit.lti.runner.ToolRunner;
 import es.us.dit.lti.runner.ToolRunnerFactory;
 import es.us.dit.lti.runner.ToolRunnerType;
+import es.us.dit.lti.persistence.KeyService;
+
 import jakarta.el.ELContext;
 import jakarta.el.ExpressionFactory;
 import jakarta.servlet.ServletException;
@@ -345,7 +347,14 @@ public class AssessServlet extends HttpServlet {
 					out.println(formatError(text.get("T_ERROR_AUTORIZACION")));
 				} else if (userFilePath != null && filename != null) {
 					int scoreInt = 1000;
+					logger.info("Diagnostico para debug");
+					logger.info("¿Está permitido enviar notas (isOutcomeAllowed)? : " + ts.isOutcomeAllowed());
+					logger.info("¿El ResourceUser es nulo? : " + (ts.getLtiResourceUser() == null));
 					final boolean nocal = !ts.isOutcomeAllowed();
+					if (!ts.isOutcomeAllowed()) {
+						logger.warn(
+								"El LMS (LTI-RI) NO envió el claim de calificaciones en el JWT de inicio (https://purl.imsglobal.org/spec/lti-ags/claim/endpoint).");
+					}
 					final File resultFile = new File(outputPath);
 					if (maxConcurrencyOnlyStoreMode) {
 						scoreInt = ToolRunner.ERROR_CONCURRENT_EXCEPTION;
@@ -436,6 +445,9 @@ public class AssessServlet extends HttpServlet {
 						out.println(formatError(text.get("T_ERROR_GENERIC") + " " + scoreInt));
 						attempt.setErrorCode(scoreInt);
 					} else if (!nocal && ts.getLtiResourceUser() != null) {
+						logger.info("Flujo LTI 1.3 Iniciado");
+						logger.info("Client ID: " + ts.getLti13ClientId());
+						logger.info("Resource User SID: " + ts.getLtiResourceUser().getSid());
 						attempt.setScore(scoreInt);
 						if (isInstructor) {
 							// Instructor is only testing
@@ -454,13 +466,12 @@ public class AssessServlet extends HttpServlet {
 									es.us.dit.lti.persistence.Lti13ToolConfig config = lti13Dao
 											.findByClientId(ts.getLti13ClientId());
 									if (config != null) {
-										es.us.dit.lti.persistence.KeyService keyService = new es.us.dit.lti.persistence.KeyService();
-										if (es.us.dit.lti.persistence.KeyService.getDbUtil() == null) {
-											es.us.dit.lti.persistence.KeyService
-													.setDbUtil(es.us.dit.lti.persistence.ToolAttemptDao.getDbUtil());
+										KeyService keyService = new KeyService();
+										if (KeyService.getDbUtil() == null) {
+											KeyService.setDbUtil(ToolAttemptDao.getDbUtil());
 										}
 										String kid = keyService.getFirstKid(); // Recuperamos el Key ID
-
+										// logger.info("URL de la columna de notas (LineItem) "+ ts.getLineItemUrl());
 										outcomeSuccess = OutcomeService.writeLti13Outcome(
 												ts.getLtiResourceUser(),
 												ts.getLti13ClientId(),
