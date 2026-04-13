@@ -537,22 +537,14 @@ public final class OutcomeService {
 					post.setEntity(
 							new UrlEncodedFormEntity(params, StandardCharsets.UTF_8));
 
-					// Debug del payload
-					String payloadDebug = EntityUtils.toString(post.getEntity());
-					System.out.println("====== PAYLOAD ENVIADO ======");
-					System.out.println(payloadDebug);
-					System.out.println("=============================");
 					// Ejecutar petición
 					try (CloseableHttpResponse response = client.execute(post)) {
 						int statusCode = response.getStatusLine().getStatusCode();
 						HttpEntity entity = response.getEntity();
 						String body = entity != null ? EntityUtils.toString(entity, StandardCharsets.UTF_8)
 								: "EMPTY_BODY";
-
-						System.out.println("====== LTI 1.3 TOKEN DEBUG ======");
-						System.out.println("STATUS: " + statusCode);
-						System.out.println("RESPONSE BODY: " + body);
-						System.out.println("=================================");
+						System.out.println("Estado: " + statusCode);
+						System.out.println("Cuerpo de Respuesta: " + body);
 
 						if (statusCode >= 400) {
 							logger.error("Fallo OAuth. Body crudo del LMS: " + body);
@@ -606,7 +598,7 @@ public final class OutcomeService {
 					"  \"gradingProgress\": \"FullyGraded\",\n" +
 					"  \"userId\": \"" + userId + "\"\n" +
 					"}";
-			logger.info("\n=== ENVIANDO NOTA LTI 1.3 A SALTIRE ===\nURL: " + url + "\nPayload:\n" + jsonPayload + "\n");
+			logger.info("\nEnviando Nota a URL: " + url + "\nPayload:\n" + jsonPayload + "\n");
 			// El Content-Type DEBE ser exactamente este por estándar:
 			StringEntity entity = new StringEntity(jsonPayload,
 					ContentType.create("application/vnd.ims.lis.v1.score+json", "UTF-8"));
