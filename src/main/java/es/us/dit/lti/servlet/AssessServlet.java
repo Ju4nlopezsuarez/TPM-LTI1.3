@@ -351,7 +351,7 @@ public class AssessServlet extends HttpServlet {
 					logger.info("¿Está permitido enviar notas (isOutcomeAllowed)? : " + ts.isOutcomeAllowed());
 					logger.info("¿El ResourceUser es nulo? : " + (ts.getLtiResourceUser() == null));
 					final boolean nocal = !ts.isOutcomeAllowed();
-					if (!ts.isOutcomeAllowed()) {
+					if (!nocal) {
 						logger.warn(
 								"El LMS (LTI-RI) NO envió el claim de calificaciones en el JWT de inicio (https://purl.imsglobal.org/spec/lti-ags/claim/endpoint).");
 					}
