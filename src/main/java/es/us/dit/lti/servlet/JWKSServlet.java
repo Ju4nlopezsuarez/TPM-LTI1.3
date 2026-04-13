@@ -2,6 +2,7 @@ package es.us.dit.lti.servlet;
 
 import es.us.dit.lti.persistence.KeyService;
 import com.nimbusds.jose.jwk.JWKSet;
+import com.google.gson.Gson;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -34,8 +35,8 @@ public class JWKSServlet extends HttpServlet {
             KeyService keyService = new KeyService();
 
             JWKSet publicKeys = keyService.getPublicJWKSet();
-
-            out.print(publicKeys.toJSONObject().toString());
+            Gson gson = new Gson();
+            out.print(gson.toJson(publicKeys.toJSONObject()));
 
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
