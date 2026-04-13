@@ -480,8 +480,8 @@ public final class OutcomeService {
 		final HttpEntity httpEntity = response.getEntity();
 		if (httpEntity != null) {
 			fileContent = EntityUtils.toString(httpEntity, StandardCharsets.UTF_8);
-			if (fileContent != null && fileContent.isEmpty()) {
-				fileContent = null;
+			if (fileContent != null) {
+				logger.info("Cuerpo de Respuesta: " + fileContent);
 			}
 		}
 
