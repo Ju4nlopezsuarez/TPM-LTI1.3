@@ -493,7 +493,7 @@ public final class OutcomeService {
 				fileContent = EntityUtils.toString(httpEntity, StandardCharsets.UTF_8);
 			}
 			logger.error("HTTP error response: " + resp);
-			logger.error("Motivo del rechazo del LMS: " + fileContent + "\n");
+			// logger.error("Motivo del rechazo del LMS: " + fileContent + "\n");
 			fileContent = null; // Devolvemos null para que la app sepa que falló de verdad
 		}
 		return fileContent;
