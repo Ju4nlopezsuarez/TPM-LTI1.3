@@ -444,6 +444,7 @@ public final class OutcomeService {
 			fileContent = processHttpResponse(response);
 
 		} catch (IOException | URISyntaxException e) {
+			logger.error("Network or URI Error during sendRequest to " + url, e);
 			fileContent = null;
 		}
 		httpPost.releaseConnection();
@@ -464,25 +465,19 @@ public final class OutcomeService {
 	private static String processHttpResponse(HttpResponse response) throws IOException {
 		String fileContent = null;
 		final int resp = response.getStatusLine().getStatusCode();
-		if (resp < 400) {
-			final HttpEntity httpEntity = response.getEntity();
-			if (!httpEntity.isChunked()) {
-				final long len = response.getEntity().getContentLength();
-				if (len > 0 && len < 65535) {
-					fileContent = EntityUtils.toString(response.getEntity());
-				} else {
-					// invalid response
-					fileContent = null;
-				}
-			} else {
-				fileContent = EntityUtils.toString(response.getEntity());
-				if (fileContent.isEmpty()) {
-					fileContent = null;
-				}
+		
+		final HttpEntity httpEntity = response.getEntity();
+		if (httpEntity != null) {
+			fileContent = EntityUtils.toString(httpEntity, StandardCharsets.UTF_8);
+			if (fileContent != null && fileContent.isEmpty()) {
+				fileContent = null;
 			}
-		}else {
+		}
+
+		if (resp >= 400) {
 			logger.error("HTTP error response: " + resp);
-			logger.error("Motivo del rechazo del LMS: " + fileContent+"\n");
+			logger.error("Motivo del rechazo del LMS: " + fileContent + "\n");
+			fileContent = null; // Return null so callers know it failed
 		}
 		return fileContent;
 	}
@@ -576,8 +571,18 @@ public final class OutcomeService {
 
 			// Adaptar la URL si es necesario
 			String scoreUrl = url;
-			if (!scoreUrl.endsWith("/scores")) {
-				scoreUrl += "/scores"; 
+			try {
+				URIBuilder ub = new URIBuilder(url);
+				String path = ub.getPath();
+				if (path != null && !path.endsWith("/scores")) {
+					ub.setPath(path + "/scores");
+				}
+				scoreUrl = ub.build().toString();
+			} catch (URISyntaxException e) {
+				logger.error("Invalid AGS URL: {}", url);
+				if (!scoreUrl.endsWith("/scores")) {
+					scoreUrl += "/scores"; 
+				}
 			}
 			
 			// Enviar la nota
