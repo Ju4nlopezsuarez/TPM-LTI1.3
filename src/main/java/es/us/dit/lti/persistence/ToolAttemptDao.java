@@ -72,12 +72,10 @@ public final class ToolAttemptDao {
 	private static final String SQL_GET_BY_SID = "SELECT resource_user_sid, original_ru_sid, epoch_seconds, nanoseconds, fileSaved, outputSaved,"
 			+ " filename, storage_type, score, errorCode, " + ToolConsumerUserDao.LTI_USER_TABLE_NAME
 			+ ".sid, source_id, " + ToolResourceLinkDao.RL_TABLE_NAME + ".sid, tool_key_sid FROM " + AT_TABLE_NAME
-			+ "," + ToolResourceLinkDao.RL_TABLE_NAME + "," + ToolResourceUserDao.RU_TABLE_NAME + ","
-			+ ToolConsumerUserDao.LTI_USER_TABLE_NAME + " WHERE " + AT_TABLE_NAME + ".sid = ?"
-			+ " AND resource_user_sid=" + ToolResourceUserDao.RU_TABLE_NAME + ".sid AND "
-			+ ToolResourceUserDao.RU_TABLE_NAME + ".resource_sid=" + ToolResourceLinkDao.RL_TABLE_NAME + ".sid AND "
-			+ ToolResourceUserDao.RU_TABLE_NAME + ".lti_user_sid=" + ToolConsumerUserDao.LTI_USER_TABLE_NAME
-			+ ".sid";
+			+ " JOIN " + ToolResourceUserDao.RU_TABLE_NAME + " ON resource_user_sid=" + ToolResourceUserDao.RU_TABLE_NAME + ".sid"
+			+ " JOIN " + ToolResourceLinkDao.RL_TABLE_NAME + " ON " + ToolResourceUserDao.RU_TABLE_NAME + ".resource_sid=" + ToolResourceLinkDao.RL_TABLE_NAME + ".sid"
+			+ " LEFT JOIN " + ToolConsumerUserDao.LTI_USER_TABLE_NAME + " ON " + ToolResourceUserDao.RU_TABLE_NAME + ".lti_user_sid=" + ToolConsumerUserDao.LTI_USER_TABLE_NAME + ".sid"
+			+ " WHERE " + AT_TABLE_NAME + ".sid = ?";
 
 	/**
 	 * SQL statement to get an attempt by the serial ID of the resource user and its
@@ -141,12 +139,11 @@ public final class ToolAttemptDao {
 	private static final String SQL_GET_ALL_TK = "SELECT " + AT_TABLE_NAME
 			+ ".sid, resource_user_sid, original_ru_sid, epoch_seconds, nanoseconds, fileSaved, outputSaved, "
 			+ "filename, storage_type, score, errorCode, " + ToolConsumerUserDao.LTI_USER_TABLE_NAME + ".sid, source_id FROM "
-			+ AT_TABLE_NAME + "," + ToolResourceLinkDao.RL_TABLE_NAME + ","
-			+ ToolResourceUserDao.RU_TABLE_NAME + "," + ToolConsumerUserDao.LTI_USER_TABLE_NAME
-			+ " WHERE resource_user_sid=" + ToolResourceUserDao.RU_TABLE_NAME + ".sid AND "
-			+ ToolResourceUserDao.RU_TABLE_NAME + ".resource_sid=" + ToolResourceLinkDao.RL_TABLE_NAME + ".sid AND "
-			+ ToolResourceUserDao.RU_TABLE_NAME + ".lti_user_sid=" + ToolConsumerUserDao.LTI_USER_TABLE_NAME
-			+ ".sid AND " + ToolResourceLinkDao.RL_TABLE_NAME
+			+ AT_TABLE_NAME
+			+ " JOIN " + ToolResourceUserDao.RU_TABLE_NAME + " ON resource_user_sid=" + ToolResourceUserDao.RU_TABLE_NAME + ".sid"
+			+ " JOIN " + ToolResourceLinkDao.RL_TABLE_NAME + " ON " + ToolResourceUserDao.RU_TABLE_NAME + ".resource_sid=" + ToolResourceLinkDao.RL_TABLE_NAME + ".sid"
+			+ " LEFT JOIN " + ToolConsumerUserDao.LTI_USER_TABLE_NAME + " ON " + ToolResourceUserDao.RU_TABLE_NAME + ".lti_user_sid=" + ToolConsumerUserDao.LTI_USER_TABLE_NAME + ".sid"
+			+ " WHERE " + ToolResourceLinkDao.RL_TABLE_NAME
 			+ ".tool_key_sid=? ORDER BY epoch_seconds ASC, nanoseconds ASC, " + AT_TABLE_NAME + ".sid ASC";
 
 	/**
@@ -612,11 +609,20 @@ public final class ToolAttemptDao {
 		final SecurityUtil.SecuredSid sSid = SecurityUtil.getPlainSecuredSid(securedSid, AT_SERIAL_VERSION_UID);
 		if (sSid.sid > 0) {
 			attempt = getBySid(sSid.sid);
-			if (attempt == null || sSid.verifier != attempt.getInstant().toEpochMilli()
-					|| attempt.getResourceUser().getResourceLink().getToolKey().getSid() != tk.getSid()) { 
-				// Error
+			if (attempt == null) {
+				logger.error("getBySecuredSid: getBySid({}) returned null!", sSid.sid);
+			} else if (sSid.verifier != attempt.getInstant().toEpochMilli()) {
+				logger.error("getBySecuredSid: Verifier mistmatch! sSid.verifier={} vs attempt.toEpochMilli={}", sSid.verifier, attempt.getInstant().toEpochMilli());
 				attempt = null;
+			} else if (attempt.getResourceUser().getResourceLink().getToolKey().getSid() != 0 && attempt.getResourceUser().getResourceLink().getToolKey().getSid() != tk.getSid()) { 
+				logger.error("getBySecuredSid: ToolKey mistmatch! attempt tk={} vs required tk={}", attempt.getResourceUser().getResourceLink().getToolKey().getSid(), tk.getSid());
+				attempt = null;
+			} else if (attempt.getResourceUser().getResourceLink().getToolKey().getSid() == 0) {
+				logger.info("getBySecuredSid: attempt tk is 0, assuming dynamically mapped tk={} for sid={}", tk.getSid(), sSid.sid);
+				attempt.getResourceUser().getResourceLink().setToolKey(tk);
 			}
+		} else {
+			logger.error("getBySecuredSid: plain secured sid is <= 0: {}", sSid.sid);
 		}
 		return attempt;
 	}

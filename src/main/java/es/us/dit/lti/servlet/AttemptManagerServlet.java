@@ -137,8 +137,14 @@ public class AttemptManagerServlet extends HttpServlet {
 		if (uid != null && cipheredSid != null && tool != null) {
 			uid = URLDecoder.decode(uid, StandardCharsets.UTF_8);
 			final Attempt attempt = ToolAttemptDao.getBySecuredSid(cipheredSid, ts.getToolKey());
+			if (attempt == null) {
+				logger.error("Attempt is null for cipheredSid {}", cipheredSid);
+			} else if (ts.getLtiResourceUser() != null && attempt.getResourceUser() != null) {
+				logger.info("Attempt ok. uid equals userId: {}. RU match: {}", uid.equals(userId), ts.getLtiResourceUser().getSid() == attempt.getResourceUser().getSid());
+			}
+
 			if (attempt != null && (uid.equals(userId)
-					&& ts.getLtiResourceUser().getUser().getSid() == attempt.getResourceUser().getUser().getSid()
+					&& ts.getLtiResourceUser().getSid() == attempt.getResourceUser().getSid()
 					|| request.getServletPath().equals("/instructor/attempt")
 							&& tool.getToolUiConfig().isManageAttempts())) {
 				attempt.getResourceUser().getResourceLink().setTool(tool);

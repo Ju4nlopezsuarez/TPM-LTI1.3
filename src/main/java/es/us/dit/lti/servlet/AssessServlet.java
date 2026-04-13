@@ -82,9 +82,7 @@ import jakarta.servlet.jsp.PageContext;
  * @author Francisco José Fernández Jiménez
  */
 @WebServlet({ "/learner/assess" })
-@MultipartConfig(fileSizeThreshold = 1024 * 1024,
-	maxFileSize = 1024 * 1024 * 5, 
-	maxRequestSize = 1024 * 1024 * 5 * 5)
+@MultipartConfig(fileSizeThreshold = 1024 * 1024, maxFileSize = 1024 * 1024 * 5, maxRequestSize = 1024 * 1024 * 5 * 5)
 public class AssessServlet extends HttpServlet {
 	/**
 	 * Serializable requirement.
@@ -115,8 +113,7 @@ public class AssessServlet extends HttpServlet {
 	 * Number of concurrent users being assessed.
 	 */
 	private final SortedSet<String> concurrentUsers = Collections.synchronizedSortedSet(new TreeSet<String>());
-	
-	
+
 	/**
 	 * Processes an assessment or redirect attempt.
 	 *
@@ -143,7 +140,7 @@ public class AssessServlet extends HttpServlet {
 		final MessageMap text = (MessageMap) session.getAttribute("text");
 		boolean isReassessment = false;
 		boolean maxConcurrencyOnlyStoreMode = false;
-		
+
 		if (tool != null && userId != null && (ts.isLearner() || isInstructor)) {
 
 			// Use of streaming API
@@ -190,7 +187,7 @@ public class AssessServlet extends HttpServlet {
 							logger.error("Max. concurrent users: {}", concurrentUsers.size());
 							if (tui.isKeepFiles()
 									&& tool.getEnabledUntil() != null
-									&& tool.getToolUiConfig().getMaxConcurrentUsers() != 0 
+									&& tool.getToolUiConfig().getMaxConcurrentUsers() != 0
 									&& !tool.isEnabledByDate(Calendar.getInstance(), -DEFAULT_GRACE_TIME * 2)) {
 								// If the remaining time is short and the files must be saved, we activate this
 								// mode (if global limit is not reached)
@@ -219,8 +216,9 @@ public class AssessServlet extends HttpServlet {
 					if (iter.hasNext()) {
 						item = iter.next();
 						if (item.getName().equals("launchId")) {
-							//Not file
-							final String receivedLaunchId = new String(item.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+							// Not file
+							final String receivedLaunchId = new String(item.getInputStream().readAllBytes(),
+									StandardCharsets.UTF_8);
 							final String launchId = ts.getLaunchId();
 							if (receivedLaunchId.equals(launchId)) {
 								validated = true;
@@ -252,7 +250,7 @@ public class AssessServlet extends HttpServlet {
 
 							// File or field
 							if (item.getContentType() == null) {
-								//not file
+								// not file
 								if (item.getName().equals("password")) {
 									final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 									item.getInputStream().transferTo(baos);
@@ -260,7 +258,8 @@ public class AssessServlet extends HttpServlet {
 									if (tool.getDeliveryPassword().equals(baos.toString(StandardCharsets.UTF_8))) {
 										validDeliveryPassword = true;
 									} else if (!validDeliveryPassword) {
-										logger.warn("Tool {} User {}: incorrect delivery password", tool.getName(), userId);
+										logger.warn("Tool {} User {}: incorrect delivery password", tool.getName(),
+												userId);
 									}
 								} else if (item.getName().equals("sid") && isInstructor
 										&& tui.isManageAttempts()) {
@@ -280,6 +279,7 @@ public class AssessServlet extends HttpServlet {
 										attempt.setOriginalResourceUser(originalAttempt.getResourceUser());
 										attempt.setFileName(originalAttempt.getFileName());
 										attempt.setInstant(originalAttempt.getInstant());
+										// attempt.setToolKeyId(originalAttempt.getId());
 										userFilePath = originalAttempt.getUserFilePath(); // original
 										final File archivoServer = new File(userFilePath);
 										if (archivoServer.exists() && archivoServer.isFile()) {
@@ -294,6 +294,7 @@ public class AssessServlet extends HttpServlet {
 											// Copy sid in case user is the original user, because no new attempt will
 											// be created
 											attempt.setSid(originalAttempt.getSid());
+											attempt.setInstant(originalAttempt.getInstant());
 											isReassessment = true;
 										} else {
 											userFilePath = null;
@@ -357,18 +358,20 @@ public class AssessServlet extends HttpServlet {
 							final int counter = ToolDao.incrementCounter(tool);
 							// Add extra arguments
 							final List<String> extraArgs = generateExtraArguments(request, ts);
-	
+
 							logger.info("{}:{} > {} > concurrence={}", tool.getName(), counter, userId,
 									concurrentUsers.size());
 							try {
-								scoreInt = executer.exec(userFilePath, outputPath, userId, filename, counter, isInstructor,
+								scoreInt = executer.exec(userFilePath, outputPath, userId, filename, counter,
+										isInstructor,
 										extraArgs, 60); // 1 minute max correction
 							} catch (Throwable t) {
 								scoreInt = ToolRunner.ERROR_RUNNER_EXCEPTION;
-								logger.error("FATAL ERROR during ToolRunner.exec for tool {}: {}", tool.getName(), t.getMessage(), t);
+								logger.error("FATAL ERROR during ToolRunner.exec for tool {}: {}", tool.getName(),
+										t.getMessage(), t);
 							}
 							logger.info("{}:{} > {} > result={}", tool.getName(), counter, userId, scoreInt);
-							
+
 							// Output of execution
 							if (resultFile.exists() && resultFile.length() > 0) {
 								attempt.setOutputSaved(true);
@@ -436,32 +439,34 @@ public class AssessServlet extends HttpServlet {
 						attempt.setScore(scoreInt);
 						if (isInstructor) {
 							// Instructor is only testing
-							out.println("<p id='score'><strong>(TEST) " + text.get("T_NOTA") + ":</strong> " 
+							out.println("<p id='score'><strong>(TEST) " + text.get("T_NOTA") + ":</strong> "
 									+ String.format("%.1f", scoreInt * 0.1)
 									+ "</p>");
 							attempt.setErrorCode(OK_WITHOUT_OUTCOME);
-							} else {
+						} else {
 							boolean outcomeSuccess = false;
 							String scoreStr = String.valueOf(scoreInt * 0.01);
-							
+
 							if (ts.getLti13ClientId() != null) {
 								// === FLUJO LTI 1.3 (AGS 2.0) ===
 								try {
 									es.us.dit.lti.persistence.ToolLti13Dao lti13Dao = new es.us.dit.lti.persistence.ToolLti13Dao();
-									es.us.dit.lti.persistence.Lti13ToolConfig config = lti13Dao.findByClientId(ts.getLti13ClientId());
+									es.us.dit.lti.persistence.Lti13ToolConfig config = lti13Dao
+											.findByClientId(ts.getLti13ClientId());
 									if (config != null) {
 										es.us.dit.lti.persistence.KeyService keyService = new es.us.dit.lti.persistence.KeyService();
-										if(es.us.dit.lti.persistence.KeyService.getDbUtil() == null) {
-											es.us.dit.lti.persistence.KeyService.setDbUtil(new es.us.dit.lti.persistence.DbUtilSingleConnection());
+										if (es.us.dit.lti.persistence.KeyService.getDbUtil() == null) {
+											es.us.dit.lti.persistence.KeyService
+													.setDbUtil(es.us.dit.lti.persistence.ToolAttemptDao.getDbUtil());
 										}
 										String kid = keyService.getFirstKid(); // Recuperamos el Key ID
-										
+
 										outcomeSuccess = OutcomeService.writeLti13Outcome(
-												ts.getLtiResourceUser(), 
-												ts.getLti13ClientId(), 
-												config.getTokenUrl(), 
-												kid, 
-												scoreStr, 
+												ts.getLtiResourceUser(),
+												ts.getLti13ClientId(),
+												config.getTokenUrl(),
+												kid,
+												scoreStr,
 												"1.0");
 									}
 								} catch (Exception e) {
@@ -469,7 +474,8 @@ public class AssessServlet extends HttpServlet {
 								}
 							} else {
 								// === FLUJO LTI 1.1 (Clásico XML) ===
-								outcomeSuccess = OutcomeService.writeOutcome(ts.getLtiResourceUser(), ts.getToolKey(), scoreStr);
+								outcomeSuccess = OutcomeService.writeOutcome(ts.getLtiResourceUser(), ts.getToolKey(),
+										scoreStr);
 							}
 
 							// Evaluamos si el envío fue un éxito en cualquiera de los dos estándares
@@ -483,7 +489,6 @@ public class AssessServlet extends HttpServlet {
 								attempt.setErrorCode(ToolRunner.ERROR_WRITE_OUTCOME);
 							}
 						}
-					
 
 					} else {
 						attempt.setScore(scoreInt);
@@ -499,6 +504,8 @@ public class AssessServlet extends HttpServlet {
 						if (aux == null) {
 							ToolAttemptDao.create(attempt);
 						}
+					} else {
+						ToolAttemptDao.update(attempt);
 					}
 					// Send output
 					if (resultFile.exists() && resultFile.length() > 0) {
@@ -507,7 +514,9 @@ public class AssessServlet extends HttpServlet {
 							String secureId = SecurityUtil.getSecureSid(attempt);
 							out.println(
 									"<div class='resizer'><iframe class='resized outputframe' src='attempt/"
-											+ java.net.URLEncoder.encode(userId != null ? userId : "user", StandardCharsets.UTF_8).replace("+", "%20")
+											+ java.net.URLEncoder
+													.encode(userId != null ? userId : "user", StandardCharsets.UTF_8)
+													.replace("+", "%20")
 											+ "/output/" + secureId + "'></iframe></div>");
 						} else {
 							// Copy to response
@@ -576,7 +585,7 @@ public class AssessServlet extends HttpServlet {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Adds user to concurrent users set (ignoring tool).
 	 *
@@ -699,7 +708,8 @@ public class AssessServlet extends HttpServlet {
 	private void printDebug(HttpServletRequest request) {
 		final StringBuilder sb = new StringBuilder();
 		// List all accessible parameters
-		sb.append("Tool properties (ts.tool): name, description, " + "deliveryPassword, enabled, enabledFrom, enabledUntil, "
+		sb.append("Tool properties (ts.tool): name, description, "
+				+ "deliveryPassword, enabled, enabledFrom, enabledUntil, "
 				+ "outcome, extraArgs, counter\n");
 		sb.append("Request attributes: ");
 		Enumeration<String> names = request.getAttributeNames();
@@ -803,7 +813,7 @@ public class AssessServlet extends HttpServlet {
 	private String formatError(String error) {
 		return "<p class='error'>" + error + "</p>";
 	}
-	
+
 	/**
 	 * Clean output error file but do not delete output file yet.
 	 *
