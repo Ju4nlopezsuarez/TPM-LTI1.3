@@ -507,28 +507,50 @@ public final class OutcomeService {
 			// Generar el JWT firmado (Client Assertion)
 			String clientAssertion = SecurityUtil.createLti13ClientAssertion(clientId, tokenUrl, privateKey, kid);
 
-			// Preparar la petición POST
-			List<NameValuePair> params = new ArrayList<>();
-			params.add(new BasicNameValuePair("grant_type", "client_credentials"));
-			params.add(new BasicNameValuePair("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"));
-			params.add(new BasicNameValuePair("client_assertion", clientAssertion));
-			// Solicitamos permiso exclusivo para publicar notas:
-			params.add(new BasicNameValuePair("scope", scope));
-
-			// Enviar la petición usando el método que ya tienes programado
-			String response = sendRequest(tokenUrl, params, null, null);
-			
-			// Extraer el "access_token" del JSON de respuesta
-			if (response != null && response.contains("\"access_token\"")) {
-				// Usamos el parser de Nimbus (que ya tienes como dependencia)
-					Map<String, Object> jsonMap = JSONObjectUtils.parse(response);
-					accessToken = (String) jsonMap.get("access_token");
-			}else{
-				logger.error("LTI 1.3 Error: Respuesta inválida al solicitar Access Token. Respuesta: " + response);
+			// Petición HTTP POST en línea usando Apache HttpClient tal y como lo requiere el usuario
+			try (org.apache.http.impl.client.CloseableHttpClient client = org.apache.http.impl.client.HttpClients.createDefault()) {
+				org.apache.http.client.methods.HttpPost post = new org.apache.http.client.methods.HttpPost(tokenUrl);
+				
+				// Añadir cabecera
+				post.setHeader("Content-Type", "application/x-www-form-urlencoded");
+				
+				// Añadir parámetros
+				List<NameValuePair> params = new ArrayList<>();
+				params.add(new BasicNameValuePair("grant_type", "client_credentials"));
+				params.add(new BasicNameValuePair("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"));
+				params.add(new BasicNameValuePair("client_assertion", clientAssertion));
+				params.add(new BasicNameValuePair("scope", scope));
+				
+				post.setEntity(new UrlEncodedFormEntity(params, StandardCharsets.UTF_8));
+				
+				// Ejecutar petición
+				try (org.apache.http.client.methods.CloseableHttpResponse response = client.execute(post)) {
+					int statusCode = response.getStatusLine().getStatusCode();
+					HttpEntity entity = response.getEntity();
+					String body = entity != null ? EntityUtils.toString(entity, StandardCharsets.UTF_8) : "EMPTY_BODY";
+					
+					System.out.println("====== LTI 1.3 TOKEN DEBUG ======");
+					System.out.println("STATUS: " + statusCode);
+					System.out.println("RESPONSE BODY: " + body);
+					System.out.println("=================================");
+					
+					if (statusCode >= 400) {
+						logger.error("Fallo OAuth. Body crudo del LMS: " + body);
+						return null; // Salimos después de haber impreso el error
+					}
+					
+					if (body != null && body.contains("\"access_token\"")) {
+						Map<String, Object> jsonMap = JSONObjectUtils.parse(body);
+						accessToken = (String) jsonMap.get("access_token");
+					} else {
+						logger.error("LTI 1.3 Error: Respuesta no contiene access_token. Body: " + body);
+					}
+				}
 			}
-		}
+			} // closes else
 		} catch (Exception e) {
 			logger.error("Error obteniendo el Access Token LTI 1.3", e);
+			e.printStackTrace();
 		}
 		return accessToken;
 	}
