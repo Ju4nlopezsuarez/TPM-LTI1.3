@@ -1187,16 +1187,16 @@ public final class ToolSession implements Serializable {
 						// Asegurar que la herramienta está cargada en memoria y vinculada
 						if (this.tool != null) {
 							if (this.resourceLink.getTool() == null || this.resourceLink.getTool().getSid() != this.tool.getSid()) {
-								this.resourceLink.setTool(this.tool);
 								linkChanged = true;
 							}
+							this.resourceLink.setTool(this.tool);
 						}
 						// Asegurar que la toolKey está cargada en memoria y vinculada
 						if (this.toolKey != null) {
 							if (this.resourceLink.getToolKey() == null || this.resourceLink.getToolKey().getSid() != this.toolKey.getSid()) {
-								this.resourceLink.setToolKey(this.toolKey);
 								linkChanged = true;
 							}
+							this.resourceLink.setToolKey(this.toolKey);
 						}
 						// Si existe, lo usamos y actualizamos el título si ha cambiado
 						if (!this.resourceLink.getTitle().equals(resourceLinkTitle)) {
