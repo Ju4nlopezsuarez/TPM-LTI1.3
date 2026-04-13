@@ -476,21 +476,27 @@ public final class OutcomeService {
 	private static String processHttpResponse(HttpResponse response) throws IOException {
 		String fileContent = null;
 		final int resp = response.getStatusLine().getStatusCode();
-
-		final HttpEntity httpEntity = response.getEntity();
-		if (httpEntity != null) {
-			fileContent = EntityUtils.toString(httpEntity, StandardCharsets.UTF_8);
-			if (fileContent != null) {
-				logger.info("Cuerpo de Respuesta: " + fileContent);
+		if (resp < 400) {
+			final HttpEntity httpEntity = response.getEntity();
+			if (httpEntity != null) {
+				fileContent = EntityUtils.toString(httpEntity, StandardCharsets.UTF_8);
+				if (fileContent == null || fileContent.isEmpty()) {
+					fileContent = "";
+				}
+			} else {
+				fileContent = "";
 			}
-		}
-
-		if (resp >= 400) {
+		} else {
+			final HttpEntity httpEntity = response.getEntity();
+			if (httpEntity != null) {
+				fileContent = EntityUtils.toString(httpEntity, StandardCharsets.UTF_8);
+			}
 			logger.error("HTTP error response: " + resp);
 			logger.error("Motivo del rechazo del LMS: " + fileContent + "\n");
-			fileContent = null; // Return null so callers know it failed
+			fileContent = null; // Devolvemos null para que la app sepa que falló de verdad
 		}
 		return fileContent;
+
 	}
 
 	/**
