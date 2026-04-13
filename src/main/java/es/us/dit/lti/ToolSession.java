@@ -1168,7 +1168,7 @@ public final class ToolSession implements Serializable {
 						if (this.tool != null) {
 							newLink.setTool(this.tool);
 						}
-						
+
 						// Si tenemos toolKey asignada, la vinculamos
 						if (this.toolKey != null) {
 							newLink.setToolKey(this.toolKey);
@@ -1186,14 +1186,16 @@ public final class ToolSession implements Serializable {
 						boolean linkChanged = false;
 						// Asegurar que la herramienta está cargada en memoria y vinculada
 						if (this.tool != null) {
-							if (this.resourceLink.getTool() == null || this.resourceLink.getTool().getSid() != this.tool.getSid()) {
+							if (this.resourceLink.getTool() == null
+									|| this.resourceLink.getTool().getSid() != this.tool.getSid()) {
 								linkChanged = true;
 							}
 							this.resourceLink.setTool(this.tool);
 						}
 						// Asegurar que la toolKey está cargada en memoria y vinculada
 						if (this.toolKey != null) {
-							if (this.resourceLink.getToolKey() == null || this.resourceLink.getToolKey().getSid() != this.toolKey.getSid()) {
+							if (this.resourceLink.getToolKey() == null
+									|| this.resourceLink.getToolKey().getSid() != this.toolKey.getSid()) {
 								linkChanged = true;
 							}
 							this.resourceLink.setToolKey(this.toolKey);
@@ -1203,7 +1205,7 @@ public final class ToolSession implements Serializable {
 							this.resourceLink.setTitle(resourceLinkTitle);
 							linkChanged = true;
 						}
-						
+
 						if (linkChanged) {
 							ToolResourceLinkDao.update(this.resourceLink);
 						}
@@ -1310,9 +1312,14 @@ public final class ToolSession implements Serializable {
 						// 'lineitem' es la URL específica donde enviaremos la nota
 						// La guardamos en la variable que OutcomeService antiguo seguramente ya usa.
 						String lineItemUrl = (String) agsClaim.get("lineitem");
+						if (lineItemUrl == null || lineItemUrl.isEmpty()) {
+							lineItemUrl = (String) agsClaim.get("lineitems");
+							logger.info("Usando 'lineitems' porque 'lineitem' es nulo: ");
+						}
+
 						if (lineItemUrl != null && !lineItemUrl.isEmpty()) {
 							this.lisOutcomeServiceUrl = lineItemUrl;
-							logger.debug("AGS LineItem URL guardada: " + lineItemUrl);
+							logger.info("AGS LineItem URL guardada: " + lineItemUrl);
 							if (this.resourceLink != null) {
 								this.resourceLink.setOutcomeServiceUrl(lineItemUrl);
 								ToolResourceLinkDao.update(this.resourceLink);

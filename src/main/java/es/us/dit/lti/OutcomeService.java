@@ -134,7 +134,8 @@ public final class OutcomeService {
 			String value, String maxValue) {
 		boolean result = false;
 		final String url = user.getResourceLink().getOutcomeServiceUrl();
-
+		logger.info("URL recibida: " + url);
+		logger.info("ClientID recibido: " + clientId);
 		if (url != null && !url.isEmpty()) {
 
 			// Control de nulos estructurado

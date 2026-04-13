@@ -64,6 +64,8 @@ import es.us.dit.lti.runner.ToolRunner;
 import es.us.dit.lti.runner.ToolRunnerFactory;
 import es.us.dit.lti.runner.ToolRunnerType;
 import es.us.dit.lti.persistence.KeyService;
+import es.us.dit.lti.persistence.ToolLti13Dao;
+import es.us.dit.lti.persistence.Lti13ToolConfig;
 
 import jakarta.el.ELContext;
 import jakarta.el.ExpressionFactory;
@@ -348,12 +350,12 @@ public class AssessServlet extends HttpServlet {
 				} else if (userFilePath != null && filename != null) {
 					int scoreInt = 1000;
 					logger.info("Diagnostico para debug");
-					logger.info("¿Está permitido enviar notas (isOutcomeAllowed)? : " + ts.isOutcomeAllowed());
+					logger.info("¿Está permitido enviar notas ? : " + ts.isOutcomeAllowed());
 					logger.info("¿El ResourceUser es nulo? : " + (ts.getLtiResourceUser() == null));
 					final boolean nocal = !ts.isOutcomeAllowed();
-					if (!nocal) {
+					if (nocal) {
 						logger.warn(
-								"El LMS (LTI-RI) NO envió el claim de calificaciones en el JWT de inicio (https://purl.imsglobal.org/spec/lti-ags/claim/endpoint).");
+								"El LMS NO envió el claim de calificaciones en el JWT de inicio (https://purl.imsglobal.org/spec/lti-ags/claim/endpoint).");
 					}
 					final File resultFile = new File(outputPath);
 					if (maxConcurrencyOnlyStoreMode) {
@@ -447,7 +449,9 @@ public class AssessServlet extends HttpServlet {
 					} else if (!nocal && ts.getLtiResourceUser() != null) {
 						logger.info("Flujo LTI 1.3 Iniciado");
 						logger.info("Client ID: " + ts.getLti13ClientId());
-						logger.info("Resource User SID: " + ts.getLtiResourceUser().getSid());
+						// logger.info("URL de Calificaciones (lisOutcomeServiceUrl): " +
+						// ts.getLisOutcomeServiceUrl());
+
 						attempt.setScore(scoreInt);
 						if (isInstructor) {
 							// Instructor is only testing
@@ -462,8 +466,8 @@ public class AssessServlet extends HttpServlet {
 							if (ts.getLti13ClientId() != null) {
 								// === FLUJO LTI 1.3 (AGS 2.0) ===
 								try {
-									es.us.dit.lti.persistence.ToolLti13Dao lti13Dao = new es.us.dit.lti.persistence.ToolLti13Dao();
-									es.us.dit.lti.persistence.Lti13ToolConfig config = lti13Dao
+									ToolLti13Dao lti13Dao = new ToolLti13Dao();
+									Lti13ToolConfig config = lti13Dao
 											.findByClientId(ts.getLti13ClientId());
 									if (config != null) {
 										KeyService keyService = new KeyService();
