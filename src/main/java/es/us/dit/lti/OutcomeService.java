@@ -23,6 +23,9 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.security.interfaces.RSAPrivateKey;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -41,21 +44,21 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestContent;
 import org.apache.http.protocol.RequestTargetHost;
 import org.apache.http.protocol.RequestUserAgent;
 import org.apache.http.util.EntityUtils;
 import org.apache.http.util.VersionInfo;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
@@ -64,14 +67,12 @@ import org.jdom2.input.SAXBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.util.JSONObjectUtils;
+
 import es.us.dit.lti.entity.ResourceUser;
 import es.us.dit.lti.entity.ToolKey;
 import es.us.dit.lti.persistence.KeyService;
-import com.nimbusds.jose.jwk.RSAKey;
-import com.nimbusds.jose.util.JSONObjectUtils;
-import java.security.interfaces.RSAPrivateKey;
-import java.time.Instant;
-import java.time.format.DateTimeFormatter;
 import net.oauth.OAuthAccessor;
 import net.oauth.OAuthConsumer;
 import net.oauth.OAuthException;
@@ -616,16 +617,22 @@ public final class OutcomeService {
 
 			// Adaptar la URL si es necesario
 			String scoreUrl = url;
+
 			try {
 				URIBuilder ub = new URIBuilder(url);
 				String path = ub.getPath();
-				if (path != null && !path.endsWith("/scores")) {
-					ub.setPath(path + "/scores");
+				if (path != null) {
+					if (path.endsWith("linteitems") || path.endsWith("line_items"))
+						logger.info("URL en plural");
+					else if (!path.endsWith("/scores")) {
+						ub.setPath(path + "/scores");
+						scoreUrl = ub.build().toString();
+					}
 				}
-				scoreUrl = ub.build().toString();
 			} catch (URISyntaxException e) {
 				logger.error("Invalid AGS URL: {}", url);
-				if (!scoreUrl.endsWith("/scores")) {
+				if (!scoreUrl.endsWith("/scores") && !scoreUrl.endsWith("/lineitems")
+						&& !scoreUrl.endsWith("/line_items")) {
 					scoreUrl += "/scores";
 				}
 			}
