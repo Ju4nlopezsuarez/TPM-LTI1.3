@@ -239,7 +239,9 @@ public class HttpToolRunner implements ToolRunner {
 	public int exec(String filePath, String outputPath, String userId, String originalFilename, int counter,
 			boolean isInstructor, List<String> extraArgs, long maxSecondsWait) {
 		int result = 0;
+		logger.info("¿La config 'tc' es nula? " + (tc == null));
 		if (tc != null && tc.getUrl() != null) {
+			logger.info("Ejecutando petición web hacia la URL: " + tc.getUrl());
 			final File output = new File(outputPath);
 			final File outputErr = new File(outputPath + Settings.OUTPUT_ERROR_EXT);
 			final ArrayList<String> args = new ArrayList<>();
@@ -267,11 +269,14 @@ public class HttpToolRunner implements ToolRunner {
 				// send HTTP request
 				try (CloseableHttpResponse response = (CloseableHttpResponse) client.execute(request);) {
 					// process response
+					logger.info("Procesando respuesta de la petición web hacia la URL: " + tc.getUrl());
 					result = processResponse(output, errorLog, response);
+					logger.info("Resultado: " + result);
 				}
 				t.cancel();
 			} catch (final IOException ioe) {
 				ioe.printStackTrace();
+				logger.error("ERROR AL CONECTAR CON PYTHON :", ioe);
 			}
 		}
 		return result;
