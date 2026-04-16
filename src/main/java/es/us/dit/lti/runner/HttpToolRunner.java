@@ -127,23 +127,28 @@ public class HttpToolRunner implements ToolRunner {
 	/**
 	 * Initializes tool runner.
 	 * 
-	 * <p><code>executionRestrictions</code> is ignored. <code>exeData</code> is the
+	 * <p>
+	 * <code>executionRestrictions</code> is ignored. <code>exeData</code> is the
 	 * file name of JSON serialized {@link HttpToolConfig}.
 	 */
 	@Override
 	public void init(String exeData, String executionRestrictions) {
 		// get working directory.
+		logger.info("Valor de exeData (Ruta): '" + exeData + "'");
 		final File ed = new File(exeData);
-
+		logger.info("¿Existe? " + ed.exists() + " | ¿Es archivo? " + ed.isFile()
+				+ " | ¿Se puede leer? " + ed.canRead());
 		if (ed.exists() && ed.isFile() && ed.canRead()) {
 			try {
 				tc = HttpToolConfig.fromString(new FileReader(ed, StandardCharsets.UTF_8));
 			} catch (final IOException e) {
 				// Ignore
 				tc = null;
+				logger.error("Excepción IOException al leer el archivo JSON: ", e);
 			}
 		}
 		if (tc != null) {
+			logger.info("El archivo JSON se ha convertido a HttpToolConfig. URL: " + tc.getUrl());
 			// debug
 			logger.debug("{}", tc);
 
@@ -373,7 +378,7 @@ public class HttpToolRunner implements ToolRunner {
 			if (requestBody != null) {
 				requestBody = replaceRequestTokens(requestBody, args);
 			}
-			parameters = new ArrayList<Entry>(); //clone 
+			parameters = new ArrayList<Entry>(); // clone
 			for (final Entry e : tc.getParameters()) {
 				if (!e.literal) {
 					Entry m = new Entry();
@@ -384,7 +389,7 @@ public class HttpToolRunner implements ToolRunner {
 					parameters.add(e);
 				}
 			}
-			headers = new ArrayList<Entry>(); //clone
+			headers = new ArrayList<Entry>(); // clone
 			for (final Entry e : tc.getHeaders()) {
 				if (!e.literal) {
 					Entry m = new Entry();
@@ -490,7 +495,8 @@ public class HttpToolRunner implements ToolRunner {
 	/**
 	 * Factory method to get the proper object according to a URL.
 	 *
-	 * <p>Only GET, POST and PUT are supported
+	 * <p>
+	 * Only GET, POST and PUT are supported
 	 *
 	 * @param errorLog output to write errors
 	 * @param url      an HTTP URL
@@ -500,19 +506,19 @@ public class HttpToolRunner implements ToolRunner {
 		// Build request, only GET, POST and PUT are supported
 		HttpUriRequest request;
 		switch (tc.getRequestMethod()) {
-		case "GET":
-			request = new HttpGet(url);
-			break;
-		case "POST":
-			request = new HttpPost(url);
-			break;
-		case "PUT":
-			request = new HttpPut(url);
-			break;
-		default:
-			errorLog.println("Method not supported. Using POST by default.");
-			request = new HttpPost(url);
-			break;
+			case "GET":
+				request = new HttpGet(url);
+				break;
+			case "POST":
+				request = new HttpPost(url);
+				break;
+			case "PUT":
+				request = new HttpPut(url);
+				break;
+			default:
+				errorLog.println("Method not supported. Using POST by default.");
+				request = new HttpPost(url);
+				break;
 		}
 		return request;
 	}
@@ -520,7 +526,8 @@ public class HttpToolRunner implements ToolRunner {
 	/**
 	 * Replaces a text with a map of replacements.
 	 * 
-	 * <p>Argument expansion:
+	 * <p>
+	 * Argument expansion:
 	 * <ul>
 	 * <li><code>${n}</code> where n is a number it is replaced by the argument n
 	 * <li><code>${%n}</code> same as before but the value is URLencoded
@@ -556,7 +563,8 @@ public class HttpToolRunner implements ToolRunner {
 	/**
 	 * Replaces a text with a list of arguments.
 	 *
-	 * <p>Argument expansion:
+	 * <p>
+	 * Argument expansion:
 	 * <ul>
 	 * <li><code>${n}</code> where n is a number it is replaced by the argument n
 	 * <li><code>${%n}</code> same as before but the value is URLencoded
@@ -606,7 +614,8 @@ public class HttpToolRunner implements ToolRunner {
 	/**
 	 * Generates the replacement texts with data from the response.
 	 *
-	 * <p>The following substitutions are allowed:
+	 * <p>
+	 * The following substitutions are allowed:
 	 * <ul>
 	 * <li><code>${body}</code> full body received in the request.
 	 * <li><code>${h.header}</code> header value.

@@ -37,6 +37,7 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpFilter;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 /**
@@ -81,10 +82,7 @@ public class CsrfFilter extends HttpFilter implements Filter {
 				String launchId = null;
 				if (ts != null) {
 					launchId = ts.getLaunchId();
-					if (session.getAttribute("launchId") != null) {
-						// copy to avoid problems
-						session.setAttribute("launchId", launchId);
-					}
+					session.setAttribute("launchId", launchId);
 				} else {
 					launchId = (String) session.getAttribute("launchId");
 				}
@@ -114,6 +112,9 @@ public class CsrfFilter extends HttpFilter implements Filter {
 			chain.doFilter(request, response);
 		} else {
 			logger.error("launchId incorrect: {}", req.getServletPath());
+			HttpServletResponse httpResponse = (HttpServletResponse) response;
+			httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN,
+					"Error de seguridad (CSRF): El Launch ID es incorrecto o está caducado.");
 		}
 
 	}
