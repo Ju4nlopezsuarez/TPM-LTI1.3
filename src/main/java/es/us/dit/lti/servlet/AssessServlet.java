@@ -139,7 +139,7 @@ public class AssessServlet extends HttpServlet {
 		final HttpSession session = request.getSession();
 		final ToolSession ts = (ToolSession) session.getAttribute(ToolSession.class.getName());
 		final String userId = ts.getSessionUserId();
-		final Tool tool = ts.getTool();
+		final Tool tool = ToolDao.get(ts.getTool().getName());
 		final boolean isInstructor = ts.isInstructor();
 		final MessageMap text = (MessageMap) session.getAttribute("text");
 		boolean isReassessment = false;
