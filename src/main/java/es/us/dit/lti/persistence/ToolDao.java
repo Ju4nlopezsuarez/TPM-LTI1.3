@@ -254,13 +254,13 @@ public final class ToolDao {
 	private static final String SQL_UPDATE_NOT_NAME = "UPDATE " + TOOL_TABLE_NAME
 			+ " SET description=?,deliveryPassword=?,"
 			+ "enabled=?,enabled_from=?,enabled_until=?,outcome=?,extra_args=?,type=?,json_config=?,"
-			+ "issuer=?,client_id=?,deployment_id=?,oidc_auth_url=?,jwks_url=?,token_url=?,updated=? WHERE name=?";
+			+ "updated=? WHERE name=?";
 	/**
 	 * SQL statement to change all tool data.
 	 */
 	private static final String SQL_UPDATE = "UPDATE " + TOOL_TABLE_NAME + " SET description=?,deliveryPassword=?,"
 			+ "enabled=?,enabled_from=?,enabled_until=?,outcome=?,extra_args=?,type=?,json_config=?,"
-			+ "issuer=?,client_id=?,deployment_id=?,oidc_auth_url=?,jwks_url=?,token_url=?,name=?,updated=? WHERE name=?";
+			+ "name=?,updated=? WHERE name=?";
 	/**
 	 * SQL statement to DELETE resource Users without attempts of a tool.
 	 */
@@ -688,7 +688,11 @@ public final class ToolDao {
 					}
 					stmt.setTimestamp(i++, DaoUtil.toTimestamp(Calendar.getInstance()));
 					stmt.setString(i++, oldName);
-					stmt.executeUpdate();
+					int rows = stmt.executeUpdate();
+					if (rows == 0) {
+						result = false;
+						logger.error("No rows affected updating tool.");
+					}
 				} catch (final Exception e) {
 					result = false;
 					logger.error("Error updating tool.", e);

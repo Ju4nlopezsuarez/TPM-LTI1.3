@@ -228,7 +228,13 @@ public class EditToolServlet extends HttpServlet {
 				}
 			} else {
 				final String fieldName = fi.getName();
-				setProperty(paramTool, fieldName, fi);
+				String fieldValue = "";
+				try {
+					fieldValue = new String(fi.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+				} catch (final Exception e) {
+					logger.error(CHARSET, e);
+				}
+				setProperty(paramTool, fieldName, fieldValue);
 
 				if (fieldName.equals(TOOLNAME_PARAM)) {
 					// It can only be processed if the user is an
@@ -240,12 +246,7 @@ public class EditToolServlet extends HttpServlet {
 						authorized = false;
 					}
 				} else if (fieldName.equals("oldname")) {
-					try {
-						oldname = new String(fi.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-					} catch (final Exception e) {
-						// never
-						logger.error(CHARSET, e);
-					}
+					oldname = fieldValue;
 					if (!oldname.isEmpty()) {
 						final Tool oldTool = ToolDao.get(oldname);
 						toolTypeUser = ToolDao.getToolUserType(sessionUser, oldTool);

@@ -50,7 +50,7 @@ import es.us.dit.lti.persistence.Lti13ToolConfig;
 import es.us.dit.lti.persistence.ToolConsumerDao;
 import es.us.dit.lti.persistence.ToolConsumerUserDao;
 import es.us.dit.lti.persistence.ToolContextDao;
-import es.us.dit.lti.persistence.ToolDao;
+
 import es.us.dit.lti.persistence.ToolKeyDao;
 import es.us.dit.lti.persistence.ToolLti13Dao;
 import es.us.dit.lti.persistence.ToolNonceDao;
