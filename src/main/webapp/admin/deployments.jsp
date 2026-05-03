@@ -44,7 +44,7 @@
                                                             <%= d.getId() %>
                                                         </td>
                                                         <td style="padding: 8px;">
-                                                            <%= d.getClientId() %>
+                                                            <%= d.getClientIdPk() %>
                                                         </td>
                                                         <td style="padding: 8px; font-family: monospace;">
                                                             <%= Encode.forHtml(d.getDeploymentId()) %>
