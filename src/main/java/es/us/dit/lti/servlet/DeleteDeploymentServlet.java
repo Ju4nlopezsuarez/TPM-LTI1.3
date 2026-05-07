@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import es.us.dit.lti.entity.Settings;
 import es.us.dit.lti.persistence.LtiDeploymentDao;
 
-@WebServlet("/admin/deletedeployment")
+@WebServlet("/admin/DeleteDeploymentServlet")
 public class DeleteDeploymentServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = LoggerFactory.getLogger(DeleteDeploymentServlet.class);
@@ -33,7 +33,8 @@ public class DeleteDeploymentServlet extends HttpServlet {
                 if (deleted) {
                     request.getSession().setAttribute(Settings.PENDING_MSG_ATTRIB, "Deployment ID eliminado con éxito");
                 } else {
-                    request.getSession().setAttribute(Settings.PENDING_MSG_ATTRIB, "Error al eliminar el Deployment ID");
+                    request.getSession().setAttribute(Settings.PENDING_MSG_ATTRIB,
+                            "Error al eliminar el Deployment ID");
                 }
             } catch (NumberFormatException e) {
                 logger.error("Invalid deployment ID format", e);
