@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import es.us.dit.lti.entity.Settings;
 import es.us.dit.lti.persistence.LtiPlatformDao;
 
-@WebServlet("/admin/deleteplatform")
+@WebServlet("/admin/DeletePlatformServlet")
 public class DeletePlatformServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = LoggerFactory.getLogger(DeletePlatformServlet.class);
