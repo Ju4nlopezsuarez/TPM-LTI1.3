@@ -11,7 +11,14 @@ function enviar(destino) {
 	}
 	if (checked) {
 		let f = document.getElementById("formulario");
-		if (destino === 'deleteplatform.jsp') {
+		
+		if (destino.toLowerCase().includes('delete')) {
+			f.method = 'POST';
+		} else {
+			f.method = 'GET';
+		}
+		
+		if (destino === 'DeletePlatformServlet' || destino === 'deleteplatform.jsp') {
 			let nameInput = document.getElementById('name_' + selectedId);
 			if (nameInput) {
 				nameInput.disabled = false;

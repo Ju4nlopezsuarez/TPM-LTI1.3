@@ -30,6 +30,7 @@
 
                                 <h2>Listado de LMS de confianza</h2>
                                 <form id="formulario" method="get" action="" accept-charset="UTF-8">
+                                <input type="hidden" name="launchId" value="${launchId}" />
                                 <div class="scroll50">
                                     <% if (platforms==null || platforms.isEmpty()) { %>
                                         <p>No hay plataformas LTI 1.3 registradas en el sistema.</p>

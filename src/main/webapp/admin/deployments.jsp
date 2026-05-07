@@ -29,6 +29,7 @@
                                 <p>Listado de Deployment IDs descubiertas dinámicamente.</p>
 
                                 <form id="formulario" method="get" action="">
+                                <input type="hidden" name="launchId" value="${launchId}" />
                                 <div class="scroll50">
                                     <% if (deployments==null || deployments.isEmpty()) { %>
                                         <p>No hay Deployment IDs registrados.</p>

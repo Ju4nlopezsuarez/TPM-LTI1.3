@@ -29,6 +29,7 @@
                                 <p>Listado de Client IDs registrados dinámicamente en el sistema.</p>
 
                                 <form id="formulario" method="get" action="">
+                                <input type="hidden" name="launchId" value="${launchId}" />
                                 <div class="scroll50">
                                     <% if (clients==null || clients.isEmpty()) { %>
                                         <p>No hay Client IDs registrados.</p>
