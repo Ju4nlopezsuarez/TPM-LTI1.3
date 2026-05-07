@@ -11,6 +11,7 @@
                 <link rel="stylesheet" type="text/css" href="../css/style.css">
                 <title>Gestión de Clientes (Client IDs)</title>
                 <script src="../js/move.js"></script>
+                <script src="js/lists.js"></script>
             </head>
             <% request.setCharacterEncoding("UTF-8"); if (mgmtUser !=null && (mgmtUser.getType()==MgmtUserType.SUPER ||
                 mgmtUser.getType()==MgmtUserType.ADMIN)) { @SuppressWarnings("unchecked") List<LtiClient> clients =
@@ -19,7 +20,7 @@
 
                     <body>
                         <%@include file="/WEB-INF/includes/cabecera.jsp" %>
-                            <div class="h1container dialog" style="max-width: 90%;">
+                            <div class="h1container dialog">
                                 <h1>
                                     <a href="platforms" accesskey="x"><span
                                             class="material-icons bcerrar">arrow_back</span></a>
@@ -27,39 +28,46 @@
                                 </h1>
                                 <p>Listado de Client IDs registrados dinámicamente en el sistema.</p>
 
+                                <form id="formulario" method="get" action="">
                                 <div class="scroll50">
                                     <% if (clients==null || clients.isEmpty()) { %>
                                         <p>No hay Client IDs registrados.</p>
                                         <% } else { %>
-                                            <table style="width: 100%; text-align: left; border-collapse: collapse;">
-                                                <tr style="border-bottom: 2px solid #ccc;">
-                                                    <th style="padding: 8px;">ID Base de Datos</th>
-                                                    <th style="padding: 8px;">Platform ID (Padre)</th>
-                                                    <th style="padding: 8px;">Client ID (LMS)</th>
-                                                    <th style="padding: 8px;">Acciones</th>
+                                            <table aria-label="clientes" id="clients">
+                                                <tr>
+                                                    <th scope="col"></th>
+                                                    <th scope="col">ID Base de Datos</th>
+                                                    <th scope="col">Platform ID (Padre)</th>
+                                                    <th scope="col">Client ID (LMS)</th>
                                                 </tr>
+                                                <% boolean first = true; %>
                                                 <% for (LtiClient c : clients) { %>
-                                                    <tr style="border-bottom: 1px solid #eee;">
-                                                        <td style="padding: 8px;">
+                                                    <tr>
+                                                        <td class='seleccionar'>
+                                                            <input type='radio' name='id' value='<%=c.getId()%>' required <%= first ? "checked" : "" %>>
+                                                        </td>
+                                                        <td>
                                                             <%= c.getId() %>
                                                         </td>
-                                                        <td style="padding: 8px;">
+                                                        <td class='clientname'>
                                                             <%= c.getPlatformId() %>
                                                         </td>
-                                                        <td style="padding: 8px; font-family: monospace;">
+                                                        <td style="font-family: monospace;">
                                                             <%= Encode.forHtml(c.getClientId()) %>
                                                         </td>
-                                                        <td style="padding: 8px;">
-                                                            <a href="DeleteClientServlet?id=<%= c.getId() %>"
-                                                                style="color: #D32F2F; text-decoration: none;"
-                                                                onclick="return confirm('¿Borrar este Client ID? Se perderá la conexión con todas las instituciones que lo usen.');">[Borrar
-                                                                Cliente]</a>
-                                                        </td>
                                                     </tr>
+                                                    <% first = false; %>
                                                     <% } %>
                                             </table>
                                             <% } %>
                                 </div>
+                                <br />
+                                <div class="centrado">
+                                    <input type='button' id='bdelete' value='Borrar Cliente' class="accionp" disabled="disabled"
+                                           data-action="DeleteClientServlet"
+                                           data-confirm="¿Borrar este Client ID? Se perderá la conexión con todas las instituciones que lo usen." />
+                                </div>
+                                </form>
                             </div>
                     </body>
 

@@ -11,6 +11,7 @@
                 <link rel="stylesheet" type="text/css" href="../css/style.css">
                 <title>Gestión de Plataformas</title>
                 <script src="../js/move.js"></script>
+                <script src="js/lists.js"></script>
             </head>
             <% request.setCharacterEncoding("UTF-8"); if (mgmtUser !=null && (mgmtUser.getType()==MgmtUserType.SUPER ||
                 mgmtUser.getType()==MgmtUserType.ADMIN)) { @SuppressWarnings("unchecked") List<LtiPlatform> platforms =
@@ -19,54 +20,58 @@
 
                     <body>
                         <%@include file="/WEB-INF/includes/cabecera.jsp" %>
-                            <div class="h1container dialog" style="max-width: 90%;">
+                            <div class="h1container dialog">
                                 <h1>
                                     <a href="../user/menu.jsp" accesskey="x"><span
                                             class="material-icons bcerrar">close</span></a>
                                     Plataformas LTI 1.3
                                 </h1>
+                                <a href="addplatform.jsp"> <span id="add" class="material-icons">add</span></a>
 
-                                <p>Listado de LMS de confianza.</p>
-
+                                <h2>Listado de LMS de confianza</h2>
+                                <form id="formulario" method="get" action="" accept-charset="UTF-8">
                                 <div class="scroll50">
                                     <% if (platforms==null || platforms.isEmpty()) { %>
                                         <p>No hay plataformas LTI 1.3 registradas en el sistema.</p>
                                         <% } else { %>
-                                            <table style="width: 100%; text-align: left; border-collapse: collapse;">
-                                                <tr style="border-bottom: 2px solid #ccc;">
-                                                    <th style="padding: 8px;">ID</th>
-                                                    <th style="padding: 8px;">Nombre</th>
-                                                    <th style="padding: 8px;">Issuer (Emisor)</th>
-                                                    <th style="padding: 8px;">Acciones</th>
+                                            <table aria-label="plataformas" id="platforms">
+                                                <tr>
+                                                    <th scope="col"></th>
+                                                    <th scope="col">ID</th>
+                                                    <th scope="col">Nombre</th>
+                                                    <th scope="col">Issuer</th>
                                                 </tr>
+                                                <% boolean first = true; %>
                                                 <% for (LtiPlatform p : platforms) { %>
-                                                    <tr style="border-bottom: 1px solid #eee;">
-                                                        <td style="padding: 8px;">
+                                                    <tr>
+                                                        <td class='seleccionar'>
+                                                            <input type='radio' name='id' value='<%=p.getId()%>' required <%= first ? "checked" : "" %>>
+                                                            <input type='hidden' id='name_<%=p.getId()%>' value='<%=Encode.forHtmlAttribute(p.getName())%>' disabled>
+                                                        </td>
+                                                        <td>
                                                             <%= p.getId() %>
                                                         </td>
-                                                        <td style="padding: 8px;"><strong>
-                                                                <%= Encode.forHtml(p.getName()) %>
-                                                            </strong></td>
-                                                        <td style="padding: 8px;">
+                                                        <td class='platformname'>
+                                                            <%= Encode.forHtml(p.getName()) %>
+                                                        </td>
+                                                        <td>
                                                             <%= Encode.forHtml(p.getIssuer()) %>
                                                         </td>
-                                                        <td style="padding: 8px;">
-                                                            <a href="editplatform?id=<%= p.getId() %>"
-                                                                style="color: #1976D2; text-decoration: none; margin-right: 10px;">[Editar]</a>
-                                                            <a href="deleteplatform.jsp?id=<%= p.getId() %>&name=<%= Encode.forUriComponent(p.getName()) %>"
-                                                                style="color: #D32F2F; text-decoration: none;">[Borrar]</a>
-                                                        </td>
                                                     </tr>
+                                                    <% first = false; %>
                                                     <% } %>
                                             </table>
                                             <% } %>
                                 </div>
                                 <br />
                                 <div class="centrado">
-                                    <input type='button' value='Añadir plataforma' class="accionp" onclick="window.location.href='addplatform.jsp'" />
-                                    <input type='button' value='Ver Clientes' class="accionp" onclick="window.location.href='clients'" />
-                                    <input type='button' value='Ver Despliegues' class="accionp" onclick="window.location.href='deployments'" />
+                                    <input type='button' id='bedit' value='Editar' class="accionp" disabled="disabled" accesskey="e"/>
+                                    <input type='button' id='bdelete' value='Borrar' class="accionp" disabled="disabled"/>
+                                    <br /><br />
+                                    <input type='button' id='bclients' value='Ver Clientes' class="accionp" />
+                                    <input type='button' id='bdeployments' value='Ver Despliegues' class="accionp" />
                                 </div>
+                                </form>
                             </div>
                     </body>
 

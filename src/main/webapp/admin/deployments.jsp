@@ -11,6 +11,7 @@
                 <link rel="stylesheet" type="text/css" href="../css/style.css">
                 <title>Gestión de Despliegues (Deployment IDs)</title>
                 <script src="../js/move.js"></script>
+                <script src="js/lists.js"></script>
             </head>
             <% request.setCharacterEncoding("UTF-8"); if (mgmtUser !=null && (mgmtUser.getType()==MgmtUserType.SUPER ||
                 mgmtUser.getType()==MgmtUserType.ADMIN)) { @SuppressWarnings("unchecked") List<LtiDeployment>
@@ -19,7 +20,7 @@
 
                     <body>
                         <%@include file="/WEB-INF/includes/cabecera.jsp" %>
-                            <div class="h1container dialog" style="max-width: 90%;">
+                            <div class="h1container dialog">
                                 <h1>
                                     <a href="platforms" accesskey="x"><span
                                             class="material-icons bcerrar">arrow_back</span></a>
@@ -27,39 +28,46 @@
                                 </h1>
                                 <p>Listado de instalaciones (Deployment IDs) descubiertas dinámicamente.</p>
 
+                                <form id="formulario" method="get" action="">
                                 <div class="scroll50">
                                     <% if (deployments==null || deployments.isEmpty()) { %>
                                         <p>No hay Deployment IDs registrados.</p>
                                         <% } else { %>
-                                            <table style="width: 100%; text-align: left; border-collapse: collapse;">
-                                                <tr style="border-bottom: 2px solid #ccc;">
-                                                    <th style="padding: 8px;">ID Base de Datos</th>
-                                                    <th style="padding: 8px;">Client ID (Padre)</th>
-                                                    <th style="padding: 8px;">Deployment ID (Institución)</th>
-                                                    <th style="padding: 8px;">Acciones</th>
+                                            <table aria-label="despliegues" id="deployments">
+                                                <tr>
+                                                    <th scope="col"></th>
+                                                    <th scope="col">ID Base de Datos</th>
+                                                    <th scope="col">Client ID (Padre)</th>
+                                                    <th scope="col">Deployment ID (Institución)</th>
                                                 </tr>
+                                                <% boolean first = true; %>
                                                 <% for (LtiDeployment d : deployments) { %>
-                                                    <tr style="border-bottom: 1px solid #eee;">
-                                                        <td style="padding: 8px;">
+                                                    <tr>
+                                                        <td class='seleccionar'>
+                                                            <input type='radio' name='id' value='<%=d.getId()%>' required <%= first ? "checked" : "" %>>
+                                                        </td>
+                                                        <td>
                                                             <%= d.getId() %>
                                                         </td>
-                                                        <td style="padding: 8px;">
+                                                        <td class='deploymentname'>
                                                             <%= d.getClientIdPk() %>
                                                         </td>
-                                                        <td style="padding: 8px; font-family: monospace;">
+                                                        <td style="font-family: monospace;">
                                                             <%= Encode.forHtml(d.getDeploymentId()) %>
                                                         </td>
-                                                        <td style="padding: 8px;">
-                                                            <a href="DeleteDeploymentServlet?id=<%= d.getId() %>"
-                                                                style="color: #D32F2F; text-decoration: none;"
-                                                                onclick="return confirm('¿Borrar este Deployment ID? Esa institución concreta perderá el acceso a las herramientas.');">[Borrar
-                                                                Despliegue]</a>
-                                                        </td>
                                                     </tr>
+                                                    <% first = false; %>
                                                     <% } %>
                                             </table>
                                             <% } %>
                                 </div>
+                                <br />
+                                <div class="centrado">
+                                    <input type='button' id='bdelete' value='Borrar Despliegue' class="accionp" disabled="disabled"
+                                           data-action="DeleteDeploymentServlet"
+                                           data-confirm="¿Borrar este Deployment ID? Esa institución concreta perderá el acceso a las herramientas." />
+                                </div>
+                                </form>
                             </div>
                     </body>
 
