@@ -173,19 +173,42 @@ public class LtiPlatformDao {
     }
 
     public boolean delete(int id) {
-        String sql = "DELETE FROM lti_platform WHERE id=?";
+        String sqlDeployments = "DELETE FROM lti_deployment WHERE client_id IN (SELECT id FROM lti_client WHERE platform_id = ?)";
+        String sqlClients = "DELETE FROM lti_client WHERE platform_id = ?";
+        String sqlPlatform = "DELETE FROM lti_platform WHERE id=?";
         Connection conn = null;
-        boolean result= false;
+        boolean result = false;
         try {
             conn = getConnection();
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setInt(1, id);
-                int rows = ps.executeUpdate();
-                result= rows > 0;
+            conn.setAutoCommit(false);
+            
+            try (PreparedStatement ps1 = conn.prepareStatement(sqlDeployments)) {
+                ps1.setInt(1, id);
+                ps1.executeUpdate();
             }
+            try (PreparedStatement ps2 = conn.prepareStatement(sqlClients)) {
+                ps2.setInt(1, id);
+                ps2.executeUpdate();
+            }
+            try (PreparedStatement ps3 = conn.prepareStatement(sqlPlatform)) {
+                ps3.setInt(1, id);
+                int rows = ps3.executeUpdate();
+                result = rows > 0;
+            }
+            conn.commit();
         } catch (SQLException e) {
+            try {
+                if (conn != null) conn.rollback();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
             e.printStackTrace();
         } finally {
+            try {
+                if (conn != null) conn.setAutoCommit(true);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
             if (conn != null && dbUtil != null) {
                 dbUtil.closeConnection(conn);
             }

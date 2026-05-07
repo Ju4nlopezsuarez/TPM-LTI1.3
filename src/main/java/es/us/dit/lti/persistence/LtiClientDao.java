@@ -153,23 +153,42 @@ public class LtiClientDao {
     }
 
     public boolean delete(int id) {
-        String sql = "DELETE FROM lti_client WHERE id=?";
+        String sqlDeployments = "DELETE FROM lti_deployment WHERE client_id = ?";
+        String sqlClient = "DELETE FROM lti_client WHERE id=?";
         Connection conn = null;
+        boolean result = false;
         try {
             conn = getConnection();
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setInt(1, id);
-                int rows = ps.executeUpdate();
-                return rows > 0;
+            conn.setAutoCommit(false);
+            
+            try (PreparedStatement ps1 = conn.prepareStatement(sqlDeployments)) {
+                ps1.setInt(1, id);
+                ps1.executeUpdate();
             }
+            try (PreparedStatement ps2 = conn.prepareStatement(sqlClient)) {
+                ps2.setInt(1, id);
+                int rows = ps2.executeUpdate();
+                result = rows > 0;
+            }
+            conn.commit();
         } catch (SQLException e) {
+            try {
+                if (conn != null) conn.rollback();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
             e.printStackTrace();
         } finally {
+            try {
+                if (conn != null) conn.setAutoCommit(true);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
             if (conn != null && dbUtil != null) {
                 dbUtil.closeConnection(conn);
             }
         }
-        return false;
+        return result;
     }
 
     public LtiClient findByPlatformAndClientId(int platformId, String clientId) {

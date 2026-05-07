@@ -37,7 +37,6 @@
                                             <table aria-label="plataformas" id="platforms">
                                                 <tr>
                                                     <th scope="col"></th>
-                                                    <th scope="col">ID</th>
                                                     <th scope="col">Nombre</th>
                                                     <th scope="col">Issuer</th>
                                                 </tr>
@@ -47,9 +46,6 @@
                                                         <td class='seleccionar'>
                                                             <input type='radio' name='id' value='<%=p.getId()%>' required <%= first ? "checked" : "" %>>
                                                             <input type='hidden' id='name_<%=p.getId()%>' value='<%=Encode.forHtmlAttribute(p.getName())%>' disabled>
-                                                        </td>
-                                                        <td>
-                                                            <%= p.getId() %>
                                                         </td>
                                                         <td class='platformname'>
                                                             <%= Encode.forHtml(p.getName()) %>

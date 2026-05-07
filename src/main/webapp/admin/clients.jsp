@@ -36,9 +36,7 @@
                                             <table aria-label="clientes" id="clients">
                                                 <tr>
                                                     <th scope="col"></th>
-                                                    <th scope="col">ID Base de Datos</th>
-                                                    <th scope="col">Platform ID (Padre)</th>
-                                                    <th scope="col">Client ID (LMS)</th>
+                                                    <th scope="col">Client ID</th>
                                                 </tr>
                                                 <% boolean first = true; %>
                                                 <% for (LtiClient c : clients) { %>
@@ -46,13 +44,7 @@
                                                         <td class='seleccionar'>
                                                             <input type='radio' name='id' value='<%=c.getId()%>' required <%= first ? "checked" : "" %>>
                                                         </td>
-                                                        <td>
-                                                            <%= c.getId() %>
-                                                        </td>
                                                         <td class='clientname'>
-                                                            <%= c.getPlatformId() %>
-                                                        </td>
-                                                        <td style="font-family: monospace;">
                                                             <%= Encode.forHtml(c.getClientId()) %>
                                                         </td>
                                                     </tr>
@@ -63,9 +55,7 @@
                                 </div>
                                 <br />
                                 <div class="centrado">
-                                    <input type='button' id='bdelete' value='Borrar Cliente' class="accionp" disabled="disabled"
-                                           data-action="DeleteClientServlet"
-                                           data-confirm="¿Borrar este Client ID? Se perderá la conexión con todas las instituciones que lo usen." />
+                                    <input type='button' id='bdelete' value='Borrar Cliente' class="accionp" disabled="disabled" data-action="DeleteClientServlet"/>
                                 </div>
                                 </form>
                             </div>
