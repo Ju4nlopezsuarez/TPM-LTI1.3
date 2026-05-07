@@ -78,6 +78,36 @@ public class LtiDeploymentDao {
         return list;
     }
 
+    public List<LtiDeployment> findByPlatformId(int platformId) {
+        List<LtiDeployment> list = new ArrayList<>();
+        String sql = "SELECT d.id, d.client_id, d.deployment_id FROM lti_deployment d " +
+                     "JOIN lti_client c ON d.client_id = c.id " +
+                     "WHERE c.platform_id = ?";
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, platformId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        list.add(new LtiDeployment(
+                                rs.getInt("id"),
+                                rs.getInt("client_id"),
+                                rs.getString("deployment_id")
+                        ));
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (conn != null && dbUtil != null) {
+                dbUtil.closeConnection(conn);
+            }
+        }
+        return list;
+    }
+
     public LtiDeployment findById(int id) {
         String sql = "SELECT id, client_id, deployment_id FROM lti_deployment WHERE id = ?";
         Connection conn = null;

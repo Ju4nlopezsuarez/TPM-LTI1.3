@@ -44,9 +44,9 @@ window.addEventListener("load", function () {
     }
     
 	if (document.getElementById("bclients"))
-		document.getElementById("bclients").onclick=function() { window.location.href='clients'; };
+		document.getElementById("bclients").onclick=function() { enviar('clients'); };
 	if (document.getElementById("bdeployments"))
-		document.getElementById("bdeployments").onclick=function() { window.location.href='deployments'; };
+		document.getElementById("bdeployments").onclick=function() { enviar('deployments'); };
 
 	let r = document.getElementsByName("id");
 	for (let ri of r) {

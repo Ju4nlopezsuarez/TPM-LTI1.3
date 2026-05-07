@@ -19,7 +19,18 @@ public class ListDeploymentsServlet extends HttpServlet {
             throws ServletException, IOException {
         
         LtiDeploymentDao dao = new LtiDeploymentDao();
-        List<LtiDeployment> deployments = dao.findAll();
+        List<LtiDeployment> deployments;
+        String idStr = request.getParameter("id");
+        if (idStr != null && !idStr.isEmpty()) {
+            try {
+                int platformId = Integer.parseInt(idStr);
+                deployments = dao.findByPlatformId(platformId);
+            } catch (NumberFormatException e) {
+                deployments = dao.findAll();
+            }
+        } else {
+            deployments = dao.findAll();
+        }
         request.setAttribute("deployments", deployments);
         
         request.getRequestDispatcher("deployments.jsp").forward(request, response);

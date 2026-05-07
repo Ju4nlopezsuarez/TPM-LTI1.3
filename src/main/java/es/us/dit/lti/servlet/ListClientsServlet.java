@@ -19,7 +19,18 @@ public class ListClientsServlet extends HttpServlet {
             throws ServletException, IOException {
         
         LtiClientDao dao = new LtiClientDao();
-        List<LtiClient> clients = dao.findAll(); 
+        List<LtiClient> clients;
+        String idStr = request.getParameter("id");
+        if (idStr != null && !idStr.isEmpty()) {
+            try {
+                int platformId = Integer.parseInt(idStr);
+                clients = dao.findByPlatformId(platformId);
+            } catch (NumberFormatException e) {
+                clients = dao.findAll();
+            }
+        } else {
+            clients = dao.findAll(); 
+        }
         request.setAttribute("clients", clients);
         
         request.getRequestDispatcher("clients.jsp").forward(request, response);
