@@ -28,19 +28,12 @@
                                 <%= (nameStr !=null) ? Encode.forHtml(nameStr) : "seleccionada" %>
                             </strong>?</p>
 
-                        <blockquote style="color: #D32F2F; border-left-color: #D32F2F;">
-                            <strong>Advertencia:</strong> Esta acción es irreversible. Se eliminarán en cascada todos
-                            los clientes y despliegues (instituciones) asociados a esta plataforma.
-                        </blockquote>
-
                         <form method="post" action="DeletePlatformServlet">
                             <input type="hidden" name="launchId" value="${launchId}" />
                             <input type="hidden" name="id" value="<%= Encode.forHtmlAttribute(idStr) %>" />
-                            <div class="centrado" style="margin-top: 20px;">
-                                <input class="accionp" type="submit" value="Sí, Eliminar"
-                                    style="background-color: #D32F2F; color: white;" />
-                                <a href="ListPlatformsServlet" class="accionp"
-                                    style="text-decoration: none; padding: 6px 12px; margin-left: 10px;">Cancelar</a>
+                            <div class="centrado">
+                                <input class="accionp" type="submit" value="Sí, Eliminar"/>
+                                <input type="button" value="Cancelar" onclick="window.location.href='platforms'" class="accionp">
                             </div>
                         </form>
                     </div>
