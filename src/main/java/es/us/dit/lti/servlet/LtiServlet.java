@@ -93,8 +93,7 @@ public class LtiServlet extends HttpServlet {
                     logger.error("LTI 1.3 Error: Missing audience in ID Token.");
                     response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid ID Token: Missing audience.");
                 } else {
-                    String clientId = audiences.get(0); // Normalmente el Client ID es el primer elemento de la
-                                                        // audiencia
+                    String clientId = audiences.get(0);
                     ToolLti13Dao dao = new ToolLti13Dao();
                     Lti13ToolConfig config = dao.findByClientId(clientId);
 
@@ -143,7 +142,7 @@ public class LtiServlet extends HttpServlet {
                                     request.getRequestDispatcher("/link_setup.jsp").forward(request, response);
                                     return;
                                 }
-                                
+
                                 // El valor recuperado de la BD es en realidad la 'clave' de ToolKey
                                 ToolKey toolKey = ToolKeyDao.get(mappedClave, false);
                                 if (toolKey != null) {
@@ -156,14 +155,15 @@ public class LtiServlet extends HttpServlet {
 
                             // Inicializar ToolSession con los datos de LTI 1.3
                             final ToolSession ts = new ToolSession();
-                            
+
                             ToolKey sessionToolKey = (ToolKey) request.getSession().getAttribute("toolKey");
                             if (sessionToolKey != null) {
                                 ts.setToolKey(sessionToolKey);
                                 ts.setTool(sessionToolKey.getTool());
-                                sessionToolKey.getTool().setToolRunner(ToolRunnerFactory.fromType(sessionToolKey.getTool().getToolType()));
+                                sessionToolKey.getTool().setToolRunner(
+                                        ToolRunnerFactory.fromType(sessionToolKey.getTool().getToolType()));
                             }
-                            
+
                             // Le pasamos los claims (JSON) para que extraiga user_id, roles, context, etc.
                             ts.initLti13(claims);
 

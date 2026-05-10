@@ -464,7 +464,7 @@ public class AssessServlet extends HttpServlet {
 							String scoreStr = String.valueOf(scoreInt * 0.01);
 
 							if (ts.getLti13ClientId() != null) {
-								// === FLUJO LTI 1.3 (AGS 2.0) ===
+								// FLUJO LTI 1.3
 								try {
 									ToolLti13Dao lti13Dao = new ToolLti13Dao();
 									Lti13ToolConfig config = lti13Dao

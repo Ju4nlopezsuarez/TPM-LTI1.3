@@ -12,35 +12,37 @@
     <div class="h1container">
         <h1>Vincular Nuevo Enlace LTI 1.3</h1>
         
-        <p style="margin-bottom: 20px;">
+        <p>
             El sistema ha reconocido la plataforma, pero <strong>este enlace concreto de su asignatura aún no está asociado a ninguna herramienta</strong> de corrección.
         </p>
-        <p style="margin-bottom: 20px; color: #555;">
+        <p>
             Por favor, introduzca la clave identificadora (Toolname) de la herramienta a la que desea apuntar este enlace. Esta acción solo se realiza una vez.
         </p>
 
         <% if (request.getAttribute("error_clave") != null) { %>
-            <div style="color: #D32F2F; margin-bottom: 15px; font-weight: bold; border-left: 4px solid #D32F2F; padding-left: 10px;">
-                <%= request.getAttribute("error_clave") %>
+            <div>
+                <h3><%= request.getAttribute("error_clave") %></h3>
             </div>
         <% } %>
         
         <% if (request.getAttribute("success_msg") != null) { %>
-            <div style="color: #388E3C; margin-bottom: 15px; font-weight: bold; border-left: 4px solid #388E3C; padding-left: 10px; font-size: 1.1em;">
+            <div class="notice">
                 <%= request.getAttribute("success_msg") %>
             </div>
         <% } else { %>
-            <form method="post" action="SaveLinkServlet" style="text-align: center; padding: 20px 0;">
+            <form method="post" action="SaveLinkServlet">
                 
                 <input type="hidden" name="resource_link_id" value="<%= request.getAttribute("resource_link_id") != null ? request.getAttribute("resource_link_id") : request.getParameter("resource_link_id") %>" />
 
-                <div style="margin-bottom: 25px;">
-                    <input type="text" name="clave" placeholder="Clave Identificadora" required="required" style="width: 100%; max-width: 450px; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; display: block; margin: 0 auto 15px auto; box-shadow: 0 2px 5px rgba(0,0,0,0.05);" />
-                    <input type="password" name="secreto" placeholder="LTI Secret" required="required" style="width: 100%; max-width: 450px; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; display: block; margin: 0 auto; box-shadow: 0 2px 5px rgba(0,0,0,0.05);" />
+                <div class="editfields">
+                    <label for="clave"><b>Clave</b></label>
+                    <input type="text" name="clave" placeholder="Escribe la clave" required="required" />
+                    <label for="secreto"><b>Secreto</b></label>
+                    <input type="password" name="secreto" placeholder="Escribe el secreto" required="required" />
                 </div>
 
-                <div>
-                    <input class="accionp" type="submit" value="Vincular y Lanzar" style="font-size: 16px; padding: 12px 24px; border-radius: 4px; cursor: pointer; background-color: #0056b3; color: white; border: none;" />
+                <div class="centrado">
+                    <input class="accionp" type="submit" value="Vincular y Lanzar" />
                 </div>
             </form>
         <% } %>
