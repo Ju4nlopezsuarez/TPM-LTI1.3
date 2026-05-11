@@ -204,8 +204,10 @@ CREATE TABLE lti_deployment (
 );
 
 CREATE TABLE lti_link_mapping (
-    resource_link_id VARCHAR(255) PRIMARY KEY,
-    toolname VARCHAR(255) NOT NULL
+    "resource_link_id" VARCHAR(255) PRIMARY KEY,
+    "toolname" VARCHAR(255) NOT NULL,
+    FOREIGN KEY ("resource_link_id") REFERENCES "resource_link" ("resource_id") ON DELETE CASCADE,
+    FOREIGN KEY ("toolname") REFERENCES "tool" ("name") ON DELETE CASCADE
 );
 
 ALTER TABLE "tool" ADD COLUMN "lti_version" TEXT DEFAULT 'LTI-1p1';
