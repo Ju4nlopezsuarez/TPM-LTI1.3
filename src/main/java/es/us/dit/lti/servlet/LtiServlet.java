@@ -2,6 +2,7 @@ package es.us.dit.lti.servlet;
 
 import java.io.IOException;
 import java.util.Locale;
+import java.util.List;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -88,7 +89,7 @@ public class LtiServlet extends HttpServlet {
                 // Obtener el ISS (Issuer)
                 SignedJWT parsedToken = SignedJWT.parse(idToken);
                 String issuer = parsedToken.getJWTClaimsSet().getIssuer();
-                java.util.List<String> audiences = parsedToken.getJWTClaimsSet().getAudience();
+                List<String> audiences = parsedToken.getJWTClaimsSet().getAudience();
                 if (audiences == null || audiences.isEmpty()) {
                     logger.error("LTI 1.3 Error: Missing audience in ID Token.");
                     response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid ID Token: Missing audience.");
@@ -127,65 +128,91 @@ public class LtiServlet extends HttpServlet {
                                 resourceLinkId = (String) resourceLinkClaim.get("id");
                             }
 
+                            boolean continueToToolSession = true;
                             if (resourceLinkId != null) {
                                 String mappedClave = dao.getMappedTool(resourceLinkId);
                                 if (mappedClave == null) {
-                                    logger.info("Unmapped resource_link_id: {}. Redirecting to link setup.",
+                                    continueToToolSession = false;
+                                    logger.info("Unmapped resource_link_id: {}. Checking instructor role for setup.",
                                             resourceLinkId);
-                                    ToolLti13Dao toolDao = new ToolLti13Dao();
 
-                                    request.setAttribute("available_tools", toolDao.findAll());
-                                    request.getSession().setAttribute("pending_resource_link_id", resourceLinkId);
-                                    request.getSession().setAttribute("lti13_id_token", idToken);
-                                    // request.getSession().setAttribute("lti13_claims_json",
-                                    // claims.toJSONObject().toJSONString());
-                                    request.getRequestDispatcher("/link_setup.jsp").forward(request, response);
-                                    return;
+                                    boolean isInstructor = false;
+                                    List<String> userRoles = claims
+                                            .getStringListClaim("https://purl.imsglobal.org/spec/lti/claim/roles");
+                                    if (userRoles != null) {
+                                        for (String roleUri : userRoles) {
+                                            if (roleUri.equals(
+                                                    "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Instructor")) {
+                                                isInstructor = true;
+                                            }
+                                        }
+                                        
+                                        if (!isInstructor) {
+                                            logger.warn("User attempted to setup a tool without instructor privileges.");
+                                            response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                                                    "Solo los instructores pueden configurar una nueva herramienta.");
+                                        } else {
+                                            ToolLti13Dao toolDao = new ToolLti13Dao();
+
+                                            request.setAttribute("available_tools", toolDao.findAll());
+                                            request.getSession().setAttribute("pending_resource_link_id", resourceLinkId);
+                                            request.getSession().setAttribute("lti13_id_token", idToken);
+                                            // request.getSession().setAttribute("lti13_claims_json",
+                                            // claims.toJSONObject().toJSONString());
+                                            request.getRequestDispatcher("/link_setup.jsp").forward(request, response);
+                                        }
+                                    } else {
+                                        logger.warn("User attempted to setup a tool without instructor privileges.");
+                                        response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                                                "No se han encontrado roles en el token.");
+                                    }
+                                } else {
+                                    // El valor recuperado de la BD es en realidad la 'clave' de ToolKey
+                                    ToolKey toolKey = ToolKeyDao.get(mappedClave, false);
+                                    if (toolKey != null) {
+                                        // Inyectamos la toolKey en la sesión
+                                        request.getSession().setAttribute("toolKey", toolKey);
+                                        // Guardamos el verdadero nombre de la herramienta por si hace falta
+                                        request.getSession().setAttribute("mappedToolName", toolKey.getTool().getName());
+                                    }
+                                }
+                            }
+
+                            if (continueToToolSession) {
+                                // Inicializar ToolSession con los datos de LTI 1.3
+                                final ToolSession ts = new ToolSession();
+
+                                ToolKey sessionToolKey = (ToolKey) request.getSession().getAttribute("toolKey");
+                                if (sessionToolKey != null) {
+                                    ts.setToolKey(sessionToolKey);
+                                    ts.setTool(sessionToolKey.getTool());
+                                    sessionToolKey.getTool().setToolRunner(
+                                            ToolRunnerFactory.fromType(sessionToolKey.getTool().getToolType()));
                                 }
 
-                                // El valor recuperado de la BD es en realidad la 'clave' de ToolKey
-                                ToolKey toolKey = ToolKeyDao.get(mappedClave, false);
-                                if (toolKey != null) {
-                                    // Inyectamos la toolKey en la sesión
-                                    request.getSession().setAttribute("toolKey", toolKey);
-                                    // Guardamos el verdadero nombre de la herramienta por si hace falta
-                                    request.getSession().setAttribute("mappedToolName", toolKey.getTool().getName());
+                                // Le pasamos los claims (JSON) para que extraiga user_id, roles, context, etc.
+                                ts.initLti13(claims);
+
+                                // Lógica de presentación y redirección (Similar a LTI 1.1)
+                                Locale locale = request.getLocale();
+                                if (ts.getPresentationLocale() != null) {
+                                    locale = Locale.forLanguageTag(ts.getPresentationLocale());
                                 }
-                            }
+                                final MessageMap text = new MessageMap(locale);
 
-                            // Inicializar ToolSession con los datos de LTI 1.3
-                            final ToolSession ts = new ToolSession();
+                                if (ts.isValid()) {
+                                    // Guardamos el token en sesión para futuras llamadas
+                                    final HttpSession session = request.getSession(true);
+                                    session.setAttribute(ToolSession.class.getName(), ts);
+                                    session.setAttribute("text", text);
 
-                            ToolKey sessionToolKey = (ToolKey) request.getSession().getAttribute("toolKey");
-                            if (sessionToolKey != null) {
-                                ts.setToolKey(sessionToolKey);
-                                ts.setTool(sessionToolKey.getTool());
-                                sessionToolKey.getTool().setToolRunner(
-                                        ToolRunnerFactory.fromType(sessionToolKey.getTool().getToolType()));
-                            }
+                                    // Guardamos el ID Token crudo por si necesitamos hacer llamadas a APIs del LMS
+                                    session.setAttribute("lti13_id_token", idToken);
 
-                            // Le pasamos los claims (JSON) para que extraiga user_id, roles, context, etc.
-                            ts.initLti13(claims);
-
-                            // Lógica de presentación y redirección (Similar a LTI 1.1)
-                            Locale locale = request.getLocale();
-                            if (ts.getPresentationLocale() != null) {
-                                locale = Locale.forLanguageTag(ts.getPresentationLocale());
-                            }
-                            final MessageMap text = new MessageMap(locale);
-
-                            if (ts.isValid()) {
-                                // Guardamos el token en sesión para futuras llamadas
-                                final HttpSession session = request.getSession(true);
-                                session.setAttribute(ToolSession.class.getName(), ts);
-                                session.setAttribute("text", text);
-
-                                // Guardamos el ID Token crudo por si necesitamos hacer llamadas a APIs del LMS
-                                session.setAttribute("lti13_id_token", idToken);
-
-                                response.sendRedirect(response.encodeRedirectURL(ts.getContinueUrl()));
-                            } else {
-                                handleError(response, ts, text);
+                                    response.sendRedirect(response.encodeRedirectURL(ts.getContinueUrl()));
+                                } else {
+                                    handleError(response, ts, text);
+                                }
                             }
                         }
                     }
