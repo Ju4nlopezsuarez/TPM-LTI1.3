@@ -183,7 +183,9 @@ async function obtenerUsuarios() {
 		.then(result => {
 			let optionList = [ "\u2800" ]; //empty option
 			for (let u in result) {
-				let text = result[u].sourceId+" <"+result[u].nameFull+">";
+				let identifier = result[u].sourceId ? result[u].sourceId : result[u].userId;
+				let name = result[u].nameFull ? result[u].nameFull : texts.unknownUser;
+				let text = identifier+" <"+name+">";
 				let dlu = document.createElement("option");
 				dlu.value=text;
 				dl.appendChild(dlu);

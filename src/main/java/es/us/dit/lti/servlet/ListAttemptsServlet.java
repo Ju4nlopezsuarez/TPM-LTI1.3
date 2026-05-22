@@ -120,7 +120,8 @@ public class ListAttemptsServlet extends HttpServlet {
 				// list of users
 				response.setContentType("application/json");
 				final Gson gson = new GsonBuilder().addSerializationExclusionStrategy(strategyUsers).create();
-				out.append(gson.toJson(getLtiUsers(ts.getToolKey(), tui.getManageAttemptsExcludeUsers())));
+				String currentResourceId = (String) session.getAttribute("current_resource_id");
+				out.append(gson.toJson(getLtiUsers(ts.getToolKey(), tui.getManageAttemptsExcludeUsers(), currentResourceId)));
 
 			} else if (request.getServletPath().startsWith("/learner/listattempts") && userId != null
 					&& (tui.isShowAttempts() || tui.isManageAttempts() && ts.isInstructor())) {
@@ -161,6 +162,7 @@ public class ListAttemptsServlet extends HttpServlet {
 		final ToolSession ts = (ToolSession) session.getAttribute(ToolSession.class.getName());
 		final Tool tool = ts.getTool();
 		final String userId = request.getParameter("userId");
+		logger.info("ListAttemptsServlet doPost received userId parameter: '{}'", userId);
 		if (request.getServletPath().startsWith("/instructor/listattempts") && tool != null && userId != null
 				&& tool.getToolUiConfig().isManageAttempts()) {
 			response.setContentType("application/json");
@@ -168,7 +170,7 @@ public class ListAttemptsServlet extends HttpServlet {
 				// userId can be * or a comma-separated list, excluding "exclude users"
 				final List<String> excludeUsers = tool.getToolUiConfig().getManageAttemptsExcludeUsers();
 				String currentResourceId = (String) session.getAttribute("current_resource_id");
-				
+
 				if (userId.equals("*")) {
 					final List<Attempt> attempts;
 					if (currentResourceId != null && !currentResourceId.isEmpty()) {
@@ -194,9 +196,12 @@ public class ListAttemptsServlet extends HttpServlet {
 							}
 						}
 					}
+					logger.info("Parsed userIdList: {}", userIdList);
 					final List<AttemptInfo> attempts = new ArrayList<>();
 					for (final String c : userIdList) {
-						final List<LtiUser> users = ToolConsumerUserDao.getToolKeyLtiUsers(ts.getToolKey(), c);
+						logger.info("Calling getToolKeyLtiUsersByUserId with c: '{}'", c);
+						final List<LtiUser> users = ToolConsumerUserDao.getToolKeyLtiUsersByUserId(ts.getToolKey(), c);
+						logger.info("getToolKeyLtiUsersByUserId returned {} users", users.size());
 						for (final LtiUser u : users) {
 							attempts.addAll(getAttempts(ts.getToolKey(), u));
 						}
@@ -224,19 +229,31 @@ public class ListAttemptsServlet extends HttpServlet {
 	 * @param excludeUsers LTI users that must not been shown
 	 * @return the list of LTI users
 	 */
-	private List<LtiUser> getLtiUsers(ToolKey tk, List<String> excludeUsers) {
+	private List<LtiUser> getLtiUsers(ToolKey tk, List<String> excludeUsers, String currentResourceId) {
+		logger.info("getLtiUsers called with excludeUsers: {}, currentResourceId: {}", excludeUsers, currentResourceId);
 		final List<LtiUser> filteredUsers = new ArrayList<>();
 		if (excludeUsers == null) {
 			excludeUsers = new ArrayList<>();
 		}
 
-		final List<LtiUser> users = ToolConsumerUserDao.getToolKeyLtiUsers(tk);
+		final List<LtiUser> users;
+		if (currentResourceId != null && !currentResourceId.isEmpty()) {
+			users = ToolConsumerUserDao.getToolKeyLtiUsersByResource(tk, currentResourceId);
+			logger.info("ToolConsumerUserDao.getToolKeyLtiUsersByResource returned {} users", users.size());
+		} else {
+			users = ToolConsumerUserDao.getToolKeyLtiUsers(tk);
+			logger.info("ToolConsumerUserDao.getToolKeyLtiUsers returned {} users", users.size());
+		}
 		for (final LtiUser u : users) {
+			logger.info("Checking user: userId='{}', sourceId='{}', nameFull='{}'", u.getUserId(), u.getSourceId(), u.getNameFull());
 			if (excludeUsers.indexOf(u.getSourceId()) < 0) {
 				filteredUsers.add(u);
+			} else {
+				logger.info("User excluded because sourceId '{}' is in excludeUsers list", u.getSourceId());
 			}
 		}
 
+		logger.info("getLtiUsers returning {} filtered users", filteredUsers.size());
 		return filteredUsers;
 	}
 
@@ -268,7 +285,7 @@ public class ListAttemptsServlet extends HttpServlet {
 			i.setFileName(a.getFileName());
 			i.setWithFile(a.isFileSaved());
 			i.setWithOutput(a.isOutputSaved());
-			i.setUserId(a.getResourceUser().getUser().getSourceId());
+			i.setUserId(a.getResourceUser().getUser().getUserId());
 			i.setScore(a.getScore());
 			i.setErrorCode(a.getErrorCode());
 			i.setTimestamp(DateTimeFormatter.ISO_INSTANT.format(a.getInstant()));

@@ -95,46 +95,58 @@ public final class ToolConsumerUserDao {
 	/**
 	 * SQL statement to get all user full names and source ID that used a tool.
 	 */
-	private static final String SQL_TOOL_LTI_USERS = "SELECT DISTINCT source_id, name_full" + " FROM "
+	private static final String SQL_TOOL_LTI_USERS = "SELECT DISTINCT lti_user_id, name_full" + " FROM "
 			+ ToolResourceUserDao.RU_TABLE_NAME + ", " + ToolResourceLinkDao.RL_TABLE_NAME + ", " + LTI_USER_TABLE_NAME
-			+ "	WHERE " + ToolResourceUserDao.RU_TABLE_NAME + ".lti_user_sid=" + LTI_USER_TABLE_NAME + ".sid"
-			+ "	AND " + ToolResourceUserDao.RU_TABLE_NAME + ".resource_sid=" + ToolResourceLinkDao.RL_TABLE_NAME
-			+ ".sid" + " AND " + ToolResourceLinkDao.RL_TABLE_NAME + ".tool_sid=?" + " ORDER BY source_id";
+			+ " WHERE " + ToolResourceUserDao.RU_TABLE_NAME + ".lti_user_sid=" + LTI_USER_TABLE_NAME + ".sid"
+			+ " AND " + ToolResourceUserDao.RU_TABLE_NAME + ".resource_sid=" + ToolResourceLinkDao.RL_TABLE_NAME
+			+ ".sid" + " AND " + ToolResourceLinkDao.RL_TABLE_NAME + ".tool_sid=?" + " ORDER BY name_full";
 
 	/**
 	 * SQL statement to get all user full names and source ID that used a tool key.
 	 */
-	private static final String SQL_TOOLKEY_LTI_USERS = "SELECT DISTINCT source_id, name_full" + " FROM "
+	private static final String SQL_TOOLKEY_LTI_USERS = "SELECT DISTINCT lti_user_id, source_id, name_full" + " FROM "
 			+ ToolResourceUserDao.RU_TABLE_NAME + ", " + ToolResourceLinkDao.RL_TABLE_NAME + ", " + LTI_USER_TABLE_NAME
-			+ "	WHERE " + ToolResourceUserDao.RU_TABLE_NAME + ".lti_user_sid=" + LTI_USER_TABLE_NAME + ".sid"
-			+ "	AND " + ToolResourceUserDao.RU_TABLE_NAME + ".resource_sid=" + ToolResourceLinkDao.RL_TABLE_NAME
-			+ ".sid" + " AND " + ToolResourceLinkDao.RL_TABLE_NAME + ".tool_key_sid=?" + " ORDER BY source_id";
+			+ " WHERE " + ToolResourceUserDao.RU_TABLE_NAME + ".lti_user_sid=" + LTI_USER_TABLE_NAME + ".sid"
+			+ " AND " + ToolResourceUserDao.RU_TABLE_NAME + ".resource_sid=" + ToolResourceLinkDao.RL_TABLE_NAME
+			+ ".sid" + " AND " + ToolResourceLinkDao.RL_TABLE_NAME + ".tool_key_sid=?" + " ORDER BY name_full";
 
 	/**
-	 * SQL statement to get all serial IDs, full names and source IDs of users that
-	 * used a tool key with a specific source ID.
+	 * SQL statement to get all user full names and source ID that used a tool key
+	 * in a specific resource link.
 	 */
-	private static final String SQL_TOOLKEY_LTI_USERS_BY_SOURCE_ID = "SELECT DISTINCT " + LTI_USER_TABLE_NAME
-			+ ".sid, source_id, name_full" + " FROM " + ToolResourceUserDao.RU_TABLE_NAME + ", "
+	private static final String SQL_TOOLKEY_LTI_USERS_BY_RESOURCE = "SELECT DISTINCT lti_user_id, source_id, name_full" + " FROM "
+			+ ToolResourceUserDao.RU_TABLE_NAME + ", " + ToolResourceLinkDao.RL_TABLE_NAME + ", " + LTI_USER_TABLE_NAME
+			+ " WHERE " + ToolResourceUserDao.RU_TABLE_NAME + ".lti_user_sid=" + LTI_USER_TABLE_NAME + ".sid"
+			+ " AND " + ToolResourceUserDao.RU_TABLE_NAME + ".resource_sid=" + ToolResourceLinkDao.RL_TABLE_NAME
+			+ ".sid" + " AND " + ToolResourceLinkDao.RL_TABLE_NAME + ".tool_key_sid=?"
+			+ " AND " + ToolResourceLinkDao.RL_TABLE_NAME + ".resource_id=?" + " ORDER BY name_full";
+
+	/**
+	 * SQL statement to get all serial IDs, user IDs, full names and source IDs of users that
+	 * used a tool key with a specific user ID.
+	 */
+	private static final String SQL_TOOLKEY_LTI_USERS_BY_USER_ID = "SELECT DISTINCT " + LTI_USER_TABLE_NAME
+			+ ".sid, lti_user_id, source_id, name_full" + " FROM " + ToolResourceUserDao.RU_TABLE_NAME + ", "
 			+ ToolResourceLinkDao.RL_TABLE_NAME + ", " + LTI_USER_TABLE_NAME + " WHERE "
 			+ ToolResourceUserDao.RU_TABLE_NAME + ".lti_user_sid=" + LTI_USER_TABLE_NAME + ".sid" + " AND "
 			+ ToolResourceUserDao.RU_TABLE_NAME + ".resource_sid=" + ToolResourceLinkDao.RL_TABLE_NAME + ".sid"
-			+ "	AND " + ToolResourceLinkDao.RL_TABLE_NAME + ".tool_key_sid=?" + " AND source_id=?";
+			+ "	AND " + ToolResourceLinkDao.RL_TABLE_NAME + ".tool_key_sid=?" + " AND lti_user_id=?";
 
 	/**
-	 * SQL statement to get serial IDs of unused LTI users (not using resource links).
+	 * SQL statement to get serial IDs of unused LTI users (not using resource
+	 * links).
 	 */
 	private static final String SQL_GET_UNUSED_LTI_USERS = "SELECT " + LTI_USER_TABLE_NAME + ".sid FROM "
 			+ LTI_USER_TABLE_NAME + " LEFT JOIN " + ToolResourceUserDao.RU_TABLE_NAME + " ON " + LTI_USER_TABLE_NAME
 			+ ".sid=" + ToolResourceUserDao.RU_TABLE_NAME + ".lti_user_sid WHERE " + ToolResourceUserDao.RU_TABLE_NAME
 			+ ".sid IS NULL";
-	
+
 	/**
 	 * SQL statement to delete unused LTI users.
 	 */
 	private static final String SQL_DELETE_UNUSED_LTI_USERS = "DELETE FROM " + LTI_USER_TABLE_NAME + " WHERE "
 			+ LTI_USER_TABLE_NAME + ".sid IN (" + SQL_GET_UNUSED_LTI_USERS + ")";
-	
+
 	/**
 	 * Utility class that provides methods for managing connections to a database.
 	 */
@@ -378,7 +390,7 @@ public final class ToolConsumerUserDao {
 			while (rs.next()) {
 				int i = 1;
 				final LtiUser user = new LtiUser();
-				user.setSourceId(rs.getString(i++));
+				user.setUserId(rs.getString(i++));
 				user.setNameFull(rs.getString(i++));
 				list.add(user);
 			}
@@ -409,6 +421,7 @@ public final class ToolConsumerUserDao {
 			while (rs.next()) {
 				int i = 1;
 				final LtiUser user = new LtiUser();
+				user.setUserId(rs.getString(i++));
 				user.setSourceId(rs.getString(i++));
 				user.setNameFull(rs.getString(i++));
 				list.add(user);
@@ -424,26 +437,25 @@ public final class ToolConsumerUserDao {
 	}
 
 	/**
-	 * Gets all serial IDs, full names and source IDs of users that used a tool key
-	 * with a specific source ID.
+	 * Gets all LTI users that used a tool key in a specific resource link.
 	 *
-	 * @param tk       the tool key
-	 * @param sourceId the source ID
-	 * @return list of LTI users (only source id and full name)
+	 * @param tk         the tool key
+	 * @param resourceId the resource link ID
+	 * @return list of LTI users
 	 */
-	public static List<LtiUser> getToolKeyLtiUsers(ToolKey tk, String sourceId) {
+	public static List<LtiUser> getToolKeyLtiUsersByResource(ToolKey tk, String resourceId) {
 		final List<LtiUser> list = new ArrayList<>();
 
 		final Connection conn = dbUtil.getConnection();
-		try (PreparedStatement stmt = conn.prepareStatement(SQL_TOOLKEY_LTI_USERS_BY_SOURCE_ID);) {
+		try (PreparedStatement stmt = conn.prepareStatement(SQL_TOOLKEY_LTI_USERS_BY_RESOURCE);) {
 			stmt.setInt(1, tk.getSid());
-			stmt.setString(2, sourceId);
+			stmt.setString(2, resourceId);
 			final ResultSet rs = stmt.executeQuery();
 
 			while (rs.next()) {
 				int i = 1;
 				final LtiUser user = new LtiUser();
-				user.setSid(rs.getInt(i++));
+				user.setUserId(rs.getString(i++));
 				user.setSourceId(rs.getString(i++));
 				user.setNameFull(rs.getString(i++));
 				list.add(user);
@@ -457,7 +469,43 @@ public final class ToolConsumerUserDao {
 
 		return list;
 	}
-	
+
+	/**
+	 * Gets all serial IDs, user IDs, full names and source IDs of users that used a tool key
+	 * with a specific user ID.
+	 *
+	 * @param tk     the tool key
+	 * @param userId the user ID
+	 * @return list of LTI users
+	 */
+	public static List<LtiUser> getToolKeyLtiUsersByUserId(ToolKey tk, String userId) {
+		final List<LtiUser> list = new ArrayList<>();
+
+		final Connection conn = dbUtil.getConnection();
+		try (PreparedStatement stmt = conn.prepareStatement(SQL_TOOLKEY_LTI_USERS_BY_USER_ID);) {
+			stmt.setInt(1, tk.getSid());
+			stmt.setString(2, userId);
+			final ResultSet rs = stmt.executeQuery();
+
+			while (rs.next()) {
+				int i = 1;
+				final LtiUser user = new LtiUser();
+				user.setSid(rs.getInt(i++));
+				user.setUserId(rs.getString(i++));
+				user.setSourceId(rs.getString(i++));
+				user.setNameFull(rs.getString(i++));
+				list.add(user);
+			}
+			rs.close();
+		} catch (final Exception ex) {
+			logger.error("Access error", ex);
+		} finally {
+			dbUtil.closeConnection(conn);
+		}
+
+		return list;
+	}
+
 	/**
 	 * Deletes unused LTI users.
 	 * 
