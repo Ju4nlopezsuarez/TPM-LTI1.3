@@ -82,6 +82,28 @@ public class ResourceLink extends UpdateRecordEntity {
 	 * Last tool key used, to be able to retrieve the scores or send them later.
 	 */
 	private ToolKey toolKey;
+	/**
+	 * Mapped toolname from the denormalized column.
+	 */
+	private String mappedToolname;
+
+	/**
+	 * Gets the mapped toolname.
+	 *
+	 * @return the mapped toolname
+	 */
+	public String getMappedToolname() {
+		return mappedToolname;
+	}
+
+	/**
+	 * Sets the mapped toolname.
+	 *
+	 * @param mappedToolname the mapped toolname to set
+	 */
+	public void setMappedToolname(String mappedToolname) {
+		this.mappedToolname = mappedToolname;
+	}
 
 	/**
 	 * Add a property to the custom properties.

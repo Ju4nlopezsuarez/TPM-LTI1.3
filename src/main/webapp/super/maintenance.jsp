@@ -84,6 +84,16 @@
 					<span class="keyTitle"><strong>Consumidores/LMS</strong></span>
 				</div>
 				<div><span class="keyTitle" id="consumers-count">0</span></div>
+
+				<!-- Unmap tools -->
+				<div>
+					<span class="keyTitle">
+						<a id="unmapAllBtn" class="faction" href="unmapall" 
+							title="Desvincular"><span class="material-icons">link_off</span></a>
+					</span>
+					<span class="keyTitle"><strong>Desvincular herramientas</strong></span>
+				</div>
+				<div><span class="keyTitle" id="unmapAllBtn-count">0</span></div>
 				
 			</div>
 		</div>

@@ -46,7 +46,7 @@ import jakarta.servlet.http.HttpServletResponse;
  * tool key.
  */
 @WebServlet({ "/super/optimize", "/super/getunused", "/super/deleteunusedusers", "/super/deleteunusedresourceusers",
-		"/super/deleteunusedresourcelinks", "/super/deleteunusedcontexts", "/super/deleteunusedconsumers" })
+		"/super/deleteunusedresourcelinks", "/super/deleteunusedcontexts", "/super/deleteunusedconsumers", "/super/unmapall" })
 public class MaintenanceServlet extends HttpServlet {
 	/**
 	 * Serializable requirement.
@@ -75,12 +75,13 @@ public class MaintenanceServlet extends HttpServlet {
 		}
 		if (request.getServletPath().equals("/super/getunused")) {
 			response.setContentType("application/json");
-			UnusedInfo info = new UnusedInfo();
-			info.setConsumers(ToolConsumerDao.getUnused().size());
-			info.setContexts(ToolContextDao.getUnused().size());
-			info.setResourceLinks(ToolResourceLinkDao.getUnused().size());
-			info.setResourceUsers(ToolResourceUserDao.getUnused().size());
-			info.setUsers(ToolConsumerUserDao.getUnused().size());
+			java.util.Map<String, Integer> info = new java.util.HashMap<>();
+			info.put("consumers", ToolConsumerDao.getUnused().size());
+			info.put("contexts", ToolContextDao.getUnused().size());
+			info.put("resourceLinks", ToolResourceLinkDao.getUnused().size());
+			info.put("resourceUsers", ToolResourceUserDao.getUnused().size());
+			info.put("users", ToolConsumerUserDao.getUnused().size());
+			info.put("unmapAllBtn", ToolResourceLinkDao.getMappedCount());
 			out.append(new Gson().toJson(info));
 		} else {
 			response.setStatus(HttpServletResponse.SC_FORBIDDEN);
@@ -135,6 +136,9 @@ public class MaintenanceServlet extends HttpServlet {
 		case "/super/deleteunusedconsumers":
 			ToolNonceDao.deleteAll(); //Nonce depends on consumer
 			out.print(ToolConsumerDao.deleteUnused());
+			break;
+		case "/super/unmapall":
+			out.print(ToolResourceLinkDao.unmapAll());
 			break;
 		default:
 			response.setStatus(HttpServletResponse.SC_FORBIDDEN);

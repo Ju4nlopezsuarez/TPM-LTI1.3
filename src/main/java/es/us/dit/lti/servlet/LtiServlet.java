@@ -25,6 +25,7 @@ import es.us.dit.lti.persistence.Lti13ToolConfig;
 import es.us.dit.lti.persistence.ToolLti13Dao;
 import es.us.dit.lti.persistence.ToolKeyDao;
 import es.us.dit.lti.entity.ToolKey;
+import es.us.dit.lti.persistence.ToolResourceLinkDao;
 import es.us.dit.lti.runner.ToolRunnerFactory;
 
 /**
@@ -131,7 +132,7 @@ public class LtiServlet extends HttpServlet {
                             boolean continueToToolSession = true;
                             if (resourceLinkId != null) {
                                 request.setAttribute("current_resource_id", resourceLinkId);
-                                String mappedClave = dao.getMappedTool(resourceLinkId);
+                                String mappedClave = ToolResourceLinkDao.getMappedToolnameByResourceId(resourceLinkId);
                                 if (mappedClave == null) {
                                     continueToToolSession = false;
                                     logger.info("Unmapped resource_link_id: {}. Checking instructor role for setup.",

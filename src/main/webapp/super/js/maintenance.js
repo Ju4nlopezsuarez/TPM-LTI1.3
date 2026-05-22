@@ -111,6 +111,16 @@ window.addEventListener("load", function() {
 	  i.onclick = deleteUnused;
 	  i.style.visibility="hidden";
 	}
+	let unmapBtn = document.getElementById("unmapAllBtn");
+	if (unmapBtn) {
+		unmapBtn.onclick = async function(event) {
+			event.preventDefault();
+			await sendPost(this, this.href);
+			if (this.lastResult) {
+				alert("Todas las herramientas han sido desvinculadas.");
+			}
+		};
+	}
 	let aux = document.getElementById("add");
 	if (aux) {
 		aux.onclick = getUnused;

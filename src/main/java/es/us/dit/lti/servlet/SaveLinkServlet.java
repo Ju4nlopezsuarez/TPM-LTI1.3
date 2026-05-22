@@ -3,7 +3,7 @@ package es.us.dit.lti.servlet;
 
 import es.us.dit.lti.entity.ToolKey;
 import es.us.dit.lti.persistence.ToolKeyDao;
-import es.us.dit.lti.persistence.ToolLti13Dao;
+import es.us.dit.lti.persistence.ToolResourceLinkDao;
 import es.us.dit.lti.ToolSession;
 import es.us.dit.lti.MessageMap;
 import es.us.dit.lti.runner.ToolRunnerFactory;
@@ -45,8 +45,7 @@ public class SaveLinkServlet extends HttpServlet {
                 String toolName = toolKey.getTool().getName();
 
                 // Guardar la asociación en la base de datos LTI 1.3
-                ToolLti13Dao dao = new ToolLti13Dao();
-                boolean saved = dao.saveResourceLinkMapping(resourceLinkId, clave);
+                boolean saved = ToolResourceLinkDao.updateMappedToolname(resourceLinkId, clave);
 
                 if (saved) {
                     // Limpiar sesión y notificar éxito

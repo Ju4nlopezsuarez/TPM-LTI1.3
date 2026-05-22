@@ -61,28 +61,28 @@ public final class ToolResourceLinkDao {
 	/**
 	 * SQL statement to get a resource link by the serial ID.
 	 */
-	public static final String SQL_GET_BY_SID = "SELECT tool_sid, context_sid, resource_id, title, custom_properties, outcome_service_url, tool_key_sid, created, updated FROM "
+	public static final String SQL_GET_BY_SID = "SELECT tool_sid, context_sid, resource_id, title, custom_properties, outcome_service_url, tool_key_sid, created, updated, mapped_toolname FROM "
 			+ RL_TABLE_NAME + " WHERE sid = ?";
 
 	/**
 	 * SQL statement to get an attempt by the serial ID of the tool and the context
 	 * and its resource link ID.
 	 */
-	public static final String SQL_GET_BY_ID = "SELECT sid, title, custom_properties, outcome_service_url, tool_key_sid, created, updated FROM "
+	public static final String SQL_GET_BY_ID = "SELECT sid, title, custom_properties, outcome_service_url, tool_key_sid, created, updated, mapped_toolname FROM "
 			+ RL_TABLE_NAME + " WHERE tool_sid=? AND context_sid=? AND resource_id=?";
 
 	/**
 	 * SQL statement to add a resource link.
 	 */
 	public static final String SQL_NEW = "INSERT INTO " + RL_TABLE_NAME
-			+ " (tool_sid, context_sid, resource_id, title, custom_properties, outcome_service_url, tool_key_sid, created, updated) "
-			+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+			+ " (tool_sid, context_sid, resource_id, title, custom_properties, outcome_service_url, tool_key_sid, created, updated, mapped_toolname) "
+			+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 	/**
 	 * SQL statement to update a resource link.
 	 */
 	public static final String SQL_UPDATE = "UPDATE " + RL_TABLE_NAME
-			+ " SET title=?, custom_properties=?, outcome_service_url=?, tool_key_sid=?, updated=? " + "WHERE sid = ?";
+			+ " SET title=?, custom_properties=?, outcome_service_url=?, tool_key_sid=?, updated=?, mapped_toolname=? " + "WHERE sid = ?";
 
 	
 	/**
@@ -188,6 +188,7 @@ public final class ToolResourceLinkDao {
 
 				rl.setCreated(DaoUtil.toCalendar(rs.getTimestamp(6)));
 				rl.setUpdated(DaoUtil.toCalendar(rs.getTimestamp(7)));
+				rl.setMappedToolname(rs.getString(8));
 			}
 			rs.close();
 		} catch (final SQLException e) {
@@ -240,6 +241,7 @@ public final class ToolResourceLinkDao {
 
 				rl.setCreated(DaoUtil.toCalendar(rs.getTimestamp(8)));
 				rl.setUpdated(DaoUtil.toCalendar(rs.getTimestamp(9)));
+				rl.setMappedToolname(rs.getString(10));
 			}
 			rs.close();
 		} catch (final SQLException e) {
@@ -306,6 +308,7 @@ public final class ToolResourceLinkDao {
 				stmt.setNull(i++, java.sql.Types.INTEGER);
 			}
 			stmt.setTimestamp(i++, DaoUtil.toTimestamp(now)); // updated
+			stmt.setString(i++, rl.getMappedToolname());
 			stmt.setInt(i++, rl.getSid());
 			res = stmt.executeUpdate() == 1;
 			if (res) {
@@ -354,6 +357,7 @@ public final class ToolResourceLinkDao {
 			}
 			stmt.setTimestamp(i++, DaoUtil.toTimestamp(now)); // created
 			stmt.setTimestamp(i++, DaoUtil.toTimestamp(now)); // updated
+			stmt.setString(i++, rl.getMappedToolname());
 			res = stmt.executeUpdate() == 1;
 			if (res) {
 				rl.setCreated(now);
@@ -438,6 +442,83 @@ public final class ToolResourceLinkDao {
 			dbUtil.closeConnection(connection);
 		}
 		return res;
+	}
+
+	/**
+	 * Devuelve el número de resource links que tienen un mapeo de herramienta configurado.
+	 */
+	public static int getMappedCount() {
+		int count = 0;
+		final Connection connection = dbUtil.getConnection();
+		try (PreparedStatement stmt = connection.prepareStatement("SELECT COUNT(*) FROM " + RL_TABLE_NAME + " WHERE mapped_toolname IS NOT NULL");) {
+			final ResultSet rs = stmt.executeQuery();
+			if (rs.next()) {
+				count = rs.getInt(1);
+			}
+			rs.close();
+		} catch (final SQLException e) {
+			logger.error("Get mapped count: ", e);
+		} finally {
+			dbUtil.closeConnection(connection);
+		}
+		return count;
+	}
+
+	/**
+	 * Desvincula todos los enlaces LTI 1.3 seteando mapped_toolname a NULL.
+	 */
+	public static boolean unmapAll() {
+		boolean success = true;
+		final Connection conn = dbUtil.getConnection();
+		try (PreparedStatement stmt = conn.prepareStatement("UPDATE " + RL_TABLE_NAME + " SET mapped_toolname = NULL");) {
+			success = stmt.executeUpdate() >= 0;
+		} catch (final SQLException e) {
+			success = false;
+			logger.error("Unmap all: ", e);
+		} finally {
+			dbUtil.closeConnection(conn);
+		}
+		return success;
+	}
+
+	/**
+	 * Actualiza el mapeo de herramienta en un resource_link concreto.
+	 */
+	public static boolean updateMappedToolname(String resourceId, String mappedToolname) {
+		boolean res;
+		final Connection connection = dbUtil.getConnection();
+		try (PreparedStatement stmt = connection.prepareStatement("UPDATE " + RL_TABLE_NAME + " SET mapped_toolname = ? WHERE resource_id = ?");) {
+			stmt.setString(1, mappedToolname);
+			stmt.setString(2, resourceId);
+			res = stmt.executeUpdate() > 0;
+		} catch (final SQLException e) {
+			logger.error("Update Mapped Toolname", e);
+			res = false;
+		} finally {
+			dbUtil.closeConnection(connection);
+		}
+		return res;
+	}
+
+	/**
+	 * Obtiene el nombre de la herramienta mapeada a un recurso.
+	 */
+	public static String getMappedToolnameByResourceId(String resourceId) {
+		String toolname = null;
+		final Connection connection = dbUtil.getConnection();
+		try (PreparedStatement stmt = connection.prepareStatement("SELECT mapped_toolname FROM " + RL_TABLE_NAME + " WHERE resource_id = ?");) {
+			stmt.setString(1, resourceId);
+			final ResultSet rs = stmt.executeQuery();
+			if (rs.next()) {
+				toolname = rs.getString(1);
+			}
+			rs.close();
+		} catch (final SQLException e) {
+			logger.error("Get mapped toolname: ", e);
+		} finally {
+			dbUtil.closeConnection(connection);
+		}
+		return toolname;
 	}
 	
 }
