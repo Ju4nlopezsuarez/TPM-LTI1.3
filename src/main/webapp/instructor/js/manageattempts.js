@@ -473,15 +473,21 @@ function showUserInfo(userId, attemptId, result) {
 				container.appendChild(te);
 				container.appendChild(document.createElement("br"));
 			} 
-			container.appendChild(document.createTextNode( 
-				texts.nameGiven + ": " + rus[ui].user.nameGiven ));
-			container.appendChild(document.createElement("br"));
-			container.appendChild(document.createTextNode( 
-				texts.nameFamily + ": " +  rus[ui].user.nameFamily ));
-			container.appendChild(document.createElement("br"));
-			container.appendChild(document.createTextNode( 
-				texts.nameFull + ": " +  rus[ui].user.nameFull ));
-			container.appendChild(document.createElement("br"));
+			if (rus[ui].user.nameGiven !== undefined && rus[ui].user.nameGiven !== 'undefined' && rus[ui].user.nameGiven !== null && rus[ui].user.nameGiven !== "") {
+				container.appendChild(document.createTextNode( 
+					texts.nameGiven + ": " + rus[ui].user.nameGiven ));
+				container.appendChild(document.createElement("br"));
+			}
+			if (rus[ui].user.nameFamily !== undefined && rus[ui].user.nameFamily !== 'undefined' && rus[ui].user.nameFamily !== null && rus[ui].user.nameFamily !== "") {
+				container.appendChild(document.createTextNode( 
+					texts.nameFamily + ": " +  rus[ui].user.nameFamily ));
+				container.appendChild(document.createElement("br"));
+			}
+			if (rus[ui].user.nameFull !== undefined && rus[ui].user.nameFull !== 'undefined' && rus[ui].user.nameFull !== null && rus[ui].user.nameFull !== "") {
+				container.appendChild(document.createTextNode( 
+					texts.nameFull + ": " +  rus[ui].user.nameFull ));
+				container.appendChild(document.createElement("br"));
+			}
 			container.appendChild(document.createTextNode( 
 				texts.email + ": " +  rus[ui].user.email ));
 			container.appendChild(document.createElement("br"));

@@ -130,6 +130,7 @@ public class LtiServlet extends HttpServlet {
 
                             boolean continueToToolSession = true;
                             if (resourceLinkId != null) {
+                                request.setAttribute("current_resource_id", resourceLinkId);
                                 String mappedClave = dao.getMappedTool(resourceLinkId);
                                 if (mappedClave == null) {
                                     continueToToolSession = false;
@@ -141,21 +142,24 @@ public class LtiServlet extends HttpServlet {
                                             .getStringListClaim("https://purl.imsglobal.org/spec/lti/claim/roles");
                                     if (userRoles != null) {
                                         for (String roleUri : userRoles) {
-                                            if (roleUri.equals(
-                                                    "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Instructor")) {
+                                            String safeRole = roleUri.toLowerCase();
+                                            if (safeRole.contains("instructor") || safeRole.contains("administrator")) {
                                                 isInstructor = true;
+                                                break;
                                             }
                                         }
-                                        
+
                                         if (!isInstructor) {
-                                            logger.warn("User attempted to setup a tool without instructor privileges.");
+                                            logger.warn(
+                                                    "User attempted to setup a tool without instructor privileges.");
                                             response.sendError(HttpServletResponse.SC_FORBIDDEN,
                                                     "Solo los instructores pueden configurar una nueva herramienta.");
                                         } else {
                                             ToolLti13Dao toolDao = new ToolLti13Dao();
 
                                             request.setAttribute("available_tools", toolDao.findAll());
-                                            request.getSession().setAttribute("pending_resource_link_id", resourceLinkId);
+                                            request.getSession().setAttribute("pending_resource_link_id",
+                                                    resourceLinkId);
                                             request.getSession().setAttribute("lti13_id_token", idToken);
                                             // request.getSession().setAttribute("lti13_claims_json",
                                             // claims.toJSONObject().toJSONString());
@@ -173,7 +177,8 @@ public class LtiServlet extends HttpServlet {
                                         // Inyectamos la toolKey en la sesión
                                         request.getSession().setAttribute("toolKey", toolKey);
                                         // Guardamos el verdadero nombre de la herramienta por si hace falta
-                                        request.getSession().setAttribute("mappedToolName", toolKey.getTool().getName());
+                                        request.getSession().setAttribute("mappedToolName",
+                                                toolKey.getTool().getName());
                                     }
                                 }
                             }

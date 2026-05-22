@@ -147,6 +147,20 @@ public final class ToolAttemptDao {
 			+ ".tool_key_sid=? ORDER BY epoch_seconds ASC, nanoseconds ASC, " + AT_TABLE_NAME + ".sid ASC";
 
 	/**
+	 * SQL statement to all attempts using the same tool key, filtered by resource link id.
+	 */
+	private static final String SQL_GET_ALL_TK_BY_RESOURCE = "SELECT " + AT_TABLE_NAME
+			+ ".sid, resource_user_sid, original_ru_sid, epoch_seconds, nanoseconds, fileSaved, outputSaved, "
+			+ "filename, storage_type, score, errorCode, " + ToolConsumerUserDao.LTI_USER_TABLE_NAME + ".sid, source_id FROM "
+			+ AT_TABLE_NAME
+			+ " JOIN " + ToolResourceUserDao.RU_TABLE_NAME + " ON resource_user_sid=" + ToolResourceUserDao.RU_TABLE_NAME + ".sid"
+			+ " JOIN " + ToolResourceLinkDao.RL_TABLE_NAME + " ON " + ToolResourceUserDao.RU_TABLE_NAME + ".resource_sid=" + ToolResourceLinkDao.RL_TABLE_NAME + ".sid"
+			+ " LEFT JOIN " + ToolConsumerUserDao.LTI_USER_TABLE_NAME + " ON " + ToolResourceUserDao.RU_TABLE_NAME + ".lti_user_sid=" + ToolConsumerUserDao.LTI_USER_TABLE_NAME + ".sid"
+			+ " WHERE " + ToolResourceLinkDao.RL_TABLE_NAME
+			+ ".tool_key_sid=? AND " + ToolResourceLinkDao.RL_TABLE_NAME + ".resource_id=? "
+			+ " ORDER BY epoch_seconds ASC, nanoseconds ASC, " + AT_TABLE_NAME + ".sid ASC";
+
+	/**
 	 * Utility class that provides methods for managing connections to a database.
 	 */
 	private static IDbUtil dbUtil = null;
@@ -514,6 +528,85 @@ public final class ToolAttemptDao {
 			final ResourceUser ru = ToolResourceUserDao.getBySid(attempt.getOriginalResourceUser().getSid());
 			if (ru != null) {
 				attempt.setOriginalResourceUser(ru);
+			}
+		}
+		return list;
+	}
+
+	/**
+	 * Gets a list of all attempts for a tool key and specific resource ID.
+	 *
+	 * @param tk the tool key
+	 * @param resourceId the resource link id
+	 * @return the list of all attempts
+	 */
+	public static List<Attempt> getToolKeyAttempts(ToolKey tk, String resourceId) {
+		final List<Attempt> list = new ArrayList<>();
+		final List<Attempt> listWithoutOriginalUser = new ArrayList<>();
+		final Map<Integer, LtiUser> knownUsers = new HashMap<>();
+
+		final Connection conn = dbUtil.getConnection();
+		try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_ALL_TK_BY_RESOURCE);) {
+			stmt.setInt(1, tk.getSid());
+			stmt.setString(2, resourceId);
+			final ResultSet rs = stmt.executeQuery();
+
+			while (rs.next()) {
+				int i = 1;
+				final Attempt attempt = new Attempt();
+				attempt.setSid(rs.getInt(i++));
+
+				int auxSid = rs.getInt(i++);
+				ResourceUser auxRu = new ResourceUser();
+				auxRu.setSid(auxSid);
+				attempt.setResourceUser(auxRu);
+
+				auxSid = rs.getInt(i++);
+				if (auxSid != auxRu.getSid()) {
+					auxRu = new ResourceUser();
+					auxRu.setSid(auxSid);
+				}
+				attempt.setOriginalResourceUser(auxRu);
+
+				attempt.setInstant(Instant.ofEpochSecond(rs.getLong(i++), rs.getInt(i++)));
+				attempt.setFileSaved(rs.getBoolean(i++));
+				attempt.setOutputSaved(rs.getBoolean(i++));
+				attempt.setFileName(rs.getString(i++));
+				attempt.setStorageType(rs.getInt(i++));
+				attempt.setScore(rs.getInt(i++));
+				attempt.setErrorCode(rs.getInt(i++));
+
+				// User
+				auxSid = rs.getInt(i++);
+				final LtiUser user = new LtiUser();
+				user.setSid(auxSid);
+				user.setSourceId(rs.getString(i++));
+				attempt.getResourceUser().setUser(user);
+				knownUsers.putIfAbsent(attempt.getResourceUser().getSid(), user);
+				if (attempt.getResourceUser().getSid() != attempt.getOriginalResourceUser().getSid()) {
+					listWithoutOriginalUser.add(attempt);
+				}
+
+				list.add(attempt);
+			}
+			rs.close();
+		} catch (final Exception ex) {
+			logger.error("Unable to get attempts", ex);
+		} finally {
+			dbUtil.closeConnection(conn);
+		}
+		// Complete without original resource users
+		for (final Attempt attempt : listWithoutOriginalUser) {
+			final int sid = attempt.getOriginalResourceUser().getSid();
+			final LtiUser user = knownUsers.get(sid);
+			if (user == null) {
+				logger.info("Retrieving original user");
+				final ResourceUser ru = ToolResourceUserDao.getBySid(sid);
+				if (ru != null) {
+					attempt.setOriginalResourceUser(ru);
+				}
+			} else {
+				attempt.getOriginalResourceUser().setUser(user);
 			}
 		}
 		return list;

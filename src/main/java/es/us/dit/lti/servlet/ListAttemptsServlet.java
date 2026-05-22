@@ -167,8 +167,15 @@ public class ListAttemptsServlet extends HttpServlet {
 			try {
 				// userId can be * or a comma-separated list, excluding "exclude users"
 				final List<String> excludeUsers = tool.getToolUiConfig().getManageAttemptsExcludeUsers();
+				String currentResourceId = (String) session.getAttribute("current_resource_id");
+				
 				if (userId.equals("*")) {
-					final List<Attempt> attempts = ToolAttemptDao.getToolKeyAttempts(ts.getToolKey());
+					final List<Attempt> attempts;
+					if (currentResourceId != null && !currentResourceId.isEmpty()) {
+						attempts = ToolAttemptDao.getToolKeyAttempts(ts.getToolKey(), currentResourceId);
+					} else {
+						attempts = ToolAttemptDao.getToolKeyAttempts(ts.getToolKey());
+					}
 					if (excludeUsers != null) {
 						attempts.removeIf(a -> excludeUsers.indexOf(a.getResourceUser().getUser().getSourceId()) >= 0);
 					}

@@ -1233,6 +1233,26 @@ public final class ToolSession implements Serializable {
 					this.sessionUserId = claims.getSubject();
 					String email = (String) claims.getClaim("email");
 					String name = (String) claims.getClaim("name");
+					
+					// Fallback para given_name y family_name
+					String givenName = (String) claims.getClaim("given_name");
+					String familyName = (String) claims.getClaim("family_name");
+					
+					if (givenName == null || familyName == null) {
+						if (name != null && !name.trim().isEmpty()) {
+							int spaceIndex = name.indexOf(" ");
+							if (spaceIndex != -1) {
+								givenName = name.substring(0, spaceIndex);
+								familyName = name.substring(spaceIndex + 1);
+							} else {
+								givenName = name;
+								familyName = "";
+							}
+						} else {
+							givenName = "";
+							familyName = "";
+						}
+					}
 
 					// Sincronizar LtiUser
 					es.us.dit.lti.entity.LtiUser ltiUser = ToolConsumerUserDao.getById(this.consumer.getSid(),
@@ -1245,6 +1265,8 @@ public final class ToolSession implements Serializable {
 						ltiUser.setUserId(this.sessionUserId);
 						ltiUser.setEmail(email);
 						ltiUser.setNameFull(name);
+						ltiUser.setNameGiven(givenName);
+						ltiUser.setNameFamily(familyName);
 
 						boolean created = ToolConsumerUserDao.create(ltiUser);
 						if (!created) {
@@ -1261,6 +1283,14 @@ public final class ToolSession implements Serializable {
 						}
 						if (name != null && !name.equals(ltiUser.getNameFull())) {
 							ltiUser.setNameFull(name);
+							changed = true;
+						}
+						if (givenName != null && !givenName.equals(ltiUser.getNameGiven())) {
+							ltiUser.setNameGiven(givenName);
+							changed = true;
+						}
+						if (familyName != null && !familyName.equals(ltiUser.getNameFamily())) {
+							ltiUser.setNameFamily(familyName);
 							changed = true;
 						}
 						if (changed) {
