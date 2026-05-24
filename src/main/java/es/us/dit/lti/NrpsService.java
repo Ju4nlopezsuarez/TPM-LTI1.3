@@ -42,8 +42,9 @@ public class NrpsService {
      * @param resourceLink          El enlace de recurso (ResourceLink) desde el que
      *                              se accedió
      */
-    public static void syncRoster(String contextMembershipsUrl, String clientId, String tokenUrl, Consumer consumer,
+    public static List<Map<String, Object>> syncRoster(String contextMembershipsUrl, String clientId, String tokenUrl, Consumer consumer,
             ResourceLink resourceLink) {
+        List<Map<String, Object>> processedMembers = null;
         try {
             // 1. Obtener Access Token mediante Client Credentials
             String accessToken = getNrpsAccessToken(clientId, tokenUrl);
@@ -73,6 +74,7 @@ public class NrpsService {
                     List<Object> members = (List<Object>) jsonMap.get("members");
 
                     if (members != null) {
+                        processedMembers = new java.util.ArrayList<>();
                         for (Object m : members) {
                             Map<String, Object> member = (Map<String, Object>) m;
                             String userId = (String) member.get("user_id"); // En LTI 1.3 el "sub" suele venir aquí
@@ -118,16 +120,24 @@ public class NrpsService {
                                         ru.setResourceLink(resourceLink);
                                         ToolResourceUserDao.create(ru);
                                     }
+                                    
+                                    // Añadir a la lista de procesados
+                                    Map<String, Object> memberInfo = new java.util.HashMap<>();
+                                    memberInfo.put("name", user.getNameFull() != null ? user.getNameFull() : user.getNameGiven() + " " + user.getNameFamily());
+                                    memberInfo.put("email", user.getEmail());
+                                    memberInfo.put("roles", member.get("roles"));
+                                    processedMembers.add(memberInfo);
                                 }
                             }
                         }
-                        logger.info("NRPS: Total miembros procesados: {}", members.size());
+                        logger.info("NRPS: Total miembros procesados: {}", processedMembers.size());
                     }
                 }
             }
         } catch (Exception e) {
             logger.error("NRPS: Excepción durante la sincronización", e);
         }
+        return processedMembers;
     }
 
     /**

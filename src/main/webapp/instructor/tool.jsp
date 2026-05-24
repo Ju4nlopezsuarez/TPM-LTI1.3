@@ -213,6 +213,11 @@ if (tool != null && tool.getName() != null) {
 						data-toggle="attempts">
 					<span class="material-icons" accessKey="p">restore</span></a></p>								
 			<%} %>
+			<%if (ts.isInstructor() && ts.getLti13ClientId() != null) { %>
+				<p id="parentnrps" class="toggleButton">
+					<a id="syncroster" title="Sincronizar Lista de Alumnos" class="genericButton" data-launch="${ts.launchId}">
+					<span class="material-icons">sync</span></a></p>								
+			<%} %>
 			<p id="parentassessment" class="toggleButton hidden">
 					<a id="showassessment" title="<fmt:message key="T_MOSTRAR_RESULTADOS"/>" class="genericButton" data-toggle="resultoutput">
 					<span class="material-icons">assessment</span></a></p>
