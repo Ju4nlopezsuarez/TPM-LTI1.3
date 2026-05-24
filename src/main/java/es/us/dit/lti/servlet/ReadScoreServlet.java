@@ -37,6 +37,9 @@ import com.google.gson.Gson;
 
 import es.us.dit.lti.OutcomeService;
 import es.us.dit.lti.ToolSession;
+import es.us.dit.lti.persistence.KeyService;
+import es.us.dit.lti.persistence.ToolLti13Dao;
+import es.us.dit.lti.persistence.Lti13ToolConfig;
 import es.us.dit.lti.entity.Attempt;
 import es.us.dit.lti.entity.ResourceLink;
 import es.us.dit.lti.entity.ResourceUser;
@@ -92,7 +95,25 @@ public class ReadScoreServlet extends HttpServlet {
 	 * @return the score as a string
 	 */
 	private String getScore(ToolSession ts) {
-		return OutcomeService.readOutcome(ts.getLtiResourceUser(), ts.getToolKey());
+		if (ts.getLti13ClientId() != null) {
+			try {
+				ToolLti13Dao lti13Dao = new ToolLti13Dao();
+				Lti13ToolConfig config = lti13Dao.findByClientId(ts.getLti13ClientId());
+				if (config != null) {
+					KeyService keyService = new KeyService();
+					if (KeyService.getDbUtil() == null) {
+						KeyService.setDbUtil(ToolAttemptDao.getDbUtil());
+					}
+					String kid = keyService.getFirstKid();
+					return OutcomeService.readLti13Outcome(ts.getLtiResourceUser(), ts.getLti13ClientId(), config.getTokenUrl(), kid);
+				}
+			} catch (Exception e) {
+				logger.error("Error leyendo nota LTI 1.3", e);
+			}
+			return null;
+		} else {
+			return OutcomeService.readOutcome(ts.getLtiResourceUser(), ts.getToolKey());
+		}
 	}
 	
 	/**
@@ -154,7 +175,26 @@ public class ReadScoreServlet extends HttpServlet {
 				if (rl != null && rl.getOutcomeServiceUrl() != null && !rl.getOutcomeServiceUrl().isEmpty()) {
 					// Check tk so avoid attempt sid reuse from different tk
 					final ScoreInfo info = new ScoreInfo();
-					info.setScore(formatScore(OutcomeService.readOutcome(resUser, ts.getToolKey())));
+					String scoreValue = null;
+					if (ts.getLti13ClientId() != null) {
+						try {
+							ToolLti13Dao lti13Dao = new ToolLti13Dao();
+							Lti13ToolConfig config = lti13Dao.findByClientId(ts.getLti13ClientId());
+							if (config != null) {
+								KeyService keyService = new KeyService();
+								if (KeyService.getDbUtil() == null) {
+									KeyService.setDbUtil(ToolAttemptDao.getDbUtil());
+								}
+								String kid = keyService.getFirstKid();
+								scoreValue = OutcomeService.readLti13Outcome(resUser, ts.getLti13ClientId(), config.getTokenUrl(), kid);
+							}
+						} catch (Exception e) {
+							logger.error("Error leyendo nota LTI 1.3", e);
+						}
+					} else {
+						scoreValue = OutcomeService.readOutcome(resUser, ts.getToolKey());
+					}
+					info.setScore(formatScore(scoreValue));
 					info.setResourceTitle(resUser.getResourceLink().getTitle());
 					info.setContextTitle("");
 					scores.add(info);

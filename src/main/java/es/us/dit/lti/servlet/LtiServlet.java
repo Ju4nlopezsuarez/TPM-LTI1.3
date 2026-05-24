@@ -121,104 +121,65 @@ public class LtiServlet extends HttpServlet {
                             // Limpiamos el nonce de la sesión
                             request.getSession().removeAttribute("lti_nonce");
 
-                            // Comprobación del mapping de resource_link_id
-                            java.util.Map<String, Object> resourceLinkClaim = claims
-                                    .getJSONObjectClaim("https://purl.imsglobal.org/spec/lti/claim/resource_link");
-                            String resourceLinkId = null;
-                            if (resourceLinkClaim != null) {
-                                resourceLinkId = (String) resourceLinkClaim.get("id");
-                            }
+                            // 1. Inicializar ToolSession con los datos de LTI 1.3 PRIMERO
+                            // Esto asegurará que los registros en BD para Consumer, Context y ResourceLink
+                            // se creen.
+                            final ToolSession ts = new ToolSession();
+                            ts.initLti13(claims);
 
-                            boolean continueToToolSession = true;
-                            if (resourceLinkId != null) {
-                                request.setAttribute("current_resource_id", resourceLinkId);
-                                String mappedClave = ToolResourceLinkDao.getMappedToolnameByResourceId(resourceLinkId);
-                                if (mappedClave == null) {
-                                    continueToToolSession = false;
+                            if (ts.isValid()) {
+                                // 2. Recuperar el resourceLinkId del propio ts
+                                String resourceLinkId = null;
+                                if (ts.getResourceLink() != null) {
+                                    resourceLinkId = ts.getResourceLink().getResourceId();
+                                    request.setAttribute("current_resource_id", resourceLinkId);
+                                    request.setAttribute("resource_link_id", resourceLinkId);
+                                }
+
+                                // 3. Comprobar si hay herramienta mapeada o es deep linking
+                                if (!ts.isDeepLinking() && ts.getToolKey() == null) {
                                     logger.info("Unmapped resource_link_id: {}. Checking instructor role for setup.",
                                             resourceLinkId);
 
-                                    boolean isInstructor = false;
-                                    List<String> userRoles = claims
-                                            .getStringListClaim("https://purl.imsglobal.org/spec/lti/claim/roles");
-                                    if (userRoles != null) {
-                                        for (String roleUri : userRoles) {
-                                            String safeRole = roleUri.toLowerCase();
-                                            if (safeRole.contains("instructor") || safeRole.contains("administrator")) {
-                                                isInstructor = true;
-                                                break;
-                                            }
-                                        }
-
-                                        if (!isInstructor) {
-                                            logger.warn(
-                                                    "User attempted to setup a tool without instructor privileges.");
-                                            response.sendError(HttpServletResponse.SC_FORBIDDEN,
-                                                    "Solo los instructores pueden configurar una nueva herramienta.");
-                                        } else {
-                                            ToolLti13Dao toolDao = new ToolLti13Dao();
-
-                                            request.setAttribute("available_tools", toolDao.findAll());
-                                            request.getSession().setAttribute("pending_resource_link_id",
-                                                    resourceLinkId);
-                                            request.getSession().setAttribute("lti13_id_token", idToken);
-                                            // request.getSession().setAttribute("lti13_claims_json",
-                                            // claims.toJSONObject().toJSONString());
-                                            request.getRequestDispatcher("/link_setup.jsp").forward(request, response);
-                                        }
-                                    } else {
+                                    if (!ts.isInstructor() && !ts.isAdministrator()) {
                                         logger.warn("User attempted to setup a tool without instructor privileges.");
                                         response.sendError(HttpServletResponse.SC_FORBIDDEN,
-                                                "No se han encontrado roles en el token.");
+                                                "Solo los instructores pueden configurar una nueva herramienta.");
+                                    } else {
+                                        ToolLti13Dao toolDao = new ToolLti13Dao();
+                                        request.setAttribute("available_tools", toolDao.findAll());
+                                        request.getSession().setAttribute("pending_resource_link_id", resourceLinkId);
+                                        request.getSession().setAttribute("lti13_id_token", idToken);
+                                        request.getRequestDispatcher("/link_setup.jsp").forward(request, response);
                                     }
                                 } else {
-                                    // El valor recuperado de la BD es en realidad la 'clave' de ToolKey
-                                    ToolKey toolKey = ToolKeyDao.get(mappedClave, false);
-                                    if (toolKey != null) {
-                                        // Inyectamos la toolKey en la sesión
-                                        request.getSession().setAttribute("toolKey", toolKey);
-                                        // Guardamos el verdadero nombre de la herramienta por si hace falta
-                                        request.getSession().setAttribute("mappedToolName",
-                                                toolKey.getTool().getName());
+                                    // Setup completo o Deep Linking
+                                    if (ts.getToolKey() != null) {
+                                        request.getSession().setAttribute("toolKey", ts.getToolKey());
+                                        request.getSession().setAttribute("mappedToolName", ts.getTool().getName());
+                                        ts.getTool()
+                                                .setToolRunner(ToolRunnerFactory.fromType(ts.getTool().getToolType()));
                                     }
+
+                                    Locale locale = request.getLocale();
+                                    if (ts.getPresentationLocale() != null) {
+                                        locale = Locale.forLanguageTag(ts.getPresentationLocale());
+                                    }
+                                    final MessageMap text = new MessageMap(locale);
+
+                                    final HttpSession session = request.getSession(true);
+                                    session.setAttribute(ToolSession.class.getName(), ts);
+                                    session.setAttribute("text", text);
+                                    session.setAttribute("lti13_id_token", idToken);
+
+                                    response.sendRedirect(response.encodeRedirectURL(ts.getContinueUrl()));
                                 }
-                            }
-
-                            if (continueToToolSession) {
-                                // Inicializar ToolSession con los datos de LTI 1.3
-                                final ToolSession ts = new ToolSession();
-
-                                ToolKey sessionToolKey = (ToolKey) request.getSession().getAttribute("toolKey");
-                                if (sessionToolKey != null) {
-                                    ts.setToolKey(sessionToolKey);
-                                    ts.setTool(sessionToolKey.getTool());
-                                    sessionToolKey.getTool().setToolRunner(
-                                            ToolRunnerFactory.fromType(sessionToolKey.getTool().getToolType()));
-                                }
-
-                                // Le pasamos los claims (JSON) para que extraiga user_id, roles, context, etc.
-                                ts.initLti13(claims);
-
-                                // Lógica de presentación y redirección (Similar a LTI 1.1)
+                            } else {
                                 Locale locale = request.getLocale();
                                 if (ts.getPresentationLocale() != null) {
                                     locale = Locale.forLanguageTag(ts.getPresentationLocale());
                                 }
-                                final MessageMap text = new MessageMap(locale);
-
-                                if (ts.isValid()) {
-                                    // Guardamos el token en sesión para futuras llamadas
-                                    final HttpSession session = request.getSession(true);
-                                    session.setAttribute(ToolSession.class.getName(), ts);
-                                    session.setAttribute("text", text);
-
-                                    // Guardamos el ID Token crudo por si necesitamos hacer llamadas a APIs del LMS
-                                    session.setAttribute("lti13_id_token", idToken);
-
-                                    response.sendRedirect(response.encodeRedirectURL(ts.getContinueUrl()));
-                                } else {
-                                    handleError(response, ts, text);
-                                }
+                                handleError(response, ts, new MessageMap(locale));
                             }
                         }
                     }

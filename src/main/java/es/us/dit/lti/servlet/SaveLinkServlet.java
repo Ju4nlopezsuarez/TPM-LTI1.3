@@ -29,9 +29,12 @@ public class SaveLinkServlet extends HttpServlet {
             throws ServletException, IOException {
         String clave = request.getParameter("clave");
         String secreto = request.getParameter("secreto");
-        String resourceLinkId = (String) request.getSession().getAttribute("pending_resource_link_id");
+        String resourceLinkId = request.getParameter("resource_link_id");
+        if (resourceLinkId == null || resourceLinkId.trim().isEmpty()) {
+            resourceLinkId = (String) request.getSession().getAttribute("pending_resource_link_id");
+        }
 
-        if (resourceLinkId == null) {
+        if (resourceLinkId == null || resourceLinkId.trim().isEmpty()) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST,
                     "Sesión caducada. Por favor, vuelva a lanzar la herramienta desde el LMS.");
         } else {

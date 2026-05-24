@@ -46,6 +46,9 @@ public class DeepLinkServlet extends HttpServlet {
                 KeyService keyService = new KeyService();
                 RSAKey rsaKey = keyService.getPrivateKey(kid);
                 
+                // Construir la URL de lanzamiento de la herramienta
+                String launchUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath() + "/tools";
+                
                 if (rsaKey != null) {
                     jwtResponse = SecurityUtil.createDeepLinkingResponseJWT(
                         ts.getLti13ClientId(), 
@@ -55,7 +58,8 @@ public class DeepLinkServlet extends HttpServlet {
                         title, 
                         customArgs, 
                         rsaKey.toRSAPrivateKey(), 
-                        kid
+                        kid,
+                        launchUrl
                     );
                 } else {
                     logger.error("DeepLinking Error: No se encontró clave privada para el kid: " + kid);

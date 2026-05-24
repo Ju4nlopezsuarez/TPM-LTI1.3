@@ -1098,7 +1098,13 @@ public final class ToolSession implements Serializable {
 				if (contextClaim != null) {
 					String contextId = (String) contextClaim.get("id");
 					String contextTitle = (String) contextClaim.get("title");
+					if (contextTitle == null || contextTitle.trim().isEmpty()) {
+						contextTitle = "Curso " + contextId;
+					}
 					String contextLabel = (String) contextClaim.get("label");
+					if (contextLabel == null || contextLabel.trim().isEmpty()) {
+						contextLabel = "LTI " + contextId;
+					}
 
 					// Buscamos si ya existe este curso para este consumidor
 
@@ -1128,6 +1134,9 @@ public final class ToolSession implements Serializable {
 				if (resourceLinkClaim != null) {
 					String resourceLinkId = (String) resourceLinkClaim.get("id");
 					String resourceLinkTitle = (String) resourceLinkClaim.get("title");
+					if (resourceLinkTitle == null || resourceLinkTitle.trim().isEmpty()) {
+						resourceLinkTitle = "Enlace " + resourceLinkId;
+					}
 
 					// Overriding the tool with the mapped one for this specific link (if exists)
 					String mappedClave = ToolResourceLinkDao.getMappedToolnameByResourceId(resourceLinkId);

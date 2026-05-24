@@ -514,7 +514,7 @@ public final class SecurityUtil {
 	public static String createDeepLinkingResponseJWT(
 			String clientId, String issuer, String deploymentId, String data,
 			String title, String customArgs,
-			java.security.interfaces.RSAPrivateKey privateKey, String keyId) {
+			java.security.interfaces.RSAPrivateKey privateKey, String keyId, String launchUrl) {
 		
 		String serializedToken = null; 
 
@@ -526,6 +526,10 @@ public final class SecurityUtil {
 			java.util.Map<String, Object> contentItem = new java.util.HashMap<>();
 			contentItem.put("type", "ltiResourceLink");
 			contentItem.put("title", title);
+			if (launchUrl != null && !launchUrl.isEmpty()) {
+				contentItem.put("url", launchUrl);
+			}
+
 			
 			// Parámetros Custom
 			java.util.Map<String, Object> custom = new java.util.HashMap<>();

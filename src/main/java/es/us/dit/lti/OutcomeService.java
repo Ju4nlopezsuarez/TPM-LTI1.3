@@ -494,7 +494,7 @@ public final class OutcomeService {
 				fileContent = EntityUtils.toString(httpEntity, StandardCharsets.UTF_8);
 			}
 			logger.error("HTTP error response: " + resp);
-			// logger.error("Motivo del rechazo del LMS: " + fileContent + "\n");
+			logger.error("Motivo del rechazo del LMS: " + fileContent + "\n");
 			fileContent = null; // Devolvemos null para que la app sepa que falló de verdad
 		}
 		return fileContent;
@@ -711,12 +711,13 @@ public final class OutcomeService {
 
 			if (accessToken != null) {
 				try {
-					String resultsUrl = url;
-					if (!resultsUrl.endsWith("/results")) {
-						resultsUrl += "/results";
+					URIBuilder ub = new URIBuilder(url);
+					String path = ub.getPath();
+					if (path != null && !path.endsWith("/results")) {
+						ub.setPath(path + "/results");
 					}
-					// Filtramos por el ID de este usuario en el LMS
-					resultsUrl += "?user_id=" + user.getResultSourceId();
+					ub.addParameter("user_id", user.getResultSourceId());
+					String resultsUrl = ub.build().toString();
 
 					Map<String, String> headers = new HashMap<>();
 					headers.put("Authorization", "Bearer " + accessToken);

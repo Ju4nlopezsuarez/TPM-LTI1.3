@@ -147,18 +147,29 @@ public final class ToolResourceLinkDao {
 	public static ResourceLink getById(Integer toolSid, Integer contextSid, String rlId) {
 		ResourceLink rl = null;
 		final Connection connection = dbUtil.getConnection();
-		try (PreparedStatement stmt = connection.prepareStatement(SQL_GET_BY_ID);) {
+		
+		StringBuilder sql = new StringBuilder("SELECT sid, title, custom_properties, outcome_service_url, tool_key_sid, created, updated, mapped_toolname FROM " + RL_TABLE_NAME + " WHERE resource_id=?");
+		if (toolSid == null) {
+			sql.append(" AND tool_sid IS NULL");
+		} else {
+			sql.append(" AND tool_sid=?");
+		}
+		if (contextSid == null) {
+			sql.append(" AND context_sid IS NULL");
+		} else {
+			sql.append(" AND context_sid=?");
+		}
+
+		try (PreparedStatement stmt = connection.prepareStatement(sql.toString());) {
+			int paramIndex = 1;
+			stmt.setString(paramIndex++, rlId);
 			if (toolSid != null) {
-				stmt.setInt(1, toolSid);
-			} else {
-				stmt.setNull(1, java.sql.Types.INTEGER);
+				stmt.setInt(paramIndex++, toolSid);
 			}
 			if (contextSid != null) {
-				stmt.setInt(2, contextSid);
-			} else {
-				stmt.setNull(2, java.sql.Types.INTEGER);
+				stmt.setInt(paramIndex++, contextSid);
 			}
-			stmt.setString(3, rlId);
+			
 			final ResultSet rs = stmt.executeQuery();
 			if (rs.next()) {
 				rl = new ResourceLink();
@@ -261,18 +272,29 @@ public final class ToolResourceLinkDao {
 	public static boolean getSidByIds(ResourceLink rl) {
 		boolean res = false;
 		final Connection connection = dbUtil.getConnection();
-		try (PreparedStatement stmt = connection.prepareStatement(SQL_GET_SID);) {
+		
+		StringBuilder sql = new StringBuilder("SELECT sid FROM " + RL_TABLE_NAME + " WHERE resource_id=?");
+		if (rl.getTool() == null) {
+			sql.append(" AND tool_sid IS NULL");
+		} else {
+			sql.append(" AND tool_sid=?");
+		}
+		if (rl.getContext() == null) {
+			sql.append(" AND context_sid IS NULL");
+		} else {
+			sql.append(" AND context_sid=?");
+		}
+
+		try (PreparedStatement stmt = connection.prepareStatement(sql.toString());) {
+			int paramIndex = 1;
+			stmt.setString(paramIndex++, rl.getResourceId());
 			if (rl.getTool() != null) {
-				stmt.setInt(1, rl.getTool().getSid());
-			} else {
-				stmt.setNull(1, java.sql.Types.INTEGER);
+				stmt.setInt(paramIndex++, rl.getTool().getSid());
 			}
 			if (rl.getContext() != null) {
-				stmt.setInt(2, rl.getContext().getSid());
-			} else {
-				stmt.setNull(2, java.sql.Types.INTEGER);
+				stmt.setInt(paramIndex++, rl.getContext().getSid());
 			}
-			stmt.setString(3, rl.getResourceId());
+			
 			final ResultSet rs = stmt.executeQuery();
 			if (rs.next()) {
 				res = true;
