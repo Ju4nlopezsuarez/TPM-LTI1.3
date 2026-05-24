@@ -107,49 +107,50 @@ public class ListAttemptsServlet extends HttpServlet {
 		final ToolSession ts = (ToolSession) session.getAttribute(ToolSession.class.getName());
 		final String userId = ts.getSessionUserId();
 		final Tool tool = ts.getTool();
-		PrintWriter out;
+		PrintWriter out = null;
 		try {
 			out = response.getWriter();
 		} catch (final IOException e) {
 			logger.error("IO Error.", e);
-			return;
 		}
-		if (tool != null) {
-			final ToolUiConfig tui = tool.getToolUiConfig();
-			if (request.getServletPath().startsWith("/instructor/users") && tui.isManageAttempts()) {
-				// list of users
-				response.setContentType("application/json");
-				final Gson gson = new GsonBuilder().addSerializationExclusionStrategy(strategyUsers).create();
-				String currentResourceId = null;
-				if (ts.getResourceLink() != null) {
-					currentResourceId = ts.getResourceLink().getResourceId();
-				}
-				out.append(gson.toJson(getLtiUsers(ts.getToolKey(), tui.getManageAttemptsExcludeUsers(), currentResourceId)));
+        if (out != null) {
+            if (tool != null) {
+                final ToolUiConfig tui = tool.getToolUiConfig();
+                if (request.getServletPath().startsWith("/instructor/users") && tui.isManageAttempts()) {
+                    // list of users
+                    response.setContentType("application/json");
+                    final Gson gson = new GsonBuilder().addSerializationExclusionStrategy(strategyUsers).create();
+                    String currentResourceId = null;
+                    if (ts.getResourceLink() != null) {
+                        currentResourceId = ts.getResourceLink().getResourceId();
+                    }
+                    out.append(gson.toJson(getLtiUsers(ts.getToolKey(), tui.getManageAttemptsExcludeUsers(), currentResourceId)));
 
-			} else if (request.getServletPath().startsWith("/learner/listattempts") && userId != null
-					&& (tui.isShowAttempts() || tui.isManageAttempts() && ts.isInstructor())) {
-				// list of current user attempts
-				response.setContentType("application/json");
-				String currentResourceId = null;
-				if (ts.getResourceLink() != null) {
-					currentResourceId = ts.getResourceLink().getResourceId();
-				}
-				if (currentResourceId != null && !currentResourceId.isEmpty()) {
-					out.append(new Gson().toJson(getAttemptsByResource(ts.getToolKey(), ts.getLtiResourceUser().getUser(), currentResourceId)));
-				} else {
-					out.append(new Gson().toJson(getAttempts(ts.getToolKey(), ts.getLtiResourceUser().getUser())));
-				}
+                } else if (request.getServletPath().startsWith("/learner/listattempts") && userId != null
+                        && (tui.isShowAttempts() || tui.isManageAttempts() && ts.isInstructor())) {
+                    // list of current user attempts
+                    response.setContentType("application/json");
+                    String currentResourceId = null;
+                    if (ts.getResourceLink() != null) {
+                        currentResourceId = ts.getResourceLink().getResourceId();
+                    }
+                    if (currentResourceId != null && !currentResourceId.isEmpty()) {
+                        out.append(new Gson().toJson(getAttemptsByResource(ts.getToolKey(), ts.getLtiResourceUser().getUser(), currentResourceId)));
+                    } else {
+                        out.append(new Gson().toJson(getAttempts(ts.getToolKey(), ts.getLtiResourceUser().getUser())));
+                    }
 
-			} else {
-				response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-				response.setContentType("text/html");
-				try {
-					request.getRequestDispatcher("/errorlogin.html").include(request, response);
-				} catch (ServletException | IOException e) {
-					logger.error("IO Error.", e);
-				}
-			}
-		}
+                } else {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("text/html");
+                    try {
+                        request.getRequestDispatcher("/errorlogin.html").include(request, response);
+                    } catch (ServletException | IOException e) {
+                        logger.error("IO Error.", e);
+                    }
+                }
+            }
+        }
 	}
 
 	/**

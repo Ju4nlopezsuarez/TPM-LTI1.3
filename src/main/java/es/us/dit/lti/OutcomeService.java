@@ -622,9 +622,9 @@ public final class OutcomeService {
 				URIBuilder ub = new URIBuilder(url);
 				String path = ub.getPath();
 				if (path != null) {
-					if (path.endsWith("linteitems") || path.endsWith("line_items"))
+					if (path.endsWith("linteitems") || path.endsWith("line_items")) {
 						logger.info("URL en plural");
-					else if (!path.endsWith("/scores")) {
+					} else if (!path.endsWith("/scores")) {
 						ub.setPath(path + "/scores");
 						scoreUrl = ub.build().toString();
 					}

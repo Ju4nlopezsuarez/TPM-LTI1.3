@@ -3,6 +3,7 @@ package es.us.dit.lti.servlet;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -27,6 +28,9 @@ import es.us.dit.lti.persistence.ToolKeyDao;
 import es.us.dit.lti.entity.ToolKey;
 import es.us.dit.lti.persistence.ToolResourceLinkDao;
 import es.us.dit.lti.runner.ToolRunnerFactory;
+import es.us.dit.lti.entity.Consumer;
+import es.us.dit.lti.entity.ResourceLink;
+import es.us.dit.lti.NrpsService;
 
 /**
  * Servlet for receiving initial tool request. LTI initial contact URL.
@@ -171,6 +175,32 @@ public class LtiServlet extends HttpServlet {
                                     session.setAttribute(ToolSession.class.getName(), ts);
                                     session.setAttribute("text", text);
                                     session.setAttribute("lti13_id_token", idToken);
+
+                                    // NRPS
+                                    if (ts.isInstructor()) {
+                                        try {
+                                            Map<String, Object> nrpsClaim = claims.getJSONObjectClaim(
+                                                    "https://purl.imsglobal.org/spec/lti-nrps/claim/namesroleservice");
+                                            if (nrpsClaim != null && nrpsClaim.containsKey("context_memberships_url")) {
+                                                String contextMembershipsUrl = (String) nrpsClaim
+                                                        .get("context_memberships_url");
+
+                                                String clientIdNrps = config.getClientId();
+                                                String tokenUrlNrps = config.getTokenUrl();
+                                                Consumer consumerNrps = ts.getConsumer();
+                                                ResourceLink resLinkNrps = ts.getResourceLink();
+
+                                                new Thread(() -> {
+                                                    NrpsService.syncRoster(contextMembershipsUrl, clientIdNrps,
+                                                            tokenUrlNrps, consumerNrps, resLinkNrps);
+                                                }).start();
+                                            }
+                                        } catch (Exception e) {
+                                            logger.error(
+                                                    "LTI 1.3: Error extrayendo claim NRPS o lanzando hilo de sincronización",
+                                                    e);
+                                        }
+                                    }
 
                                     response.sendRedirect(response.encodeRedirectURL(ts.getContinueUrl()));
                                 }

@@ -95,6 +95,7 @@ public class ReadScoreServlet extends HttpServlet {
 	 * @return the score as a string
 	 */
 	private String getScore(ToolSession ts) {
+		String result = null;
 		if (ts.getLti13ClientId() != null) {
 			try {
 				ToolLti13Dao lti13Dao = new ToolLti13Dao();
@@ -105,15 +106,15 @@ public class ReadScoreServlet extends HttpServlet {
 						KeyService.setDbUtil(ToolAttemptDao.getDbUtil());
 					}
 					String kid = keyService.getFirstKid();
-					return OutcomeService.readLti13Outcome(ts.getLtiResourceUser(), ts.getLti13ClientId(), config.getTokenUrl(), kid);
+					result = OutcomeService.readLti13Outcome(ts.getLtiResourceUser(), ts.getLti13ClientId(), config.getTokenUrl(), kid);
 				}
 			} catch (Exception e) {
 				logger.error("Error leyendo nota LTI 1.3", e);
 			}
-			return null;
 		} else {
-			return OutcomeService.readOutcome(ts.getLtiResourceUser(), ts.getToolKey());
+			result = OutcomeService.readOutcome(ts.getLtiResourceUser(), ts.getToolKey());
 		}
+		return result;
 	}
 	
 	/**
