@@ -134,6 +134,18 @@ public final class ToolAttemptDao {
 			+ ".tool_key_sid=? ORDER BY epoch_seconds ASC, nanoseconds ASC";
 
 	/**
+	 * SQL statement to get all attempts of a LTI user for a specific resource link.
+	 */
+	private static final String SQL_GET_ALL_USER_BY_RESOURCE = "SELECT " + AT_TABLE_NAME
+			+ ".sid, resource_user_sid, original_ru_sid, epoch_seconds, nanoseconds, fileSaved, outputSaved, "
+			+ "filename, storage_type, score, errorCode FROM " + AT_TABLE_NAME + ","
+			+ ToolResourceLinkDao.RL_TABLE_NAME + "," + ToolResourceUserDao.RU_TABLE_NAME + " WHERE resource_user_sid="
+			+ ToolResourceUserDao.RU_TABLE_NAME + ".sid AND " + ToolResourceUserDao.RU_TABLE_NAME
+			+ ".lti_user_sid=? AND " + ToolResourceUserDao.RU_TABLE_NAME + ".resource_sid="
+			+ ToolResourceLinkDao.RL_TABLE_NAME + ".sid AND " + ToolResourceLinkDao.RL_TABLE_NAME
+			+ ".tool_key_sid=? AND " + ToolResourceLinkDao.RL_TABLE_NAME + ".resource_id=? ORDER BY epoch_seconds ASC, nanoseconds ASC";
+
+	/**
 	 * SQL statement to all attempts using the same tool key.
 	 */
 	private static final String SQL_GET_ALL_TK = "SELECT " + AT_TABLE_NAME
@@ -483,6 +495,73 @@ public final class ToolAttemptDao {
 		try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_ALL_USER);) {
 			stmt.setInt(1, user.getSid());
 			stmt.setInt(2, tk.getSid());
+			final ResultSet rs = stmt.executeQuery();
+
+			while (rs.next()) {
+				int i = 1;
+				final Attempt attempt = new Attempt();
+				attempt.setSid(rs.getInt(i++));
+
+				int auxSid = rs.getInt(i++);
+				ResourceUser auxRu = new ResourceUser();
+				auxRu.setSid(auxSid);
+				auxRu.setUser(user);
+				attempt.setResourceUser(auxRu);
+
+				auxSid = rs.getInt(i++);
+				if (auxSid != auxRu.getSid()) {
+					auxRu = new ResourceUser();
+					auxRu.setSid(auxSid);
+				}
+				attempt.setOriginalResourceUser(auxRu);
+
+				attempt.setInstant(Instant.ofEpochSecond(rs.getLong(i++), rs.getInt(i++)));
+				attempt.setFileSaved(rs.getBoolean(i++));
+				attempt.setOutputSaved(rs.getBoolean(i++));
+				attempt.setFileName(rs.getString(i++));
+				attempt.setStorageType(rs.getInt(i++));
+				attempt.setScore(rs.getInt(i++));
+				attempt.setErrorCode(rs.getInt(i++));
+				if (attempt.getResourceUser().getSid() != attempt.getOriginalResourceUser().getSid()) {
+					listWithoutOriginalUser.add(attempt);
+				}
+
+				list.add(attempt);
+			}
+			rs.close();
+		} catch (final Exception ex) {
+			logger.error("Unable to get attempts", ex);
+		} finally {
+			dbUtil.closeConnection(conn);
+		}
+		// Complete without original resource users
+		for (final Attempt attempt : listWithoutOriginalUser) {
+			logger.info("Retrieving original user");
+			final ResourceUser ru = ToolResourceUserDao.getBySid(attempt.getOriginalResourceUser().getSid());
+			if (ru != null) {
+				attempt.setOriginalResourceUser(ru);
+			}
+		}
+		return list;
+	}
+
+	/**
+	 * Gets a list of user attempts for a tool key and specific resource link.
+	 *
+	 * @param user the user
+	 * @param tk   the tool key
+	 * @param resourceId the resource link ID
+	 * @return the list of user attempts for the tool key and resource link
+	 */
+	public static List<Attempt> getUserAttemptsByResource(LtiUser user, ToolKey tk, String resourceId) {
+		final List<Attempt> list = new ArrayList<>();
+		final List<Attempt> listWithoutOriginalUser = new ArrayList<>();
+
+		final Connection conn = dbUtil.getConnection();
+		try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_ALL_USER_BY_RESOURCE);) {
+			stmt.setInt(1, user.getSid());
+			stmt.setInt(2, tk.getSid());
+			stmt.setString(3, resourceId);
 			final ResultSet rs = stmt.executeQuery();
 
 			while (rs.next()) {

@@ -120,14 +120,25 @@ public class ListAttemptsServlet extends HttpServlet {
 				// list of users
 				response.setContentType("application/json");
 				final Gson gson = new GsonBuilder().addSerializationExclusionStrategy(strategyUsers).create();
-				String currentResourceId = (String) session.getAttribute("current_resource_id");
+				String currentResourceId = null;
+				if (ts.getResourceLink() != null) {
+					currentResourceId = ts.getResourceLink().getResourceId();
+				}
 				out.append(gson.toJson(getLtiUsers(ts.getToolKey(), tui.getManageAttemptsExcludeUsers(), currentResourceId)));
 
 			} else if (request.getServletPath().startsWith("/learner/listattempts") && userId != null
 					&& (tui.isShowAttempts() || tui.isManageAttempts() && ts.isInstructor())) {
 				// list of current user attempts
 				response.setContentType("application/json");
-				out.append(new Gson().toJson(getAttempts(ts.getToolKey(), ts.getLtiResourceUser().getUser())));
+				String currentResourceId = null;
+				if (ts.getResourceLink() != null) {
+					currentResourceId = ts.getResourceLink().getResourceId();
+				}
+				if (currentResourceId != null && !currentResourceId.isEmpty()) {
+					out.append(new Gson().toJson(getAttemptsByResource(ts.getToolKey(), ts.getLtiResourceUser().getUser(), currentResourceId)));
+				} else {
+					out.append(new Gson().toJson(getAttempts(ts.getToolKey(), ts.getLtiResourceUser().getUser())));
+				}
 
 			} else {
 				response.setStatus(HttpServletResponse.SC_FORBIDDEN);
@@ -169,7 +180,10 @@ public class ListAttemptsServlet extends HttpServlet {
 			try {
 				// userId can be * or a comma-separated list, excluding "exclude users"
 				final List<String> excludeUsers = tool.getToolUiConfig().getManageAttemptsExcludeUsers();
-				String currentResourceId = (String) session.getAttribute("current_resource_id");
+				String currentResourceId = null;
+				if (ts.getResourceLink() != null) {
+					currentResourceId = ts.getResourceLink().getResourceId();
+				}
 
 				if (userId.equals("*")) {
 					final List<Attempt> attempts;
@@ -203,7 +217,11 @@ public class ListAttemptsServlet extends HttpServlet {
 						final List<LtiUser> users = ToolConsumerUserDao.getToolKeyLtiUsersByUserId(ts.getToolKey(), c);
 						logger.info("getToolKeyLtiUsersByUserId returned {} users", users.size());
 						for (final LtiUser u : users) {
-							attempts.addAll(getAttempts(ts.getToolKey(), u));
+							if (currentResourceId != null && !currentResourceId.isEmpty()) {
+								attempts.addAll(getAttemptsByResource(ts.getToolKey(), u, currentResourceId));
+							} else {
+								attempts.addAll(getAttempts(ts.getToolKey(), u));
+							}
 						}
 					}
 					response.getWriter().append(new Gson().toJson(attempts));
@@ -266,6 +284,19 @@ public class ListAttemptsServlet extends HttpServlet {
 	 */
 	private List<AttemptInfo> getAttempts(ToolKey tk, LtiUser user) {
 		final List<Attempt> attempts = ToolAttemptDao.getUserAttempts(user, tk);
+		return convertToAttemptInfo(attempts);
+	}
+
+	/**
+	 * Gets the attempts of a LTI user for a tool key and specific resource link.
+	 *
+	 * @param tk         the tool key
+	 * @param user       the LTI user
+	 * @param resourceId the resource link ID
+	 * @return list of attempts
+	 */
+	private List<AttemptInfo> getAttemptsByResource(ToolKey tk, LtiUser user, String resourceId) {
+		final List<Attempt> attempts = ToolAttemptDao.getUserAttemptsByResource(user, tk, resourceId);
 		return convertToAttemptInfo(attempts);
 	}
 
