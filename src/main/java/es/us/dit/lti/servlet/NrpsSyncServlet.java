@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.JWTClaimsSet;
+import com.google.gson.Gson;
 
 import es.us.dit.lti.NrpsService;
 import es.us.dit.lti.ToolSession;
@@ -43,9 +44,6 @@ public class NrpsSyncServlet extends HttpServlet {
 
 	/**
 	 * Processes POST request to synchronize students via NRPS.
-	 *
-	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse
-	 *      response)
 	 */
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -76,7 +74,8 @@ public class NrpsSyncServlet extends HttpServlet {
 							Consumer consumerNrps = ts.getConsumer();
 							ResourceLink resLinkNrps = ts.getResourceLink();
 
-							syncedUsers = NrpsService.syncRoster(contextMembershipsUrl, clientIdNrps, tokenUrlNrps, consumerNrps,
+							syncedUsers = NrpsService.syncRoster(contextMembershipsUrl, clientIdNrps, tokenUrlNrps,
+									consumerNrps,
 									resLinkNrps);
 							if (syncedUsers != null) {
 								success = true;
@@ -101,7 +100,7 @@ public class NrpsSyncServlet extends HttpServlet {
 
 		response.setContentType("application/json");
 		if (success) {
-			String usersJson = new com.google.gson.Gson().toJson(syncedUsers);
+			String usersJson = new Gson().toJson(syncedUsers);
 			response.getWriter().write("{\"success\": true, \"users\": " + usersJson + "}");
 		} else {
 			response.getWriter().write("{\"success\": false, \"error\": \"" + errorMessage + "\"}");
