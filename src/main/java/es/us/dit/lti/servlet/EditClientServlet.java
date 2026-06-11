@@ -14,6 +14,10 @@ import org.slf4j.LoggerFactory;
 import es.us.dit.lti.entity.LtiClient;
 import es.us.dit.lti.entity.Settings;
 import es.us.dit.lti.persistence.LtiClientDao;
+/**
+ * @author Juan López Suárez
+ */
+
 
 @WebServlet("/admin/editclient")
 public class EditClientServlet extends HttpServlet {

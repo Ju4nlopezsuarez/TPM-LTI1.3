@@ -27,7 +27,9 @@ import es.us.dit.lti.persistence.ToolResourceUserDao;
 /**
  * Servicio encargado de la sincronización de miembros usando NRPS (Names and
  * Role Provisioning Services).
- */
+ 
+ * @author Juan López Suárez
+*/
 public class NrpsService {
 
     private static final Logger logger = LoggerFactory.getLogger(NrpsService.class);

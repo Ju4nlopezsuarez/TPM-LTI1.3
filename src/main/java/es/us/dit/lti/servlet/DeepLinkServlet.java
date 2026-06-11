@@ -19,7 +19,9 @@ import com.nimbusds.jose.jwk.RSAKey;
 /**
  * Servlet encargado de procesar la selección del profesor en Deep Linking
  * y retornar el JWT firmado al LMS.
- */
+ 
+ * @author Juan López Suárez
+*/
 @WebServlet("/DeepLinkServlet")
 public class DeepLinkServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;

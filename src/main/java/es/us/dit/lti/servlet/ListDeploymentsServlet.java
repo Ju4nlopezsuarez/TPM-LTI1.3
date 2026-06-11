@@ -9,6 +9,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import es.us.dit.lti.entity.LtiDeployment;
 import es.us.dit.lti.persistence.LtiDeploymentDao;
+/**
+ * @author Juan López Suárez
+ */
+
 
 @WebServlet("/admin/deployments")
 public class ListDeploymentsServlet extends HttpServlet {

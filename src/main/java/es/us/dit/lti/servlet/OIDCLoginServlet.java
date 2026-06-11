@@ -22,7 +22,9 @@ import es.us.dit.lti.entity.LtiDeployment;
  * Maneja el flujo de inicio de sesión iniciado por terceros (Third-party
  * Initiated Login).
  * Paso 1 del lanzamiento LTI 1.3.
- */
+ 
+ * @author Juan López Suárez
+*/
 @WebServlet("/oidc_login")
 public class OIDCLoginServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;

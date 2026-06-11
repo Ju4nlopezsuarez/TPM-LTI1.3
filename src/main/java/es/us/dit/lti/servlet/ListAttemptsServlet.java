@@ -55,7 +55,9 @@ import es.us.dit.lti.persistence.ToolConsumerUserDao;
 /**
  * Servlet implementation class to list attempts and list LTI user that had
  * attempts, with same tool key.
- */
+ 
+ * @author Juan López Suárez
+*/
 @WebServlet({ "/learner/listattempts", "/instructor/listattempts", "/instructor/users" })
 public class ListAttemptsServlet extends HttpServlet {
 	/**

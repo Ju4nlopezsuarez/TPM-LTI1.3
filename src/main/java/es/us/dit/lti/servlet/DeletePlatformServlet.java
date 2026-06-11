@@ -13,6 +13,10 @@ import org.slf4j.LoggerFactory;
 
 import es.us.dit.lti.entity.Settings;
 import es.us.dit.lti.persistence.LtiPlatformDao;
+/**
+ * @author Juan López Suárez
+ */
+
 
 @WebServlet("/admin/DeletePlatformServlet")
 public class DeletePlatformServlet extends HttpServlet {

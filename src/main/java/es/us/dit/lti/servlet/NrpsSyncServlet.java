@@ -28,7 +28,9 @@ import es.us.dit.lti.persistence.Lti13ToolConfig;
 /**
  * Servlet implementation class to handle manual NRPS synchronization.
  *
- */
+ 
+ * @author Juan López Suárez
+*/
 @WebServlet("/instructor/syncroster")
 public class NrpsSyncServlet extends HttpServlet {
 

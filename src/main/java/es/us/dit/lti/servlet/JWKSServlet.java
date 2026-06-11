@@ -16,7 +16,9 @@ import java.io.PrintWriter;
  * El LMS consultará esta URL para verificar las firmas de los mensajes que
  * enviamos.
  * Requisito LTI 1.3: Security Framework.
- */
+ 
+ * @author Juan López Suárez
+*/
 @WebServlet("/jwks")
 public class JWKSServlet extends HttpServlet {
 

@@ -2,7 +2,9 @@ package es.us.dit.lti.persistence;
 /**
  * Clase POJO para transportar la configuración
  * LTI 1.3 de una herramienta desde la base de datos a los Servlets.
- */
+ 
+ * @author Juan López Suárez
+*/
 public class Lti13ToolConfig {
     private String toolName;
     private String clientId;

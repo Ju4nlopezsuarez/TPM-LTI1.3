@@ -204,15 +204,5 @@ CREATE TABLE lti_deployment (
 );
 
 ALTER TABLE "resource_link" ADD COLUMN "mapped_toolname" VARCHAR(255) DEFAULT NULL;
-
-ALTER TABLE "tool" ADD COLUMN "lti_version" TEXT DEFAULT 'LTI-1p1';
-ALTER TABLE "tool" ADD COLUMN "issuer" TEXT;
-ALTER TABLE "tool" ADD COLUMN "client_id" TEXT;
-ALTER TABLE "tool" ADD COLUMN "deployment_id" TEXT;
-ALTER TABLE "tool" ADD COLUMN "oidc_auth_url" TEXT;
-ALTER TABLE "tool" ADD COLUMN "oauth_token_url" TEXT;
-ALTER TABLE "tool" ADD COLUMN "jwks_url" TEXT;
-ALTER TABLE "tool" ADD COLUMN "key_set_id" INTEGER;
-ALTER TABLE "tool" ADD COLUMN "token_url" TEXT;
-
+ALTER TABLE "tool" ADD COLUMN "deployment_fk" INTEGER REFERENCES "lti_deployment"("id");
 CREATE INDEX IF NOT EXISTS "idx_tool_lti13_lookup" ON "tool" ("issuer", "client_id", "deployment_id");

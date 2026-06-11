@@ -1,4 +1,8 @@
 package es.us.dit.lti.entity;
+/**
+ * @author Juan López Suárez
+ */
+
 
 public class LtiClient {
 

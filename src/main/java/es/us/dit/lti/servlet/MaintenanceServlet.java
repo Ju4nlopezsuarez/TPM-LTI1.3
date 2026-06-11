@@ -46,7 +46,9 @@ import jakarta.servlet.http.HttpServletResponse;
  * tool key.
  */
 @WebServlet({ "/super/optimize", "/super/getunused", "/super/deleteunusedusers", "/super/deleteunusedresourceusers",
-		"/super/deleteunusedresourcelinks", "/super/deleteunusedcontexts", "/super/deleteunusedconsumers", "/super/unmapall" })
+		"/super/deleteunusedresourcelinks", "/super/deleteunusedcontexts", "/super/deleteunusedconsumers",
+		"/super/unmapall" })
+
 public class MaintenanceServlet extends HttpServlet {
 	/**
 	 * Serializable requirement.
@@ -118,36 +120,36 @@ public class MaintenanceServlet extends HttpServlet {
 		}
 		// Only for instructors
 		switch (request.getServletPath()) {
-		case "/super/optimize":
-			out.print(SettingsDao.optimizeDb());
-			break;
-		case "/super/deleteunusedusers":
-			out.print(ToolConsumerUserDao.deleteUnused());
-			break;
-		case "/super/deleteunusedresourceusers":
-			out.print(ToolResourceUserDao.deleteUnused());
-			break;
-		case "/super/deleteunusedresourcelinks":
-			out.print(ToolResourceLinkDao.deleteUnused());
-			break;
-		case "/super/deleteunusedcontexts":
-			out.print(ToolContextDao.deleteUnused());
-			break;
-		case "/super/deleteunusedconsumers":
-			ToolNonceDao.deleteAll(); //Nonce depends on consumer
-			out.print(ToolConsumerDao.deleteUnused());
-			break;
-		case "/super/unmapall":
-			out.print(ToolResourceLinkDao.unmapAll());
-			break;
-		default:
-			response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-			try {
-				request.getRequestDispatcher("/errorlogin.html").include(request, response);
-			} catch (ServletException | IOException e) {
-				logger.error("IO Error.", e);
-			}
-			break;
+			case "/super/optimize":
+				out.print(SettingsDao.optimizeDb());
+				break;
+			case "/super/deleteunusedusers":
+				out.print(ToolConsumerUserDao.deleteUnused());
+				break;
+			case "/super/deleteunusedresourceusers":
+				out.print(ToolResourceUserDao.deleteUnused());
+				break;
+			case "/super/deleteunusedresourcelinks":
+				out.print(ToolResourceLinkDao.deleteUnused());
+				break;
+			case "/super/deleteunusedcontexts":
+				out.print(ToolContextDao.deleteUnused());
+				break;
+			case "/super/deleteunusedconsumers":
+				ToolNonceDao.deleteAll(); // Nonce depends on consumer
+				out.print(ToolConsumerDao.deleteUnused());
+				break;
+			case "/super/unmapall":
+				out.print(ToolResourceLinkDao.unmapAll());
+				break;
+			default:
+				response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+				try {
+					request.getRequestDispatcher("/errorlogin.html").include(request, response);
+				} catch (ServletException | IOException e) {
+					logger.error("IO Error.", e);
+				}
+				break;
 		}
 	}
 }

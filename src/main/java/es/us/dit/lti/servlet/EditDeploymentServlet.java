@@ -14,6 +14,10 @@ import org.slf4j.LoggerFactory;
 import es.us.dit.lti.entity.LtiDeployment;
 import es.us.dit.lti.entity.Settings;
 import es.us.dit.lti.persistence.LtiDeploymentDao;
+/**
+ * @author Juan López Suárez
+ */
+
 
 @WebServlet("/admin/editdeployment")
 public class EditDeploymentServlet extends HttpServlet {

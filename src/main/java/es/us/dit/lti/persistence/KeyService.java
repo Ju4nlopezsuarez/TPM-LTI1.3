@@ -15,7 +15,9 @@ import java.util.UUID;
 /**
  * Servicio encargado de la gestión de claves asimétricas para LTI 1.3.
  * Genera, almacena y recupera claves RSA de la tabla 'lti_key_set'.
- */
+ 
+ * @author Juan López Suárez
+*/
 public class KeyService {
 	/**
 	 * Utility class that provides methods for managing connections to a database.

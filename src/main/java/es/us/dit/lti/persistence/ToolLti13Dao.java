@@ -11,7 +11,9 @@ import es.us.dit.lti.entity.Tool;
 /**
  * DAO especializado en la recuperación de credenciales y configuración
  * para el flujo LTI 1.3.
- */
+ 
+ * @author Juan López Suárez
+*/
 public class ToolLti13Dao {
 
     private static IDbUtil dbUtil = null;

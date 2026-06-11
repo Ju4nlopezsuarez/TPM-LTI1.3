@@ -46,7 +46,9 @@ import es.us.dit.lti.persistence.ToolDao;
  * Servlet to list LTI user that had attempts with same tool key and same username. 
  * 
  * <p>Not used.
- */
+ 
+ * @author Juan López Suárez
+*/
 //Disabled @WebServlet("/instructor/user/*")
 @WebServlet("/super/instructor/user/*")
 public class InfoLtiUserServlet extends HttpServlet {

@@ -19,6 +19,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.Locale;
+/**
+ * @author Juan López Suárez
+ */
+
 
 @WebServlet("/SaveLinkServlet")
 public class SaveLinkServlet extends HttpServlet {
