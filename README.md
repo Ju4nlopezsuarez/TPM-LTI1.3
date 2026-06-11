@@ -1,35 +1,35 @@
-# TPM
+# TPM (Tool Provider Manager) - LTI 1.3 Advantage
 
-Tool Provider Manager, a LTI v1.1 tool provider for managing non-LTI tools.
+Tool Provider Manager, an LTI v1.3 Advantage tool provider for managing non-LTI tools.
 
-# Índice
+## Table of Contents
 
- 1. [Descripción](#descripcion)
- 2. [Estado del proyecto](#estado-del-proyecto)
- 3. [Tecnologías usadas](#tecnologías-usadas)
- 4. [Compilación](#compilación)
- 5. [Instalación](#instalación)
- 6. [Ejemplos de uso](#ejemplos-de-uso)
- 7. [Pendiente por hacer](#pendiente-por-hacer-to-do)
- 8. [Contribuciones](#contribuciones)
- 9. [Licencia](#licencia)
-10. [Contacto](#contacto)
-11. [Referencias](#referencias)
+ 1. [Description](#description)
+ 2. [Project Status](#project-status)
+ 3. [Technologies Used](#technologies-used)
+ 4. [Compilation](#compilation)
+ 5. [Installation](#installation)
+ 6. [Usage Examples](#usage-examples)
+ 7. [To Do](#to-do)
+ 8. [Contributions](#contributions)
+ 9. [License](#license)
+10. [Contact & Authors](#contact--authors)
+11. [References](#references)
 
-# Descripción
+## Description
 
-Tool Provider Manager, o TPM para abreviar, implementa un proveedor de herramientas (TP) [LTI v1.1](https://www.imsglobal.org/specs/ltiv1p1/implementation-guide). Un TP proporciona herramientas externas a una plataforma de enseñanza virtual LMS (Learning Management System) o consumidor de herramientas (TC) de tal manera que se comparten las credenciales de los usuarios (mediante [OAuth 1.0 Protocol](https://datatracker.ietf.org/doc/html/rfc5849)) y puede registrar calificaciones en el libro de calificaciones del LMS ([LTI Basic Outcomes](https://www.imsglobal.org/spec/lti-bo/v1p1)).
+Tool Provider Manager, or TPM for short, implements an [LTI 1.3 Advantage](https://www.imsglobal.org/spec/lti/v1p3/) Tool Provider (TP). A TP provides external tools to a Learning Management System (LMS) or Tool Consumer (TC) securely. It shares user credentials using modern asymmetric cryptography (JSON Web Tokens and OIDC) and can register grades directly into the LMS gradebook via [Assignment and Grade Services (AGS v2.0)](https://www.imsglobal.org/spec/lti-ags/v2p0). It also features backward compatibility with legacy LTI 1.1 connections.
 
-TPM es un gestor de herramientas externas que no soportan LTI v1.1 y que por sí solas no podrían interactuar con el LMS. TPM permite reutilizar herramientas de evaluación principalmente que no estaban pensadas para ejecutarse online o hacer nuevas herramientas fácilmente sin tener que preocuparse por implementar LTI v1.1.
+TPM acts as a middleware or manager for external tools that do not natively support LTI standards and could not interact with the LMS on their own. TPM allows reusing assessment tools—primarily those not originally designed to run online—or easily creating new tools without having to worry about implementing complex LTI 1.3 security flows.
 
-Actualmente se soportan 2 tipos de "herramientas" que se pueden conectar al TPM:
+Currently, 2 types of "tools" can be connected to the TPM:
 
-* Herramientas de corrección que reciben un fichero suministrado por el estudiante y devuelven un resultado numérico (0-100) y contenido de texto o HTML a mostrar como resultado del procesamiento realizado. El resultado numérico puede enviarse al LMS para que quede visible en el libro de calificaciones.
-* Aplicaciones web que quieren conectarse con el LMS para utilizar las credenciales y datos de este sin necesidad de usar el estándar LTI v1.1 y que no desean devolver nada al LMS.
+* **Assessment/Correction tools:** These receive a file submitted by the student and return a numerical score (0-100) along with text or HTML content to be displayed as feedback. The numerical result is sent back to the LMS to be recorded in the gradebook.
+* **Web applications (Redirection mode):** Applications that want to connect with the LMS to utilize its credentials and user data without natively implementing the LTI standard, and do not need to return a grade to the LMS.
 
-En el siguiente diagrama se muestra la interacción de los distintos elementos:
+The following diagram illustrates the interaction between the different components:
 
-```
+```text
                                    +-------+
                            .------>|TOOL_1 |
  +-------+      +-------+  |       +-------+
@@ -51,148 +51,140 @@ En el siguiente diagrama se muestra la interacción de los distintos elementos:
                                    +---------+
 ```
 
-Se han desarrollado varios prototipos previos, pero esta es una implementación totalmente nueva e independiente.
+While previous prototypes existed, this is a completely revamped, independent implementation upgraded to the latest security standards.
 
-TPM proporciona 2 interfaces diferentes:
+TPM provides 2 different interfaces:
 
-* Interfaz con el LMS.
-* Interfaz de gestión. Los usuarios acceden a esta interfaz con credenciales diferentes a las del LMS y no tienen que ser usuarios del LMS. Existen 4 tipos de usuarios:
-  * Super usuarios: pueden crear otros usuarios, cambiar la configuración de la aplicación y realizar operaciones de mantenimiento.
-  * Administradores de herramientas: crean herramientas *virtuales* y configuran la conexión con las herramientas y aplicaciones web externas y les asignan identificadores (claves) y secretos únicos. Pueden asignar otros usuarios a estas herramientas.
-  * Editores: editan la configuración de herramientas que han creado otros administradores.
-  * Probadores: solo pueden hacer pruebas de las herramientas que tienen asignadas
+* **LMS Interface:** The frontend displayed to students and teachers inside the virtual campus.
+* **Management Interface:** Users access this interface with different credentials than the LMS and do not need to be LMS users. There are 4 types of management users:
+  * **Super users:** Can create other users, change global application settings, and perform maintenance operations.
+  * **Tool administrators:** Create *virtual* tools, configure connections with external web applications, and assign them unique identifiers (Client IDs/Deployment IDs). They can assign other users to these tools.
+  * **Editors:** Edit the configuration of tools created by other administrators.
+  * **Testers:** Can only test the tools assigned to them.
 
-  Los administradores también pueden editar y probar, y los editores también pueden probar las herramientas.
+*(Note: Administrators can also edit and test, and editors can also test tools).*
 
-TPM distingue la herramienta que debe ejecutar cuando llega una petición del LMS a partir del identificador (clave) y secreto que envía el LMS. Esto debe haberse configurado previamente.
+TPM identifies which tool to execute when an LMS request arrives based on the `resource_link_id` and the OIDC security claims previously configured.
 
-TPM proporciona unas funcionalidades comunes a las herramientas:
+TPM provides common functionalities to all tools:
 
-* La gestión de ficheros enviados y los resultados obtenidos.
-* Información de los intentos realizados por los estudiantes.
+* Management of submitted files and obtained results.
+* Tracking and storage of student attempts.
+* Data isolation: The same tool can be reused across different courses or LMS platforms. TPM strictly separates students and attempts based on the Resource Link used.
 
-Una misma herramienta puede ser reutilizada en distintos cursos o plataformas de enseñanza virtual. TPM separa los estudiantes e intentos realizados según el identificador/clave utilizado. Una misma herramienta puede tener asignados distintos pares identificadores/clave para distinguir varios grupos de usuarios.
+### Motivation
 
-### Motivación
+This application was developed primarily to:
 
-Esta aplicación se ha desarrollado principalmente para:
+* Automatically grade files submitted by students, providing instant feedback. LMS platforms support auto-grading for certain quiz types, but not for complex file evaluations.
+* Pre-process submitted files to report common formatting errors before grading. This allows students to fix submissions to meet minimum requirements and saves teachers from wasting time on formal aspects.
+* Reuse custom grading scripts that teachers traditionally ran manually after downloading all submitted files.
+* Avoid building web applications that duplicate user management already handled by the LMS. Access to custom web apps can be securely restricted to enrolled students and teachers without requiring manual user registration.
 
-* Corregir automáticamente los ficheros entregados por los estudiantes proporcionando realimentación instantánea. Los LMS soportan corrección automática de algunos tipos de preguntas de exámenes, pero no todos.
-* Hacer un procesamiento previo de los ficheros entregados para informar de errores comunes que no sean específicos de la materia a evaluar. Esto permite al estudiante corregir su entrega para que cumpla los requisitos mínimos y al profesor no tener que perder tiempo en aspectos formales.
-* Reutilizar correctores que el profesor solía ejecutar manualmente después de descargar todos los ficheros entregados.
-* Evitar crear aplicaciones web que tengan que duplicar la gestión de usuarios que ya hace las plataformas de enseñanza virtual. El acceso a las aplicaciones web puede restringirse a estudiantes y profesores seleccionados sin necesidad de dar de alta previamente a los usuarios y con garantías de autenticidad.
+### Functionalities
 
-### Funcionalidades
+The functionality provided by TPM depends on whether the tool is an assessment tool or a web application (*redirection mode*).
 
-La funcionalidad que proporciona TPM depende de si la herramienta es de corrección o es una aplicación web (modo *redirección*).
+#### Assessment Tools
 
-#### Herramientas de corrección
+The following types of assessment tools are supported:
 
-Existen los siguientes tipos de herramientas de corrección:
+1. **Unknown type:** Used for testing purposes (Dummy runner).
+2. **Local:** The tool runs on the same machine as the TPM server. Restricted only to specific administrators due to security implications and potential server performance impact.
+3. **Over SSH:** The tool is executed remotely via SSH. Supports configuring multiple servers for alternative sending (round-robin). Includes mechanisms for remote tool updates via the LMS interface.
+4. **Over HTTP:** The tool is executed via HTTP requests (REST API). Allows configuration of the HTTP method, headers, parameters, and how the JSON response is processed to extract the score and feedback message.
+5. **Storage only:** No external assessment tool is executed; it simply uses TPM's built-in capabilities to store and manage submissions.
 
-1. Tipo desconocido: se usa para hacer pruebas.
-2. Local: herramienta que se ejecuta en la misma máquina que el servidor. Solo permitida para determinados administradores por las implicaciones de seguridad y porque puede afectar al rendimiento del servidor.
-3. Por SSH: herramienta que se ejecutará a través de SSH. Permite configurar varios servidores y en envío alternativo (round-robin) a ellos. Incorpora mecanismos para la actualización remota de la herramienta a través de la interfaz del LMS.
-4. Por HTTP: herramienta que se ejecutará a través de HTTP. Permite configurar qué tipo de petición HTTP se enviará, sus cabeceras y parámetros y cómo se procesará la respuesta identificando la calificación y el mensaje que se debe mostrar al usuario.
-5. Solo almacenamiento: no se ejecuta ninguna herramienta de corrección externa y simplemente se utiliza las capacidades incorporadas de TPM para almacenar y gestionar entregas.
+The minimum LMS interface common to all tools features a customizable description, a form to submit a file or text, and a space to display the result. If the user is a teacher, administrative tool info is also displayed. Optionally, the following can be enabled:
 
-La interfaz LMS mínima común a todas las herramientas presenta una descripción personalizable, un formulario para enviar un fichero o texto y un espacio para mostrar el resultado. Si el usuario es un profesor también se muestra información sobre la herramienta. Opcionalmente se puede activar:
+- **Delivery key:** The user must know a specific password to submit.
+- **Previous attempts:** A student can view their previously submitted files/texts and results. A teacher can view all users' attempts, delete attempts, retrieve user info, and re-run grading manually. Attempts can be filtered and bulk-downloaded.
+- **Time restrictions:** Countdowns are displayed if the tool is nearing its deadline for new attempts.
+- **File constraints:** Restrictions on the expected filename and size.
+- **Concurrency limits:** Restricts the number of users submitting attempts simultaneously.
+- **Storage options:** Toggles for storing files and/or results on the server.
+- **Attempt limits:** Maximum number of attempts allowed per user.
+- **Teacher commands:** An additional text box enabling the teacher to send specific commands to the assessment tool.
+- **Grade Passback:** Automated synchronization of grades to the LMS gradebook via AGS.
 
-- Una clave de entrega. El usuario debe conocerla para poder hacer una entrega.
-- Mostrar intentos anteriores. Un estudiante opcionalmente puede ver los ficheros/textos enviados por él y/o su resultado. Un profesor también puede ver los intentos de otros usuarios, borrar intentos, obtener información del usuario y volver a realizar la corrección como profesor (la herramienta de corrección puede realizar distintas acciones si el usuario es un estudiante o un profesor). Los intentos se pueden filtrar y hacer una descarga masiva de todos.
-- Requisitos temporales de funcionamiento y visualización. Si queda poco tiempo para que la herramienta deje de admitir nuevos intentos al usuario se le mostrará una cuenta atrás.
-- Requisitos al nombre y tamaño del fichero a entregar.
-- Restricciones al número de usuarios que pueden enviar intentos simultáneamente.
-- El almacenamiento de los ficheros y/o resultados.
-- Restricciones al número de intentos máximos que un usuario puede realizar.
-- Habilitar un cuadro de texto adicional para que el profesor pueda enviar comandos a la herramienta.
-- En envío de calificaciones al libro de calificaciones del LMS.
+Local, SSH, and HTTP tools receive the following parameters:
+1. The submitted file (if text is requested, it is stored as a file).
+2. A unique identifier for the user making the attempt.
+3. The original filename.
+4. A unique counter incremented on each attempt.
+5. A boolean indicating if the user is an instructor.
 
-Las herramientas locales, por SSH y por HTTP reciben como parámetros:
+Additional parameters such as course name, locale, or static custom values can optionally be sent.
 
-1. El fichero enviado. Si se elige por pedir texto, este se almacena en un fichero.
-2. Un identificador del usuario que realiza el intento.
-3. El nombre original del fichero.
-4. Un contador único que se incremente en cada intento.
-5. Si el usuario es un profesor.
+#### Redirection Mode
 
-Opcionalmente se pueden enviar más parámetros como el nombre del curso o enlace, el idioma, valores estáticos, etc.
+The redirection mode is primarily based on the [OAuth 2.0 Client Credentials Grant Type](https://oauth.net/2/grant-types/client-credentials/), though it is not strictly limited to it. The workflow is as follows:
 
-#### Modo redirección
+1. TPM sends a backend request to the external web application. This authenticated request contains user and context data. The web app generates an access token and a continuation URL.
+2. The user's browser is redirected to the new URL with the generated token. The web application retrieves the associated data and grants access.
+3. If necessary, a further redirection is performed to avoid [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) issues. From this point on, the user interacts directly with the web application seamlessly, without manual registration.
 
-El modo redirección se basa en [OAuth 2.0 Client Credentials Grant Type](https://oauth.net/2/grant-types/client-credentials/), aunque no está limitado a ese modo de funcionamiento. La idea se basa en:
+The web application can alter its behavior depending on whether the user is a teacher or student.
 
-1. Enviar una petición a la aplicación web desde TPM. Esta petición llevará datos del usuario y desde dónde se está iniciando el intento de manera autenticada. La aplicación web genera un token y una URL para continuar. La petición también puede ser enviada por una herramienta local o por SSH.
-2. Enviar una segunda petición desde el navegador del usuario a la nueva URL con el token generado anteriormente. La aplicación web recupera los datos asociados a ese token y permite el acceso.
-3. Si fuera necesario, se realiza el navegador se redirige a una nueva URL para evitar problemas con [CORS](https://developer.mozilla.org/es/docs/Web/HTTP/CORS). El usuario a partir de este momento comenzaría a usar la aplicación, sin necesidad de haberse registrado ni pasar información de manera manual.
+## Project Status
 
-La aplicación web puede funcionar de manera diferente dependiendo si el usuario es profesor o estudiante y del lugar de procedencia del intento.
+Fully operational. (LTI 1.3 Upgrade Complete).
 
-## Estado del proyecto
+## Technologies Used
 
-Funciona correctamente.
+* Java (JDK 11+)
+* Jakarta EE Servlets
+* JSP (JavaServer Pages)
+* Apache Maven
+* LTI 1.3 Core Security (JWT, RS256, OIDC)
 
-## Tecnologías usadas
+## Compilation
 
-* Java
-* Servlets de Jakarta EE
-* JSP
+[Apache Maven](https://maven.apache.org/) is required.
 
-## Compilación
-
-Se requiere tener instalado [maven](https://maven.apache.org/).
-
-Simplemente hay que ejecutar:
+Simply run the following command in the project root:
 
 ```shell
-mvn package
+mvn clean package
 ```
 
-## Instalación
+## Installation
 
-Cree una base de datos usando uno de los scripts SQL que se encuentran en `src/scripts/sql`. Se soporta SQLite, PostgreSQL y MariaDB.
+Create a database using one of the SQL scripts located in `src/scripts/sql`. SQLite, PostgreSQL, and MariaDB/MySQL are supported.
 
-Debe instalar el `war` generado en un servidor de aplicaciones Jakarta EE 10. El servidor solo necesita implementar el *Jakarta EE Web Profile*, como por ejemplo [Tomcat 10.1](https://tomcat.apache.org/download-10.cgi). Debe configurar el recurso a la base de datos en el contexto o globalmente con el nombre `jdbc/ltidb`. Por ejemplo, en Tomcat 10 puede crear el siguiente XML de configuración (`tpm.xml`) para una base de datos SQLite:
+Deploy the generated `.war` file in a Jakarta EE 10 application server. The server only needs to implement the *Jakarta EE Web Profile*, such as [Tomcat 10.1](https://tomcat.apache.org/download-10.cgi). 
 
-````xml
+You must configure the database resource in the context or globally with the JNDI name `jdbc/ltidb`. For example, in Tomcat 10, you can create the following XML configuration (`tpm.xml`) for an SQLite database:
+
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<Context reloadable="true" >
-        <Resource name="jdbc/ltidb"
-                    auth="Container"
-                    type="javax.sql.DataSource"
-                    driverClassName="org.sqlite.JDBC"
-                    url="jdbc:sqlite:/path/tpm.db/"
-                username=""
-                password=""
-                    maxTotal="1"
-                    maxIdle="1"
-                    maxWaitMillis="-1" />
-        <CookieProcessor sameSiteCookies="strict" />
+<Context reloadable="true">
+        <Resource auth="Container" driverClassName="org.sqlite.JDBC" maxIdle="1" maxTotal="1" maxWaitMillis="-1" name="jdbc/ltidb" password type="javax.sql.DataSource" url="jdbc:sqlite:/absolute/path/to/your/tpm.db" username/>
+        <CookieProcessor sameSiteCookies="strict"/>
 </Context>
-````
+```
 
-Arranque el servidor.
+Start the server.
 
-Posteriormente, debe acceder a la ruta de contexto de la aplicación una vez desplegada y entrar con el usuario y clave `super`. Cambie la contraseña a otra más segura y cree nuevos usuarios.
+Next, access the application's context path. Log in using the default credentials: username `super` and password `super`. **Change the password immediately** to a secure one and create new management users.
 
-## Ejemplos de uso
+## Usage Examples
 
-* [TPM-sshtool-template](https://github.com/fjfjgg/TPM-sshtool-template) es un ejemplo de herramienta de corrección accesible a través de SSH.
-* [demo-oauth-lti](https://github.com/fjfjgg/demo-oauth-lti) es una aplicación de intercambio de mensajes integrada con un LMS. Es un ejemplo de una integración de una aplicación web con TPM usando HTTP para el intercambio de datos inicial.
-* [TPM-httptool-template](https://github.com/fjfjgg/TPM-httptool-template) es un ejemplo de herramienta de corrección accesible a través de HTTP.
+* [TPM-sshtool-template](https://github.com/fjfjgg/TPM-sshtool-template) - Example of an assessment tool accessible via SSH.
+* [demo-oauth-lti](https://github.com/fjfjgg/demo-oauth-lti) - An integrated messaging application showcasing web app integration via HTTP for initial data exchange.
+* [TPM-httptool-template](https://github.com/fjfjgg/TPM-httptool-template) - Example of a RESTful assessment tool accessible via HTTP (Python/Flask).
 
-## Pendiente por hacer (TO DO)
+## To Do
 
-* [ ] Traducir la aplicación de gestión a múltiples idiomas. La interfaz con el LMS está traducida a español e inglés.
-* [ ] Crear distintos métodos de almacenamiento.
-* [ ] Crear un manual de usuario.
+* [ ] Translate the management interface into multiple languages. (The LMS interface is already available in English and Spanish).
+* [ ] Implement additional cloud storage methods (e.g., S3).
+* [ ] Create a comprehensive user manual.
 
-## Contribuciones
+## Contributions
 
-Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **appreciated**.
+Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Do not forget to give the project a star! Thanks again!
+If you have a suggestion that would make this project better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement". Do not forget to give the project a star! Thanks again!
 
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
@@ -200,19 +192,20 @@ Do not forget to give the project a star! Thanks again!
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## Licencia
+## License
 
 Distributed under the GNU GENERAL PUBLIC LICENSE Version 3. See `LICENSE.txt` for more information.
 
-## Contacto
+## Contact & Authors
 
-Francisco José Fernández Jiménez - [@fjfjes](ht) - fjfj @ us.es
+* **LTI 1.3 Architecture & Upgrade:** Juan López Suárez
+* **Original LTI 1.1 Architecture & Tutor:** Francisco José Fernández Jiménez - [@fjfjes](https://github.com/fjfjgg) - fjfj @ us.es
 
-Project Link: <https://github.com/fjfjgg/tpm>
+Project Link: [https://github.com/ju4nlopezsuarez/tpm-lti1.3](https://github.com/ju4nlopezsuarez/tpm-lti1.3)
 
-## Referencias
+## References
 
-* [LTI v1.1](https://www.imsglobal.org/specs/ltiv1p1/implementation-guide)
-* [LTI Basic Outcomes](https://www.imsglobal.org/spec/lti-bo/v1p1)
-* [OAuth 1.0 Protocol](https://datatracker.ietf.org/doc/html/rfc5849)
+* [LTI 1.3 Core Specification](https://www.imsglobal.org/spec/lti/v1p3/)
+* [LTI Assignment and Grade Services (AGS v2.0)](https://www.imsglobal.org/spec/lti-ags/v2p0)
+* [LTI Names and Role Provisioning Services (NRPS v2.0)](https://www.imsglobal.org/spec/lti-nrps/v2p0)
 * [OAuth 2.0 Client Credentials Grant Type](https://oauth.net/2/grant-types/client-credentials/)
