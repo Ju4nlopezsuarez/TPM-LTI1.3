@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Test Plan">
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+        <collectionProp name="Arguments.arguments"/>
+      </elementProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+    </TestPlan>
+    <hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="LTI 1.1">
+        <intProp name="ThreadGroup.num_threads">100</intProp>
+        <intProp name="ThreadGroup.ramp_time">10</intProp>
+        <longProp name="ThreadGroup.duration">60</longProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+        <boolProp name="ThreadGroup.scheduler">true</boolProp>
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
+          <intProp name="LoopController.loops">-1</intProp>
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+        </elementProp>
+      </ThreadGroup>
+      <hashTree>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Lanzamiento">
+          <stringProp name="HTTPSampler.domain">tpm.l.fjfj.es</stringProp>
+          <stringProp name="HTTPSampler.protocol">https</stringProp>
+          <stringProp name="HTTPSampler.path">/tool-provider-manager/tools</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+            <collectionProp name="Arguments.arguments"/>
+          </elementProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="JSR223 PreProcessor">
+            <stringProp name="cacheKey">true</stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="script">import javax.crypto.Mac
+import javax.crypto.spec.SecretKeySpec
+import java.net.URLEncoder
+
+
+String consumerKey = &quot;PruebaConCalificacion_clave2&quot; 
+String consumerSecret = &quot;secreto2&quot; 
+String url = &quot;https://tpm.l.fjfj.es/tool-provider-manager/tools&quot; 
+
+
+// Parámetros dinámicos OAuth 1.0a
+String nonce = UUID.randomUUID().toString().replaceAll(&quot;-&quot;, &quot;&quot;)
+String timestamp = String.valueOf(System.currentTimeMillis() / 1000)
+
+// Diccionario con TODOS los parámetros que se van a enviar
+def params = [
+    &quot;lti_message_type&quot;: &quot;basic-lti-launch-request&quot;,
+    &quot;lti_version&quot;: &quot;LTI-1p0&quot;,
+    // Aquí es donde simulamos a los alumnos. Cada hilo enviará un ID distinto.
+    &quot;user_id&quot;: &quot;alumno_prueba_${ctx.getThreadNum()}&quot;, 
+    &quot;roles&quot;: &quot;Learner&quot;,
+    // Identificador del enlace de prueba
+    &quot;resource_link_id&quot;: &quot;enlace-tfg-1&quot;, 
+    
+    // PARÁMETROS OAUTH
+    &quot;oauth_consumer_key&quot;: consumerKey,
+    &quot;oauth_nonce&quot;: nonce,
+    &quot;oauth_signature_method&quot;: &quot;HMAC-SHA1&quot;,
+    &quot;oauth_timestamp&quot;: timestamp,
+    &quot;oauth_version&quot;: &quot;1.0&quot;
+]
+
+// Inyectamos los parámetros en la petición HTTP de JMeter
+params.each { k, v -&gt;
+    sampler.addArgument(k, v)
+}
+
+// CÁLCULO DE LA FIRMA OAUTH 1.0a
+// Ordenar alfabéticamente las claves
+def sortedKeys = params.keySet().sort()
+
+// Crear la cadena de parámetros codificada
+def paramString = sortedKeys.collect { 
+    URLEncoder.encode(it, &quot;UTF-8&quot;) + &quot;=&quot; + URLEncoder.encode(params[it], &quot;UTF-8&quot;) 
+}.join(&quot;&amp;&quot;)
+
+// Crear el &quot;Base String&quot;
+String baseString = &quot;POST&amp;&quot; + URLEncoder.encode(url, &quot;UTF-8&quot;) + &quot;&amp;&quot; + URLEncoder.encode(paramString, &quot;UTF-8&quot;)
+
+// La clave de firma es el Consumer Secret seguido de un &apos;&amp;&apos;
+String key = URLEncoder.encode(consumerSecret, &quot;UTF-8&quot;) + &quot;&amp;&quot;
+
+// Ejecutar el cifrado HMAC-SHA1
+Mac mac = Mac.getInstance(&quot;HmacSHA1&quot;)
+mac.init(new SecretKeySpec(key.getBytes(&quot;UTF-8&quot;), &quot;HmacSHA1&quot;))
+byte[] rawHmac = mac.doFinal(baseString.getBytes(&quot;UTF-8&quot;))
+String signature = rawHmac.encodeBase64().toString()
+
+// Añadir la firma calculada a la petición
+sampler.addArgument(&quot;oauth_signature&quot;, signature)</stringProp>
+            <stringProp name="scriptLanguage">groovy</stringProp>
+          </JSR223PreProcessor>
+          <hashTree/>
+        </hashTree>
+        <ConstantThroughputTimer guiclass="TestBeanGUI" testclass="ConstantThroughputTimer" testname="Constant Throughput Timer">
+          <doubleProp>
+            <name>throughput</name>
+            <value>6000.0</value>
+            <savedValue>0.0</savedValue>
+          </doubleProp>
+          <intProp name="calcMode">1</intProp>
+        </ConstantThroughputTimer>
+        <hashTree/>
+      </hashTree>
+      <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
+        <boolProp name="ResultCollector.error_logging">false</boolProp>
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <timestamp>true</timestamp>
+            <success>true</success>
+            <label>true</label>
+            <code>true</code>
+            <message>true</message>
+            <threadName>true</threadName>
+            <dataType>true</dataType>
+            <encoding>false</encoding>
+            <assertions>true</assertions>
+            <subresults>true</subresults>
+            <responseData>false</responseData>
+            <samplerData>false</samplerData>
+            <xml>false</xml>
+            <fieldNames>true</fieldNames>
+            <responseHeaders>false</responseHeaders>
+            <requestHeaders>false</requestHeaders>
+            <responseDataOnError>false</responseDataOnError>
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+            <assertionsResultsToSave>0</assertionsResultsToSave>
+            <bytes>true</bytes>
+            <sentBytes>true</sentBytes>
+            <url>true</url>
+            <threadCounts>true</threadCounts>
+            <idleTime>true</idleTime>
+            <connectTime>true</connectTime>
+          </value>
+        </objProp>
+        <stringProp name="filename"></stringProp>
+      </ResultCollector>
+      <hashTree/>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>

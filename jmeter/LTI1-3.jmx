@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Test Plan">
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+        <collectionProp name="Arguments.arguments"/>
+      </elementProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+    </TestPlan>
+    <hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Lanzamiento LTI 1.3">
+        <intProp name="ThreadGroup.num_threads">100</intProp>
+        <intProp name="ThreadGroup.ramp_time">10</intProp>
+        <longProp name="ThreadGroup.duration">60</longProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+        <boolProp name="ThreadGroup.scheduler">true</boolProp>
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
+          <intProp name="LoopController.loops">-1</intProp>
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+        </elementProp>
+      </ThreadGroup>
+      <hashTree>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="OIDC Login" enabled="true">
+          <stringProp name="HTTPSampler.domain">tpm.l.fjfj.es</stringProp>
+          <stringProp name="HTTPSampler.protocol">https</stringProp>
+          <stringProp name="HTTPSampler.path">/tool-provider-manager/oidc_login</stringProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="iss" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">https://jmeter.lms.local</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">iss</stringProp>
+              </elementProp>
+              <elementProp name="login_hint" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">alumno123</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">login_hint</stringProp>
+              </elementProp>
+              <elementProp name="target_link_uri" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">https://tpm.l.fjfj.es/tool-provider-manager/tools</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">target_link_uri</stringProp>
+              </elementProp>
+              <elementProp name="lti_message_hint" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">81322</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">lti_message_hint</stringProp>
+              </elementProp>
+              <elementProp name="lti_deployment_id" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">qwertyuiop</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">lti_deployment_id</stringProp>
+              </elementProp>
+              <elementProp name="client_id" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">jmeter-client-123</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">client_id</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <RegexExtractor guiclass="RegexExtractorGui" testclass="RegexExtractor" testname="state" enabled="true">
+            <stringProp name="RegexExtractor.useHeaders">true</stringProp>
+            <stringProp name="RegexExtractor.refname">jmeter_state</stringProp>
+            <stringProp name="RegexExtractor.regex">state=([^&amp;]+)</stringProp>
+            <stringProp name="RegexExtractor.template">$1$</stringProp>
+            <stringProp name="RegexExtractor.default"></stringProp>
+            <boolProp name="RegexExtractor.default_empty_value">false</boolProp>
+            <stringProp name="RegexExtractor.match_number">1</stringProp>
+          </RegexExtractor>
+          <hashTree/>
+          <RegexExtractor guiclass="RegexExtractorGui" testclass="RegexExtractor" testname="nonce" enabled="true">
+            <stringProp name="RegexExtractor.useHeaders">true</stringProp>
+            <stringProp name="RegexExtractor.refname">jmeter_nonce</stringProp>
+            <stringProp name="RegexExtractor.regex">nonce=([^&amp;]+)</stringProp>
+            <stringProp name="RegexExtractor.template">$1$</stringProp>
+            <stringProp name="RegexExtractor.default"></stringProp>
+            <boolProp name="RegexExtractor.default_empty_value">false</boolProp>
+            <stringProp name="RegexExtractor.match_number">1</stringProp>
+          </RegexExtractor>
+          <hashTree/>
+        </hashTree>
+        <CookieManager guiclass="CookiePanel" testclass="CookieManager" testname="HTTP Cookie Manager" enabled="true">
+          <collectionProp name="CookieManager.cookies"/>
+          <boolProp name="CookieManager.clearEachIteration">false</boolProp>
+          <boolProp name="CookieManager.controlledByThreadGroup">false</boolProp>
+        </CookieManager>
+        <hashTree/>
+        <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+          <objProp>
+            <name>saveConfig</name>
+            <value class="SampleSaveConfiguration">
+              <time>true</time>
+              <latency>true</latency>
+              <timestamp>true</timestamp>
+              <success>true</success>
+              <label>true</label>
+              <code>true</code>
+              <message>true</message>
+              <threadName>true</threadName>
+              <dataType>true</dataType>
+              <encoding>false</encoding>
+              <assertions>true</assertions>
+              <subresults>true</subresults>
+              <responseData>false</responseData>
+              <samplerData>false</samplerData>
+              <xml>false</xml>
+              <fieldNames>true</fieldNames>
+              <responseHeaders>false</responseHeaders>
+              <requestHeaders>false</requestHeaders>
+              <responseDataOnError>false</responseDataOnError>
+              <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes>
+              <sentBytes>true</sentBytes>
+              <url>true</url>
+              <threadCounts>true</threadCounts>
+              <idleTime>true</idleTime>
+              <connectTime>true</connectTime>
+            </value>
+          </objProp>
+          <stringProp name="filename">/home/ju4nls/graficas-jmeter/resultados-13-prueba.csv</stringProp>
+        </ResultCollector>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Tool Launch" enabled="true">
+          <stringProp name="HTTPSampler.domain">tpm.l.fjfj.es</stringProp>
+          <stringProp name="HTTPSampler.protocol">https</stringProp>
+          <stringProp name="HTTPSampler.path">/tool-provider-manager/tools</stringProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="state" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">${jmeter_state}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">state</stringProp>
+              </elementProp>
+              <elementProp name="id_token" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">${jwt_firmado}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">id_token</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="JSR223 PreProcessor" enabled="true">
+            <stringProp name="cacheKey">true</stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="script">import java.security.*
+import java.security.spec.*
+import java.util.Base64
+
+// Clave Privada generada en mkjwk.org (en formato PEM, SIN los -----BEGIN/END-----)
+String privateKeyPEM = &quot;MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQC54JwdPyG3tLXnBzDsTJr0uwVnRHoPZYzygj8f5mBZNt9I5ohLdn/ZfgKFEnof+rYleFLxCXAp9tX1wundo/EJ2S55GFem3hjQfsnDfXjY5qkr9zJGcOOkhDQv+ogTnjKPZ0/4N4b3hvu7CCEimpWrppMVtnIqAcTDZY/0BaJoeG2iqJymlwThcFnmCaq8eXOBkurMwVRIc3PLYVeQ52N8VyrDTMgfbcs4kY09lJiA+i620ArfvMZYlGfBr5C8OV/jL17aSt+z/l2kOtYe3bILVY2bwbcCHOI1ou6ybI9cwwrVzmi9nHpY0rPmOjKkr4XOufYT7p2G3t7YjC6H8+jBAgMBAAECggEAAYkINxJge5tGsZtgyUHeeYkiK7rAQJht0iq23WNGblQ2gsxTKb7nQk9Q82MOPs2AA8YXNsoVeuZA2QpgqsHN9c8tO+cyYaSl2zKB5X9HwFBi6zPb7qKj8bXdFbydsz5INACmI6JnRyv+cCp6dhYFaJUcE8bFkYDhXH0OM+V4RIE/CWK/db8Ng4QnlkxnqDv+vEYAglhRv/Apu1L+4LCCLLpnAL3VK9FcKVnVhHW8aZro0YvvwtIPd4nbYh9DHbQm6yOP5662h2e3RbO/bI0cnYw4CxtlhK30eN7XNeEFyAS1IB2lhULpQAIQH1fvnMt8c5+s6yS8EGUtHq5DC1888QKBgQDegwdbiyHJOoJGv6BPPV/hWyLWhE5ubhc4cJZZ5oAUdeJgAGNJJNMG5mIySjXpaV2dMAk7dSp2qOgfJl2ou7p6GL/syuNJ6P9/8XEdxMJAMJrKM2bzrGbelOntH31S7NdF4PzwbK2QHxFbEJwZzqE7eUiwveKCITUGK/QikFKycQKBgQDV2h+J/9/fbb6lEcizx2Km66c/ig8+SU1m9Vx/P4Rtn7TaTMI5toSq3FcVhzdfkXlQBINVA54WTB3w1HmbpAfH8pV+xceMR1Fs+WRdrNKQqrelbf+5kwbIcm9edXkx9FDJ+dy546kux13LNUxNR92jz/VfyYu6YtwtGYpur6QjUQKBgQDCtjxJAj5FfdqkmGlrDdUKOhsJRuvvPI07SWJ4NvlbbjDzO0OmrP+xKQdC5Ke6ogZWV8OscQIAphvBrmwFDInI8EF6r6wncCmsxxXqK9SkISRCzqpHj1TRb9QoOQcM+s4CizgsF53l4Rnp62X+O0/h4GcYqoE8yFxDE1FmsY58MQKBgQCk0jPCubqDSuNH+Ff27/KB8lh6KV8sQ3TrqKo8zOi1UQUjx0tfDeRch+x6hDfSaZ3VZVUPnfUm/E2LQ0fjBF6W5coA5lCxNnp0ghav+DZmF53pW8lf7wioT0K0y9e3/7SQpwpPHz9S9Ye9yftgCMazreFRjVYrNmy6OdgvDSJ1sQKBgQC3RnoAzLDUf76Q/fE8TdZowUjw74G/nGc7n0x6qTz+0SWjIUhX1ywvMznlSGTB1R0HwAp8Q+zCldTJAfdoSbaTWmCbgqtu96YBG1SxUkfuAk4xBF/MN7y2Jb/waKRWC5OaPzH7DPVkV5kGqEAMpTvON7ewOyTHzStZFQTBXCRTsA==&quot; 
+
+// Obtener el nonce 
+String nonce = vars.get(&quot;jmeter_nonce&quot;)
+
+// Crear el Header y el Payload del JWT
+String headerJson = &apos;{&quot;typ&quot;:&quot;JWT&quot;,&quot;alg&quot;:&quot;RS256&quot;,&quot;kid&quot;:&quot;jmeter-key&quot;}&apos; 
+
+// Reemplaza los datos con los de tu plataforma JMeter-LMS
+String payloadJson = &quot;&quot;&quot;{
+  &quot;iss&quot;: &quot;https://jmeter.lms.local&quot;,
+  &quot;aud&quot;: &quot;jmeter-client-123&quot;,
+  &quot;sub&quot;: &quot;alumno-virtual-123&quot;,
+  &quot;nonce&quot;: &quot;${nonce}&quot;,
+  &quot;https://purl.imsglobal.org/spec/lti/claim/message_type&quot;: &quot;LtiResourceLinkRequest&quot;,
+  &quot;https://purl.imsglobal.org/spec/lti/claim/version&quot;: &quot;1.3.0&quot;,
+  &quot;https://purl.imsglobal.org/spec/lti/claim/roles&quot;: [&quot;http://purl.imsglobal.org/vocab/lis/v2/membership#Learner&quot;],
+  &quot;https://purl.imsglobal.org/spec/lti/claim/resource_link&quot;: {&quot;id&quot;: &quot;link-1&quot;}
+}&quot;&quot;&quot;
+
+// Codificar en Base64Url (sin padding)
+Base64.Encoder encoder = Base64.getUrlEncoder().withoutPadding()
+String headerB64 = encoder.encodeToString(headerJson.getBytes(&quot;UTF-8&quot;))
+String payloadB64 = encoder.encodeToString(payloadJson.getBytes(&quot;UTF-8&quot;))
+String unsignedJwt = headerB64 + &quot;.&quot; + payloadB64
+
+// Firma Criptográfica RSA (RS256)
+byte[] encoded = Base64.getDecoder().decode(privateKeyPEM)
+KeyFactory keyFactory = KeyFactory.getInstance(&quot;RSA&quot;)
+PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encoded)
+PrivateKey privateKey = keyFactory.generatePrivate(keySpec)
+
+Signature signature = Signature.getInstance(&quot;SHA256withRSA&quot;)
+signature.initSign(privateKey)
+signature.update(unsignedJwt.getBytes(&quot;UTF-8&quot;))
+String signatureB64 = encoder.encodeToString(signature.sign())
+
+// Guardar el JWT firmado en una variable de JMeter
+String finalJwt = unsignedJwt + &quot;.&quot; + signatureB64
+vars.put(&quot;jwt_firmado&quot;, finalJwt)</stringProp>
+            <stringProp name="scriptLanguage">groovy</stringProp>
+          </JSR223PreProcessor>
+          <hashTree/>
+        </hashTree>
+        <ConstantThroughputTimer guiclass="TestBeanGUI" testclass="ConstantThroughputTimer" testname="Constant Throughput Timer">
+          <intProp name="calcMode">1</intProp>
+          <doubleProp>
+            <name>throughput</name>
+            <value>12000.0</value>
+            <savedValue>0.0</savedValue>
+          </doubleProp>
+        </ConstantThroughputTimer>
+        <hashTree/>
+      </hashTree>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>
